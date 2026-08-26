@@ -8,6 +8,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
+import com.example.biodontos.presentation.odontogram.*
 import com.example.biodontos.presentation.patients.*
 
 @Composable
@@ -27,7 +29,9 @@ fun BiodontosNavGraph(navController: NavHostController) {
             PatientListScreen(
                 state = state,
                 onAddPatientClick = { navController.navigate(PatientRegistration) },
-                onPatientClick = { /* Navigate to Details or Odontogram */ },
+                onPatientClick = { patient -> 
+                    navController.navigate(Odontogram(patientId = patient.id)) 
+                },
                 onRetry = { viewModel.loadPatients() }
             )
         }
@@ -51,6 +55,22 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 onConsentChange = viewModel::onConsentChange,
                 onAllergiesChange = viewModel::onAllergiesChange,
                 onSaveClick = viewModel::savePatient,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        composable<Odontogram> { backStackEntry ->
+            val route: Odontogram = backStackEntry.toRoute()
+            val viewModel: OdontogramViewModel = viewModel(
+                factory = OdontogramViewModelFactory(route.patientId)
+            )
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            OdontogramScreen(
+                state = state,
+                onSurfaceClick = viewModel::onSurfaceClick,
+                onCommentChange = viewModel::onCommentChange,
+                onUpdateCondition = viewModel::updateTooth,
+                onDismissDialog = viewModel::onDismissDialog,
                 onBackClick = { navController.popBackStack() }
             )
         }
