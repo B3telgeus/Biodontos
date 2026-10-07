@@ -9,6 +9,10 @@ data class PatientDto(
     @SerialName("dni_cedula") val dniCedula: String,
     @SerialName("first_name") val firstName: String,
     @SerialName("last_name") val lastName: String,
-    @SerialName("consentimiento_firmado") val consentSigned: Boolean = false,
-    @SerialName("tiene_alergias_criticas") val hasCriticalAllergies: Boolean = false
+    @SerialName("critical_allergies") val criticalAllergies: String = "Ninguna",
+    val phone: String? = null,
+    val email: String? = null,
+    @SerialName("consent_signed") val consentSigned: Boolean = false,
+    val address: String? = null,
+    @SerialName("birth_date") val birthDate: String? = null
 )

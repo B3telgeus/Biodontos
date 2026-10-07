@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
+import com.example.biodontos.core.designsystem.biodontosTextFieldColors
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientRegistrationScreen(
@@ -55,7 +57,8 @@ fun PatientRegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 isError = state.dniError != null,
-                supportingText = state.dniError?.let { { Text(it) } }
+                supportingText = state.dniError?.let { { Text(it) } },
+                colors = biodontosTextFieldColors()
             )
 
             OutlinedTextField(
@@ -65,7 +68,8 @@ fun PatientRegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 isError = state.firstNameError != null,
-                supportingText = state.firstNameError?.let { { Text(it) } }
+                supportingText = state.firstNameError?.let { { Text(it) } },
+                colors = biodontosTextFieldColors()
             )
 
             OutlinedTextField(
@@ -75,7 +79,8 @@ fun PatientRegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 isError = state.lastNameError != null,
-                supportingText = state.lastNameError?.let { { Text(it) } }
+                supportingText = state.lastNameError?.let { { Text(it) } },
+                colors = biodontosTextFieldColors()
             )
 
             Row(
@@ -120,18 +125,57 @@ fun PatientRegistrationScreen(
                 )
             }
 
-            Button(
-                onClick = onSaveClick,
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
+                OutlinedButton(
+                    onClick = onBackClick,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = com.example.biodontos.core.designsystem.BiodontosDark),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
                     )
-                } else {
-                    Text("Guardar Paciente")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Atrás",
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                }
+
+                Button(
+                    onClick = onSaveClick,
+                    enabled = !state.isLoading,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = com.example.biodontos.core.designsystem.BiodontosDark,
+                        contentColor = androidx.compose.ui.graphics.Color.White
+                    ),
+                    modifier = Modifier
+                        .weight(1.3f)
+                        .height(52.dp)
+                ) {
+                    if (state.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = androidx.compose.ui.graphics.Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Guardar Paciente",
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

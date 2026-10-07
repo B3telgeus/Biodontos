@@ -6,5 +6,8 @@ data class Patient(
     val firstName: String,
     val lastName: String,
     val consentSigned: Boolean,
-    val hasCriticalAllergies: Boolean
+    val hasCriticalAllergies: Boolean,
+    val allergiesDescription: String = if (hasCriticalAllergies) "Alergias presentes" else "Ninguna",
+    val phone: String? = null,
+    val email: String? = null
 )

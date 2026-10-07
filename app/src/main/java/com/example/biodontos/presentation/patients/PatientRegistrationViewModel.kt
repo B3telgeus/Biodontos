@@ -22,20 +22,44 @@ class PatientRegistrationViewModel(
     private val _events = Channel<PatientRegistrationEvent>()
     val events = _events.receiveAsFlow()
 
-    fun onDniChange(value: String) { 
-        _state.update { it.copy(dniCedula = value, dniError = null) } 
+    fun onDniChange(value: String) {
+        val error = if (value.isNotEmpty() && !value.matches(Regex("^[0-9]*$"))) {
+            "Solo se permiten números (carácter inválido)"
+        } else null
+        _state.update { it.copy(dniCedula = value, dniError = error) }
     }
-    fun onFirstNameChange(value: String) { 
-        _state.update { it.copy(firstName = value, firstNameError = null) } 
+
+    fun onFirstNameChange(value: String) {
+        val error = if (value.isNotEmpty() && !value.matches(Regex("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'-]*$"))) {
+            "Solo se permiten letras y espacios (carácter inválido)"
+        } else null
+        _state.update { it.copy(firstName = value, firstNameError = error) }
     }
-    fun onLastNameChange(value: String) { 
-        _state.update { it.copy(lastName = value, lastNameError = null) } 
+
+    fun onLastNameChange(value: String) {
+        val error = if (value.isNotEmpty() && !value.matches(Regex("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'-]*$"))) {
+            "Solo se permiten letras y espacios (carácter inválido)"
+        } else null
+        _state.update { it.copy(lastName = value, lastNameError = error) }
     }
     fun onConsentChange(value: Boolean) { 
         _state.update { it.copy(consentSigned = value) } 
     }
     fun onAllergiesChange(value: Boolean) { 
-        _state.update { it.copy(hasCriticalAllergies = value) } 
+        _state.update { 
+            it.copy(
+                hasCriticalAllergies = value,
+                allergiesDescription = if (!value) "Ninguna" else it.allergiesDescription
+            ) 
+        } 
+    }
+
+    fun onAllergiesDescriptionChange(value: String) {
+        _state.update { it.copy(allergiesDescription = value) }
+    }
+
+    fun onPhoneChange(value: String) {
+        _state.update { it.copy(phone = value) }
     }
 
     fun savePatient() {
@@ -59,13 +83,20 @@ class PatientRegistrationViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
+            val allergyDesc = if (currentState.hasCriticalAllergies) {
+                currentState.allergiesDescription.ifBlank { "Alergias presentes" }
+            } else {
+                "Ninguna"
+            }
             val patient = Patient(
                 id = "",
                 dniCedula = currentState.dniCedula,
                 firstName = currentState.firstName,
                 lastName = currentState.lastName,
+                phone = currentState.phone.ifBlank { null },
                 consentSigned = currentState.consentSigned,
-                hasCriticalAllergies = currentState.hasCriticalAllergies
+                hasCriticalAllergies = currentState.hasCriticalAllergies,
+                allergiesDescription = allergyDesc
             )
             savePatientUseCase(patient)
                 .onSuccess {

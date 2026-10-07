@@ -3,6 +3,24 @@ package com.example.biodontos.presentation.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
+object Onboarding
+
+@Serializable
+object UserTypeSelection
+
+@Serializable
+object Login
+
+@Serializable
+object DoctorRegistration
+
+@Serializable
+object PatientSignUp
+
+@Serializable
+object ForgotPassword
+
+@Serializable
 object PatientList
 
 @Serializable

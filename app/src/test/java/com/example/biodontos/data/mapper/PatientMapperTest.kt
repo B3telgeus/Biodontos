@@ -14,7 +14,6 @@ class PatientMapperTest {
             dniCedula = "1010",
             firstName = "John",
             lastName = "Doe",
-            consentSigned = true,
             hasCriticalAllergies = false
         )
 
@@ -24,7 +23,7 @@ class PatientMapperTest {
         assertEquals("1010", domain.dniCedula)
         assertEquals("John", domain.firstName)
         assertEquals("Doe", domain.lastName)
-        assertEquals(true, domain.consentSigned)
+        assertEquals(false, domain.consentSigned) // Consent default in mapper
         assertEquals(false, domain.hasCriticalAllergies)
     }
 
@@ -45,7 +44,6 @@ class PatientMapperTest {
         assertEquals("1010", dto.dniCedula)
         assertEquals("John", dto.firstName)
         assertEquals("Doe", dto.lastName)
-        assertEquals(true, dto.consentSigned)
         assertEquals(false, dto.hasCriticalAllergies)
     }
 }
