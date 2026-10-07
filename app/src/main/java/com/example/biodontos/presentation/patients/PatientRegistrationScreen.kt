@@ -22,8 +22,10 @@ fun PatientRegistrationScreen(
     onDniChange: (String) -> Unit,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
+    onPhoneChange: (String) -> Unit,
     onConsentChange: (Boolean) -> Unit,
     onAllergiesChange: (Boolean) -> Unit,
+    onAllergiesDescriptionChange: (String) -> Unit,
     onSaveClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -83,6 +85,15 @@ fun PatientRegistrationScreen(
                 colors = biodontosTextFieldColors()
             )
 
+            OutlinedTextField(
+                value = state.phone,
+                onValueChange = onPhoneChange,
+                label = { Text("Teléfono de Contacto (opcional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = biodontosTextFieldColors()
+            )
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -115,6 +126,18 @@ fun PatientRegistrationScreen(
                     onCheckedChange = null
                 )
                 Text("¿Tiene alergias críticas?", modifier = Modifier.padding(start = 8.dp))
+            }
+
+            if (state.hasCriticalAllergies) {
+                OutlinedTextField(
+                    value = state.allergiesDescription,
+                    onValueChange = onAllergiesDescriptionChange,
+                    label = { Text("Especificar Alergias *") },
+                    placeholder = { Text("Ej: Penicilina, Látex, AINEs...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = biodontosTextFieldColors()
+                )
             }
 
             if (state.error != null) {

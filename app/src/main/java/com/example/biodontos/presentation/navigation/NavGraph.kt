@@ -192,8 +192,10 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 onDniChange = viewModel::onDniChange,
                 onFirstNameChange = viewModel::onFirstNameChange,
                 onLastNameChange = viewModel::onLastNameChange,
+                onPhoneChange = viewModel::onPhoneChange,
                 onConsentChange = viewModel::onConsentChange,
                 onAllergiesChange = viewModel::onAllergiesChange,
+                onAllergiesDescriptionChange = viewModel::onAllergiesDescriptionChange,
                 onSaveClick = viewModel::savePatient,
                 onBackClick = { navController.popBackStack() }
             )
