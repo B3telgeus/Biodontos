@@ -52,9 +52,17 @@ fun AnamnesisDto.toDomain(): Anamnesis = Anamnesis(
     alergiasDescripcion = alergiasDescripcion
 )
 
-fun Anamnesis.toDto(): AnamnesisDto = AnamnesisDto(
-    id = id.ifEmpty { null },
-    patientId = patientId,
+fun Anamnesis.toDto(): AnamnesisDto {
+    val resolvedId = if (id.isNotBlank()) {
+        id
+    } else if (patientId.isNotBlank()) {
+        java.util.UUID.nameUUIDFromBytes("anamnesis_$patientId".toByteArray(java.nio.charset.StandardCharsets.UTF_8)).toString()
+    } else {
+        null
+    }
+    return AnamnesisDto(
+        id = resolvedId,
+        patientId = patientId,
     tratamientoMedicoActual = tratamientoMedicoActual,
     tomaMedicamentos = tomaMedicamentos,
     alergias = alergias,
@@ -80,6 +88,7 @@ fun Anamnesis.toDto(): AnamnesisDto = AnamnesisDto(
     medicamentosActuales = medicamentosActuales,
     alergiasDescripcion = alergiasDescripcion
 )
+}
 
 // --- Clinical Record ---
 fun ClinicalRecordDto.toDomain(): ClinicalRecord = ClinicalRecord(

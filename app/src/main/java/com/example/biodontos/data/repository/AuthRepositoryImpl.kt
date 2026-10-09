@@ -2,6 +2,7 @@ package com.example.biodontos.data.repository
 
 import com.example.biodontos.core.network.SupabaseClient
 import com.example.biodontos.data.dto.PatientDto
+import com.example.biodontos.domain.model.Patient
 import com.example.biodontos.domain.model.UserRole
 import com.example.biodontos.domain.model.UserSession
 import com.example.biodontos.domain.repository.AuthRepository
@@ -71,9 +72,10 @@ class AuthRepositoryImpl : AuthRepository {
 
             // Guardar o sincronizar también en la tabla patients de la BD
             try {
-                SupabaseClient.client.from("patients").insert(
+                val patientId = user?.id ?: Patient.generateIdFromDni(dniCedula.trim())
+                SupabaseClient.client.from("patients").upsert(
                     PatientDto(
-                        id = user?.id,
+                        id = patientId,
                         dniCedula = dniCedula.trim(),
                         firstName = firstName.trim(),
                         firstLastName = lastName.trim(),
@@ -123,6 +125,22 @@ class AuthRepositoryImpl : AuthRepository {
             }
 
             val user = SupabaseClient.client.auth.currentUserOrNull()
+
+            try {
+                SupabaseClient.client.from("doctors").insert(
+                    buildJsonObject {
+                        user?.id?.let { put("user_id", it) }
+                        put("first_name", firstName.trim())
+                        put("last_name", lastName.trim())
+                        put("email", email.trim())
+                        put("license_number", licenseNumber.trim())
+                        put("specialty", specialty.trim())
+                        phone?.let { put("phone", it.trim()) }
+                    }
+                )
+            } catch (_: Exception) {
+                // Silencioso si ya está manejado por trigger o RLS
+            }
 
             val session = UserSession(
                 id = user?.id ?: "",

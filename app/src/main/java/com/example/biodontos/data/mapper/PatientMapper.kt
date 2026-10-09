@@ -9,12 +9,24 @@ fun PatientDto.toDomain(): Patient {
             !allergies.equals("No", ignoreCase = true) &&
             !allergies.equals("false", ignoreCase = true)
 
+    val effectiveFirstLastName = if (firstLastName.isNotBlank()) {
+        firstLastName
+    } else {
+        lastNameCol?.trim()?.split(" ")?.firstOrNull().orEmpty()
+    }
+
+    val effectiveSecondLastName = if (secondLastName.isNotBlank()) {
+        secondLastName
+    } else {
+        lastNameCol?.trim()?.split(" ")?.drop(1)?.joinToString(" ").orEmpty()
+    }
+
     return Patient(
         id = id ?: "",
         dniCedula = dniCedula,
         firstName = firstName,
-        firstLastName = firstLastName,
-        secondLastName = secondLastName,
+        firstLastName = effectiveFirstLastName,
+        secondLastName = effectiveSecondLastName,
         documentTypeId = documentTypeId,
         birthDate = birthDate,
         birthPlace = birthPlace,
@@ -52,10 +64,13 @@ fun Patient.toDto(): PatientDto {
         "Ninguna"
     }
 
+    val resolvedId = if (id.isNotBlank()) id else Patient.generateIdFromDni(dniCedula)
+
     return PatientDto(
-        id = id.ifEmpty { null },
+        id = resolvedId,
         dniCedula = dniCedula,
         firstName = firstName,
+        lastNameCol = fullLastName.ifBlank { firstLastName },
         firstLastName = firstLastName,
         secondLastName = secondLastName,
         documentTypeId = documentTypeId,

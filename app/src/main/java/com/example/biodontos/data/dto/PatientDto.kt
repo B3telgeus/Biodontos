@@ -9,6 +9,7 @@ data class PatientDto(
     @SerialName("user_id") val userId: String? = null,
     @SerialName("dni_cedula") val dniCedula: String,
     @SerialName("first_name") val firstName: String,
+    @SerialName("last_name") val lastNameCol: String? = null,
     @SerialName("first_last_name") val firstLastName: String = "",
     @SerialName("second_last_name") val secondLastName: String = "",
     @SerialName("document_type_id") val documentTypeId: Int = 1,
@@ -50,6 +51,7 @@ data class PatientDto(
         id = id,
         dniCedula = dniCedula,
         firstName = firstName,
+        lastNameCol = lastName,
         firstLastName = lastName.trim().split(" ").firstOrNull() ?: lastName,
         secondLastName = lastName.trim().split(" ").drop(1).joinToString(" "),
         criticalAllergies = criticalAllergies,
@@ -60,5 +62,11 @@ data class PatientDto(
         birthDate = birthDate ?: ""
     )
 
-    val lastName: String get() = if (secondLastName.isBlank()) firstLastName else "$firstLastName $secondLastName"
+    val lastName: String
+        get() = when {
+            secondLastName.isNotBlank() -> "$firstLastName $secondLastName"
+            firstLastName.isNotBlank() -> firstLastName
+            !lastNameCol.isNullOrBlank() -> lastNameCol
+            else -> ""
+        }
 }

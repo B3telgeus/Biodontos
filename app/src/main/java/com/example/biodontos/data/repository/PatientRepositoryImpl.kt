@@ -31,7 +31,7 @@ class PatientRepositoryImpl : PatientRepository {
 
     override suspend fun savePatient(patient: Patient): Result<Unit> {
         return try {
-            SupabaseClient.client.from("patients").insert(patient.toDto())
+            SupabaseClient.client.from("patients").upsert(patient.toDto())
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -41,15 +41,9 @@ class PatientRepositoryImpl : PatientRepository {
     override suspend fun createOrUpdatePatient(patient: Patient): Result<Patient> {
         return try {
             val dto = patient.toDto()
-            val savedDto = if (patient.id.isBlank()) {
-                SupabaseClient.client.from("patients").insert(dto) {
-                    select()
-                }.decodeSingle<PatientDto>()
-            } else {
-                SupabaseClient.client.from("patients").upsert(dto) {
-                    select()
-                }.decodeSingle<PatientDto>()
-            }
+            val savedDto = SupabaseClient.client.from("patients").upsert(dto) {
+                select()
+            }.decodeSingle<PatientDto>()
             Result.success(savedDto.toDomain())
         } catch (e: Exception) {
             Result.failure(e)

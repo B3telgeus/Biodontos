@@ -85,4 +85,33 @@ class PatientMapperTest {
 
         assertEquals("Ninguna", dto.criticalAllergies)
     }
+
+    @Test
+    fun jsonWithLastNameAndUnknownKeysDeserializesCorrectly() {
+        val jsonStr = """{"id":"361","first_name":"Santiago","last_name":"Bejarano","dni_cedula":"102030","extra_col":"bar"}"""
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val dto = json.decodeFromString<PatientDto>(jsonStr)
+        val domain = dto.toDomain()
+
+        assertEquals("Santiago", domain.firstName)
+        assertEquals("Bejarano", domain.lastName)
+    }
+
+    @Test
+    fun patientToDtoGeneratesDeterministicUuidFromDniWhenIdIsBlank() {
+        val domain = Patient(
+            id = "",
+            dniCedula = "1098765432",
+            firstName = "Carlos",
+            lastName = "Perez",
+            consentSigned = true
+        )
+
+        val dto = domain.toDto()
+
+        val expectedUuid = Patient.generateIdFromDni("1098765432")
+        assertEquals(expectedUuid, dto.id)
+        assertTrue(dto.id?.isNotEmpty() == true)
+        assertEquals(expectedUuid, Patient.generateIdFromDni("1098765432"))
+    }
 }

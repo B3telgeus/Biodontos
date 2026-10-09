@@ -59,4 +59,15 @@ data class Patient(
     val lastName: String get() = if (secondLastName.isBlank()) firstLastName else "$firstLastName $secondLastName"
     val fullName: String get() = "$firstName $firstLastName $secondLastName".trim().replace("\\s+".toRegex(), " ")
     val fullLastName: String get() = "$firstLastName $secondLastName".trim().replace("\\s+".toRegex(), " ")
+
+    companion object {
+        fun generateIdFromDni(dni: String): String {
+            val cleaned = dni.trim()
+            return if (cleaned.isNotEmpty()) {
+                java.util.UUID.nameUUIDFromBytes("patient_$cleaned".toByteArray(java.nio.charset.StandardCharsets.UTF_8)).toString()
+            } else {
+                java.util.UUID.randomUUID().toString()
+            }
+        }
+    }
 }

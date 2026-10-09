@@ -89,11 +89,11 @@ class PatientRegistrationViewModel(
                 "Ninguna"
             }
             val patient = Patient(
-                id = "",
-                dniCedula = currentState.dniCedula,
-                firstName = currentState.firstName,
-                lastName = currentState.lastName,
-                phone = currentState.phone.ifBlank { "" },
+                id = Patient.generateIdFromDni(currentState.dniCedula),
+                dniCedula = currentState.dniCedula.trim(),
+                firstName = currentState.firstName.trim(),
+                lastName = currentState.lastName.trim(),
+                phone = currentState.phone.trim(),
                 consentSigned = currentState.consentSigned,
                 hasCriticalAllergies = currentState.hasCriticalAllergies,
                 allergiesDescription = allergyDesc

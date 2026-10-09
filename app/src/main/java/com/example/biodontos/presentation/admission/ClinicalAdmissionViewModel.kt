@@ -326,8 +326,9 @@ class ClinicalAdmissionViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
+            val effectivePatientId = s.patientId.ifBlank { Patient.generateIdFromDni(s.dniCedula) }
             val patient = Patient(
-                id = s.patientId,
+                id = effectivePatientId,
                 dniCedula = s.dniCedula.trim(),
                 firstName = s.firstName.trim(),
                 firstLastName = s.firstLastName.trim(),

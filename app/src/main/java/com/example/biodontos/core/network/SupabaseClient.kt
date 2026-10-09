@@ -1,9 +1,11 @@
 package com.example.biodontos.core.network
 
 import io.github.jan.supabase.createSupabaseClient
-import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.gotrue.Auth
+import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.serializer.KotlinXSerializer
+import kotlinx.serialization.json.Json
 
 object SupabaseClient {
     private const val SUPABASE_URL = "https://xiuhvuudloifnuaiqpkh.supabase.co"
@@ -13,6 +15,13 @@ object SupabaseClient {
         supabaseUrl = SUPABASE_URL,
         supabaseKey = SUPABASE_KEY
     ) {
+        defaultSerializer = KotlinXSerializer(Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            coerceInputValues = true
+            encodeDefaults = true
+            explicitNulls = false
+        })
         install(Postgrest)
         install(Auth)
         install(Realtime)
