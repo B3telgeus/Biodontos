@@ -18,10 +18,39 @@ class PatientRepositoryImpl : PatientRepository {
         }
     }
 
+    override suspend fun getPatientById(id: String): Result<Patient?> {
+        return try {
+            val result = SupabaseClient.client.from("patients")
+                .select { filter { eq("id", id) } }
+                .decodeSingleOrNull<PatientDto>()
+            Result.success(result?.toDomain())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun savePatient(patient: Patient): Result<Unit> {
         return try {
             SupabaseClient.client.from("patients").insert(patient.toDto())
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun createOrUpdatePatient(patient: Patient): Result<Patient> {
+        return try {
+            val dto = patient.toDto()
+            val savedDto = if (patient.id.isBlank()) {
+                SupabaseClient.client.from("patients").insert(dto) {
+                    select()
+                }.decodeSingle<PatientDto>()
+            } else {
+                SupabaseClient.client.from("patients").upsert(dto) {
+                    select()
+                }.decodeSingle<PatientDto>()
+            }
+            Result.success(savedDto.toDomain())
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -4,7 +4,7 @@ import com.example.biodontos.data.dto.PatientDto
 import com.example.biodontos.domain.model.Patient
 
 fun PatientDto.toDomain(): Patient {
-    val allergies = criticalAllergies.ifBlank { "Ninguna" }
+    val allergies = (criticalAllergies ?: allergiesDescription ?: "Ninguna").ifBlank { "Ninguna" }
     val hasAllergies = !allergies.equals("Ninguna", ignoreCase = true) &&
             !allergies.equals("No", ignoreCase = true) &&
             !allergies.equals("false", ignoreCase = true)
@@ -13,12 +13,31 @@ fun PatientDto.toDomain(): Patient {
         id = id ?: "",
         dniCedula = dniCedula,
         firstName = firstName,
-        lastName = lastName,
+        firstLastName = firstLastName,
+        secondLastName = secondLastName,
+        documentTypeId = documentTypeId,
+        birthDate = birthDate,
+        birthPlace = birthPlace,
+        eps = eps,
+        occupation = occupation,
+        maritalStatus = maritalStatus,
+        bloodGroup = bloodGroup,
+        rhFactor = rhFactor,
+        phone = phone,
+        email = email,
+        address = address,
+        guardianRelationship = guardianRelationship,
+        guardianFirstName = guardianFirstName,
+        guardianLastName = guardianLastName,
+        guardianPhone = guardianPhone,
+        guardianAddress = guardianAddress,
+        lastDentalVisit = lastDentalVisit,
+        consultationReason = consultationReason,
+        currentConsultationReason = currentConsultationReason,
+        illnessHistory = illnessHistory,
         consentSigned = consentSigned,
         hasCriticalAllergies = hasAllergies,
-        allergiesDescription = allergies,
-        phone = phone,
-        email = email
+        allergiesDescription = allergies
     )
 }
 
@@ -34,13 +53,33 @@ fun Patient.toDto(): PatientDto {
     }
 
     return PatientDto(
-        id = if (id.isEmpty()) null else id,
+        id = id.ifEmpty { null },
         dniCedula = dniCedula,
         firstName = firstName,
-        lastName = lastName,
-        criticalAllergies = allergyText,
+        firstLastName = firstLastName,
+        secondLastName = secondLastName,
+        documentTypeId = documentTypeId,
+        birthDate = birthDate,
+        birthPlace = birthPlace,
+        eps = eps,
+        occupation = occupation,
+        maritalStatus = maritalStatus,
+        bloodGroup = bloodGroup,
+        rhFactor = rhFactor,
         phone = phone,
         email = email,
+        address = address,
+        guardianRelationship = guardianRelationship,
+        guardianFirstName = guardianFirstName,
+        guardianLastName = guardianLastName,
+        guardianPhone = guardianPhone,
+        guardianAddress = guardianAddress,
+        lastDentalVisit = lastDentalVisit,
+        consultationReason = consultationReason,
+        currentConsultationReason = currentConsultationReason,
+        illnessHistory = illnessHistory,
+        criticalAllergies = allergyText,
+        allergiesDescription = allergyText,
         consentSigned = consentSigned
     )
 }

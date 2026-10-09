@@ -76,8 +76,8 @@ class AuthRepositoryImpl : AuthRepository {
                         id = user?.id,
                         dniCedula = dniCedula.trim(),
                         firstName = firstName.trim(),
-                        lastName = lastName.trim(),
-                        phone = phone?.trim(),
+                        firstLastName = lastName.trim(),
+                        phone = phone?.trim().orEmpty(),
                         email = email.trim(),
                         criticalAllergies = "Ninguna",
                         consentSigned = true

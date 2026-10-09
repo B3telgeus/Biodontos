@@ -143,3 +143,13 @@ private fun detectSurface(offset: Offset, width: Float, height: Float): ToothSur
 
     return null
 }
+
+val ToothCondition.color: Color
+    get() = when (this) {
+        ToothCondition.SANO -> Color(0xFFCBD5E1)
+        ToothCondition.CARIES -> Color(0xFFDC2626)
+        ToothCondition.DESGASTE -> Color(0xFFFACC15)
+        ToothCondition.CALZA -> Color(0xFF3B82F6)
+        ToothCondition.CORONILLA -> Color(0xFF8B5CF6)
+        ToothCondition.TRATADO -> Color(0xFF10B981)
+    }

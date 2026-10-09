@@ -28,3 +28,6 @@ object PatientRegistration
 
 @Serializable
 data class Odontogram(val patientId: String)
+
+@Serializable
+data class ClinicalAdmission(val patientId: String? = null)

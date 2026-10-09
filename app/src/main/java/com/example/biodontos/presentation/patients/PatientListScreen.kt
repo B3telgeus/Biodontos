@@ -12,23 +12,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.biodontos.domain.model.Patient
 
+import androidx.compose.ui.text.font.FontWeight
+import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.core.designsystem.BiodontosWhite
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientListScreen(
     state: PatientListState,
     onAddPatientClick: () -> Unit,
+    onClinicalAdmissionClick: () -> Unit = onAddPatientClick,
     onPatientClick: (Patient) -> Unit,
     onRetry: () -> Unit
 ) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Pacientes") }
+                title = { Text("Pacientes - Biodontos", fontWeight = FontWeight.Bold, color = BiodontosDark) }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddPatientClick) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir Paciente")
+            ExtendedFloatingActionButton(
+                onClick = onClinicalAdmissionClick,
+                containerColor = BiodontosDark,
+                contentColor = BiodontosWhite
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Ingreso Clínico")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Ingreso Clínico", fontWeight = FontWeight.Bold)
             }
         }
     ) { padding ->
@@ -80,7 +91,7 @@ fun PatientItem(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "${patient.firstName} ${patient.lastName}",
+                text = patient.fullName,
                 style = MaterialTheme.typography.titleMedium
             )
             Text(

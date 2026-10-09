@@ -93,7 +93,7 @@ class PatientRegistrationViewModel(
                 dniCedula = currentState.dniCedula,
                 firstName = currentState.firstName,
                 lastName = currentState.lastName,
-                phone = currentState.phone.ifBlank { null },
+                phone = currentState.phone.ifBlank { "" },
                 consentSigned = currentState.consentSigned,
                 hasCriticalAllergies = currentState.hasCriticalAllergies,
                 allergiesDescription = allergyDesc

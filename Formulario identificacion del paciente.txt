@@ -1,0 +1,23 @@
+### Estas preguntas si se responden con el tipo de dato y el tamaño entre paréntesis y si tienen * son obligatorias
+Primer Apellido (VARCHAR2 20) *
+Segundo Apellido (VARCHAR2 20) *
+Nombres (VARCHAR2 20) *
+Tipo de identificación (Number 10)*
+Fecha de Naciemiento (DATE)*
+Lugar de Nacimiento (VARCHAR2 20)*
+EPS (VARCHAR2 15)*
+Ocupación (VARCHAR2 15) Opcional
+Estado Civil (VARCHAR2 15) Opcional
+Grupo Sanguineo (VARCHAR2 2)*
+RH (VARCHAR2 2)*
+Teléfono (Number 10)*
+Acudiente o Acompañante (VARCHAR2 15) Opcional
+Nombre Acudiente (VARCHAR2 15) Opcional
+Apellidos Acudiente (VARCHAR2 15) Opcional
+Teléfono Acudiente (Number 15) Opcional
+DIreccion Acudiente (VARCHAR2 15) Opcional
+Ultima visita al odontologo (VARCHAR2 150) Opcional
+Motivo de consulta (VARCHAR2 150) Opcional
+Motivo actual de consulta (VARCHAR2 150) Opcional
+Historia de la enfermedad (VARCHAR2 150) Opcional
+

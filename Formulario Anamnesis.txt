@@ -1,0 +1,24 @@
+###Todas estas preguntas se responden con si/no y son obligatorias:
+Tratamiento medico actual
+toma de medicamentos
+alergias
+cardiopatías
+alteración presión arterial
+embarazo
+diabetes
+hepatitis
+irradiaciones
+discrasias sanguíneas
+fiebre reumática
+efermedades renales
+inmunosupresión
+transtornos emocionales
+patología respiratoria
+transtornos gástricos
+epilepsia
+cirugías (incluso orales)
+enfermedades orales
+otras alteraciones
+### Estas preguntas si se responden con el tipo de dato y el tamaño entre paréntesis y también son obligatorias
+Observaciones según numero (VARCHAR2 200)*
+Antecedentes familiares (VARCHAR2 200)*

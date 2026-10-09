@@ -23,6 +23,9 @@ import com.example.biodontos.presentation.auth.patient.PatientSignUpScreen
 import com.example.biodontos.presentation.auth.patient.PatientSignUpViewModel
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordScreen
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordViewModel
+import com.example.biodontos.presentation.admission.ClinicalAdmissionScreen
+import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModel
+import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModelFactory
 import com.example.biodontos.presentation.odontogram.*
 import com.example.biodontos.presentation.patients.*
 
@@ -168,6 +171,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
             PatientListScreen(
                 state = state,
                 onAddPatientClick = { navController.navigate(PatientRegistration) },
+                onClinicalAdmissionClick = { navController.navigate(ClinicalAdmission()) },
                 onPatientClick = { patient ->
                     navController.navigate(Odontogram(patientId = patient.id))
                 },
@@ -215,6 +219,21 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 onUpdateCondition = viewModel::updateTooth,
                 onDismissDialog = viewModel::onDismissDialog,
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // --- PROCESO COMPLETO DE INGRESO Y ADMISIÓN CLÍNICA ---
+        composable<ClinicalAdmission> {
+            val viewModel: ClinicalAdmissionViewModel = viewModel(factory = ClinicalAdmissionViewModelFactory.Factory)
+
+            ClinicalAdmissionScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onAdmissionFinished = {
+                    navController.navigate(PatientList) {
+                        popUpTo(PatientList) { inclusive = true }
+                    }
+                }
             )
         }
     }

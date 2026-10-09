@@ -1,0 +1,30 @@
+package com.example.biodontos.domain.model
+
+data class Anamnesis(
+    val id: String = "",
+    val patientId: String,
+    val tratamientoMedicoActual: Boolean = false,
+    val tomaMedicamentos: Boolean = false,
+    val alergias: Boolean = false,
+    val cardiopatias: Boolean = false,
+    val alteracionPresionArterial: Boolean = false,
+    val embarazo: Boolean = false,
+    val diabetes: Boolean = false,
+    val hepatitis: Boolean = false,
+    val irradiaciones: Boolean = false,
+    val discrasiasSanguineas: Boolean = false,
+    val fiebreReumatica: Boolean = false,
+    val enfermedadesRenales: Boolean = false,
+    val inmunosupresion: Boolean = false,
+    val trastornosEmocionales: Boolean = false,
+    val patologiaRespiratoria: Boolean = false,
+    val trastornosGastricos: Boolean = false,
+    val epilepsia: Boolean = false,
+    val cirugias: Boolean = false,
+    val enfermedadesOrales: Boolean = false,
+    val otrasAlteraciones: Boolean = false,
+    val observaciones: String = "",
+    val antecedentesFamiliares: String = "",
+    val medicamentosActuales: String? = null,
+    val alergiasDescripcion: String? = null
+)

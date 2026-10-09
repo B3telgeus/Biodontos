@@ -1,0 +1,703 @@
+-- ============================================================================
+-- PROYECTO: BIODONTOS
+-- ARCHIVO MAESTRO DDL: SQL0710.txt
+-- MOTOR: PostgreSQL 15+ / Supabase
+-- DESCRIPCIÓN: Esquema integral clínico completo e IDEMPOTENTE:
+--   1. Odontograma FDI interactivo y superficies
+--   2. Periodontograma de 6 sitios con cálculo automático de CAL
+--   3. Evolución clínica con control de costos, abonos y saldos
+--   4. Inventario y trazabilidad de materiales (Registro INVIMA, lote, vencimiento)
+--   5. Cierre y bloqueo médico-legal de historia clínica
+--   6. Agendamiento de próxima cita vinculado a la consulta
+--   7. Autenticación con Supabase Auth (auth.users), trigger y RLS
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 0. EXTENSIONES Y TIPOS PERSONALIZADOS (ENUMS)
+-- ----------------------------------------------------------------------------
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+DO $$ BEGIN
+    CREATE TYPE dentition_type AS ENUM ('ADULT', 'CHILD', 'MIXED');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE tooth_surface AS ENUM (
+        'GENERAL', 
+        'MESIAL', 
+        'DISTAL', 
+        'OCCLUSAL_OR_INCISAL', 
+        'VESTIBULAR', 
+        'LINGUAL_OR_PALATINE'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE clinical_condition_enum AS ENUM (
+        'HEALTHY', 
+        'CARIES', 
+        'AMALGAM_RESTORED', 
+        'RESIN_RESTORED', 
+        'SEALED', 
+        'ENDODONTIC_TREATED', 
+        'MISSING', 
+        'CROWN'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE treatment_status AS ENUM (
+        'PENDIENTE', 
+        'EN_PROGRESO', 
+        'COMPLETADO', 
+        'CANCELADO'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE clinical_record_status AS ENUM (
+        'ABIERTA', 
+        'EN_TRATAMIENTO', 
+        'CERRADA', 
+        'ARCHIVADA'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE periodontal_site_enum AS ENUM (
+        'MESIO_VESTIBULAR', 
+        'MID_VESTIBULAR', 
+        'DISTO_VESTIBULAR', 
+        'MESIO_LINGUAL', 
+        'MID_LINGUAL', 
+        'DISTO_LINGUAL'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- ----------------------------------------------------------------------------
+-- 1. TABLA: DOCTORS (Profesionales Odontológicos)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.doctors (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid UNIQUE,
+  first_name text NOT NULL,
+  last_name text NOT NULL,
+  email text NOT NULL UNIQUE,
+  phone text,
+  license_number text NOT NULL UNIQUE,
+  specialty text NOT NULL DEFAULT 'Odontología General',
+  signature_stamp_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT doctors_pkey PRIMARY KEY (id),
+  CONSTRAINT doctors_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- ----------------------------------------------------------------------------
+-- 2. TABLA: PATIENTS (Datos de Identificación del Paciente)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.patients (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid UNIQUE,
+  first_name character varying(50) NOT NULL,
+  first_last_name character varying(50) NOT NULL DEFAULT '',
+  second_last_name character varying(50) NOT NULL DEFAULT '',
+  document_type_id integer NOT NULL DEFAULT 1,
+  dni_cedula character varying(20) NOT NULL UNIQUE,
+  birth_date date NOT NULL DEFAULT CURRENT_DATE,
+  birth_place character varying(50) NOT NULL DEFAULT 'No especificado',
+  eps character varying(50) NOT NULL DEFAULT 'Particular',
+  occupation character varying(50),
+  marital_status character varying(30),
+  blood_group character varying(2) NOT NULL DEFAULT 'O',
+  rh_factor character varying(2) NOT NULL DEFAULT '+',
+  phone character varying(20) NOT NULL DEFAULT '',
+  email text,
+  address text,
+  guardian_relationship character varying(30),
+  guardian_first_name character varying(50),
+  guardian_last_name character varying(50),
+  guardian_phone character varying(20),
+  guardian_address character varying(150),
+  last_dental_visit character varying(150),
+  consultation_reason character varying(250),
+  current_consultation_reason character varying(250),
+  illness_history text,
+  critical_allergies text,
+  allergies_description text,
+  consent_signed boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT patients_pkey PRIMARY KEY (id),
+  CONSTRAINT patients_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL
+);
+
+-- ----------------------------------------------------------------------------
+-- 3. TABLA: ANAMNESIS (20 Preguntas Obligatorias de Salud y Antecedentes)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.anamnesis (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  patient_id uuid NOT NULL UNIQUE,
+  tratamiento_medico_actual boolean NOT NULL DEFAULT false,
+  toma_medicamentos boolean NOT NULL DEFAULT false,
+  alergias boolean NOT NULL DEFAULT false,
+  cardiopatias boolean NOT NULL DEFAULT false,
+  alteracion_presion_arterial boolean NOT NULL DEFAULT false,
+  embarazo boolean NOT NULL DEFAULT false,
+  diabetes boolean NOT NULL DEFAULT false,
+  hepatitis boolean NOT NULL DEFAULT false,
+  irradiaciones boolean NOT NULL DEFAULT false,
+  discrasias_sanguineas boolean NOT NULL DEFAULT false,
+  fiebre_reumatica boolean NOT NULL DEFAULT false,
+  enfermedades_renales boolean NOT NULL DEFAULT false,
+  inmunosupresion boolean NOT NULL DEFAULT false,
+  trastornos_emocionales boolean NOT NULL DEFAULT false,
+  patologia_respiratoria boolean NOT NULL DEFAULT false,
+  trastornos_gastricos boolean NOT NULL DEFAULT false,
+  epilepsia boolean NOT NULL DEFAULT false,
+  cirugias boolean NOT NULL DEFAULT false,
+  enfermedades_orales boolean NOT NULL DEFAULT false,
+  otras_alteraciones boolean NOT NULL DEFAULT false,
+  observaciones character varying(200) NOT NULL DEFAULT '',
+  antecedentes_familiares character varying(200) NOT NULL DEFAULT '',
+  medicamentos_actuales text,
+  alergias_descripcion text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT anamnesis_pkey PRIMARY KEY (id),
+  CONSTRAINT anamnesis_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.patients(id) ON DELETE CASCADE
+);
+
+-- ----------------------------------------------------------------------------
+-- 4. TABLA: CLINICAL_RECORDS (Historia Clínica, Exámenes, DP/DR y Cierre Legal)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.clinical_records (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  patient_id uuid NOT NULL UNIQUE,
+  dentition_type dentition_type DEFAULT 'ADULT',
+  main_diagnosis text,
+  related_diagnoses text,
+  complementary_exams text,
+  status clinical_record_status NOT NULL DEFAULT 'ABIERTA',
+  closed_at timestamp with time zone,
+  closed_by_doctor_id uuid,
+  closure_summary text,
+  closure_signature_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT clinical_records_pkey PRIMARY KEY (id),
+  CONSTRAINT clinical_records_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.patients(id) ON DELETE CASCADE,
+  CONSTRAINT clinical_records_closed_by_doctor_id_fkey FOREIGN KEY (closed_by_doctor_id) REFERENCES public.doctors(id)
+);
+
+-- ----------------------------------------------------------------------------
+-- 5. TABLA: INFORMED_CONSENTS (Consentimiento Legal de Operatoria Dental)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.informed_consents (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  patient_id uuid NOT NULL,
+  doctor_id uuid NOT NULL,
+  document_version character varying(10) NOT NULL DEFAULT '2',
+  version_date date NOT NULL DEFAULT '2019-06-01',
+  treatment_summary text NOT NULL,
+  representative_name character varying(100),
+  representative_id character varying(20),
+  patient_signature_url text,
+  guardian_signature_url text,
+  doctor_signature_url text,
+  doctor_license_number character varying(30),
+  signed_at timestamp with time zone DEFAULT now(),
+  status character varying(20) NOT NULL DEFAULT 'SIGNED',
+  revoked boolean NOT NULL DEFAULT false,
+  revoked_at timestamp with time zone,
+  revocation_reason text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT informed_consents_pkey PRIMARY KEY (id),
+  CONSTRAINT informed_consents_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.patients(id) ON DELETE CASCADE,
+  CONSTRAINT informed_consents_doctor_id_fkey FOREIGN KEY (doctor_id) REFERENCES public.doctors(id)
+);
+
+-- ----------------------------------------------------------------------------
+-- 6. TABLA: INFORMED_CONSENT_PROCEDURES (Autorización por Diente FDI y Fecha)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.informed_consent_procedures (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  consent_id uuid NOT NULL,
+  tooth_number integer NOT NULL,
+  procedure_date date NOT NULL DEFAULT CURRENT_DATE,
+  patient_signature_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT informed_consent_procedures_pkey PRIMARY KEY (id),
+  CONSTRAINT informed_consent_procedures_consent_id_fkey FOREIGN KEY (consent_id) REFERENCES public.informed_consents(id) ON DELETE CASCADE
+);
+
+-- ----------------------------------------------------------------------------
+-- 7. TABLA: TREATMENTS (Plan de Tratamiento Proyectado)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.treatments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  patient_id uuid NOT NULL,
+  description character varying NOT NULL,
+  total_cost numeric(12, 2) NOT NULL DEFAULT 0.00,
+  status treatment_status DEFAULT 'PENDIENTE',
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT treatments_pkey PRIMARY KEY (id),
+  CONSTRAINT treatments_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.patients(id) ON DELETE CASCADE
+);
+
+-- ----------------------------------------------------------------------------
+-- 8. TABLA: EVOLUTIONS (Evolución de Tratamiento, Valores, Abonos y Firmas)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.evolutions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  record_id uuid NOT NULL,
+  doctor_id uuid,
+  date timestamp with time zone DEFAULT now(),
+  procedure_time time without time zone DEFAULT CURRENT_TIME,
+  description text NOT NULL,
+  doctor_name character varying,
+  tooth_treated integer,
+  cost numeric(12, 2) NOT NULL DEFAULT 0.00,
+  payment_amount numeric(12, 2) NOT NULL DEFAULT 0.00,
+  balance numeric(12, 2) NOT NULL DEFAULT 0.00,
+  patient_signature_url text,
+  doctor_signature_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT evolutions_pkey PRIMARY KEY (id),
+  CONSTRAINT evolutions_record_id_fkey FOREIGN KEY (record_id) REFERENCES public.clinical_records(id) ON DELETE CASCADE,
+  CONSTRAINT evolutions_doctor_id_fkey FOREIGN KEY (doctor_id) REFERENCES public.doctors(id)
+);
+
+-- ----------------------------------------------------------------------------
+-- 9. TABLA: TOOTH_STATES (Odontograma: Superficies Dentales FDI Afectadas)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.tooth_states (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  evolution_id uuid NOT NULL,
+  tooth_number integer NOT NULL,
+  surface tooth_surface DEFAULT 'GENERAL',
+  condition clinical_condition_enum NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT tooth_states_pkey PRIMARY KEY (id),
+  CONSTRAINT tooth_states_evolution_id_fkey FOREIGN KEY (evolution_id) REFERENCES public.evolutions(id) ON DELETE CASCADE
+);
+
+-- ----------------------------------------------------------------------------
+-- 10. TABLA: CLINICAL_MATERIALS (Inventario de Materiales / Registro INVIMA)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.clinical_materials (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying(100) NOT NULL,
+  invima_registration character varying(50) NOT NULL,
+  batch_lot_number character varying(50) NOT NULL,
+  manufacturing_date date NOT NULL,
+  expiration_date date NOT NULL,
+  current_stock integer NOT NULL DEFAULT 0,
+  unit_of_measure character varying(20) DEFAULT 'UNIDAD',
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT clinical_materials_pkey PRIMARY KEY (id)
+);
+
+-- ----------------------------------------------------------------------------
+-- 11. TABLA: EVOLUTION_MATERIALS_USED (Trazabilidad de Materiales en Consulta)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.evolution_materials_used (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  evolution_id uuid NOT NULL,
+  material_id uuid NOT NULL,
+  quantity_used numeric(6, 2) NOT NULL DEFAULT 1.0,
+  lot_number_snapshot character varying(50) NOT NULL,
+  invima_snapshot character varying(50) NOT NULL,
+  expiration_date_snapshot date NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT evolution_materials_used_pkey PRIMARY KEY (id),
+  CONSTRAINT evolution_materials_used_evolution_id_fkey FOREIGN KEY (evolution_id) REFERENCES public.evolutions(id) ON DELETE CASCADE,
+  CONSTRAINT evolution_materials_used_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.clinical_materials(id)
+);
+
+-- ----------------------------------------------------------------------------
+-- 12. TABLA: PERIODONTAL_EXAMINATIONS (Cabecera del Periodontograma)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.periodontal_examinations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  record_id uuid NOT NULL,
+  doctor_id uuid NOT NULL,
+  examination_date date NOT NULL DEFAULT CURRENT_DATE,
+  general_observations text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT periodontal_examinations_pkey PRIMARY KEY (id),
+  CONSTRAINT periodontal_examinations_record_id_fkey FOREIGN KEY (record_id) REFERENCES public.clinical_records(id) ON DELETE CASCADE,
+  CONSTRAINT periodontal_examinations_doctor_id_fkey FOREIGN KEY (doctor_id) REFERENCES public.doctors(id)
+);
+
+-- ----------------------------------------------------------------------------
+-- 13. TABLA: PERIODONTAL_SITES (Sondaje de 6 Sitios con Cálculo Automático de CAL)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.periodontal_sites (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  examination_id uuid NOT NULL,
+  tooth_number integer NOT NULL,
+  site_location periodontal_site_enum NOT NULL,
+  pocket_depth_mm numeric(3, 1) NOT NULL DEFAULT 1.0,
+  gingival_recession_mm numeric(3, 1) NOT NULL DEFAULT 0.0,
+  clinical_attachment_loss_mm numeric(4, 1) GENERATED ALWAYS AS (pocket_depth_mm + gingival_recession_mm) STORED,
+  bleeding_on_probing boolean NOT NULL DEFAULT false,
+  suppuration boolean NOT NULL DEFAULT false,
+  mobility_grade integer NOT NULL DEFAULT 0,
+  furcation_grade integer NOT NULL DEFAULT 0,
+  CONSTRAINT periodontal_sites_pkey PRIMARY KEY (id),
+  CONSTRAINT periodontal_sites_examination_id_fkey FOREIGN KEY (examination_id) REFERENCES public.periodontal_examinations(id) ON DELETE CASCADE,
+  CONSTRAINT periodontal_sites_tooth_site_unique UNIQUE (examination_id, tooth_number, site_location),
+  CONSTRAINT check_mobility_grade CHECK (mobility_grade BETWEEN 0 AND 3),
+  CONSTRAINT check_furcation_grade CHECK (furcation_grade BETWEEN 0 AND 4)
+);
+
+-- ----------------------------------------------------------------------------
+-- 14. TABLA: PAYMENTS (Recibos de Pago)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.payments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  treatment_id uuid NOT NULL,
+  amount numeric(12, 2) NOT NULL,
+  payment_method character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT payments_pkey PRIMARY KEY (id),
+  CONSTRAINT payments_treatment_id_fkey FOREIGN KEY (treatment_id) REFERENCES public.treatments(id) ON DELETE CASCADE
+);
+
+-- ----------------------------------------------------------------------------
+-- 15. TABLA: APPOINTMENTS (Citas Médicas y Agendamiento de Control)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.appointments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  patient_id uuid NOT NULL,
+  doctor_id uuid,
+  origin_evolution_id uuid,
+  start_time timestamp with time zone NOT NULL,
+  end_time timestamp with time zone,
+  status text NOT NULL DEFAULT 'SCHEDULED',
+  confirmation_status boolean NOT NULL DEFAULT false,
+  reason text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT appointments_pkey PRIMARY KEY (id),
+  CONSTRAINT appointments_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.patients(id) ON DELETE CASCADE,
+  CONSTRAINT appointments_doctor_id_fkey FOREIGN KEY (doctor_id) REFERENCES public.doctors(id),
+  CONSTRAINT appointments_origin_evolution_id_fkey FOREIGN KEY (origin_evolution_id) REFERENCES public.evolutions(id) ON DELETE SET NULL
+);
+
+-- ============================================================================
+-- 16. GARANTÍA DE MIGRACIÓN: ALTER TABLE PARA TABLAS PREEXISTENTES
+-- (Evita el ERROR 42703: column does not exist si las tablas ya existían)
+-- ============================================================================
+
+-- A. Asegurar columnas nuevas en CLINICAL_RECORDS
+ALTER TABLE public.clinical_records
+  ADD COLUMN IF NOT EXISTS main_diagnosis text,
+  ADD COLUMN IF NOT EXISTS related_diagnoses text,
+  ADD COLUMN IF NOT EXISTS complementary_exams text,
+  ADD COLUMN IF NOT EXISTS status clinical_record_status NOT NULL DEFAULT 'ABIERTA',
+  ADD COLUMN IF NOT EXISTS closed_at timestamp with time zone,
+  ADD COLUMN IF NOT EXISTS closed_by_doctor_id uuid REFERENCES public.doctors(id),
+  ADD COLUMN IF NOT EXISTS closure_summary text,
+  ADD COLUMN IF NOT EXISTS closure_signature_url text;
+
+-- B. Asegurar columnas nuevas en PATIENTS
+ALTER TABLE public.patients
+  ADD COLUMN IF NOT EXISTS first_last_name character varying(50) DEFAULT '',
+  ADD COLUMN IF NOT EXISTS second_last_name character varying(50) DEFAULT '',
+  ADD COLUMN IF NOT EXISTS document_type_id integer DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS birth_place character varying(50) DEFAULT 'No especificado',
+  ADD COLUMN IF NOT EXISTS eps character varying(50) DEFAULT 'Particular',
+  ADD COLUMN IF NOT EXISTS occupation character varying(50),
+  ADD COLUMN IF NOT EXISTS marital_status character varying(30),
+  ADD COLUMN IF NOT EXISTS blood_group character varying(2) DEFAULT 'O',
+  ADD COLUMN IF NOT EXISTS rh_factor character varying(2) DEFAULT '+',
+  ADD COLUMN IF NOT EXISTS guardian_relationship character varying(30),
+  ADD COLUMN IF NOT EXISTS guardian_first_name character varying(50),
+  ADD COLUMN IF NOT EXISTS guardian_last_name character varying(50),
+  ADD COLUMN IF NOT EXISTS guardian_phone character varying(20),
+  ADD COLUMN IF NOT EXISTS guardian_address character varying(150),
+  ADD COLUMN IF NOT EXISTS last_dental_visit character varying(150),
+  ADD COLUMN IF NOT EXISTS consultation_reason character varying(250),
+  ADD COLUMN IF NOT EXISTS current_consultation_reason character varying(250),
+  ADD COLUMN IF NOT EXISTS illness_history text;
+
+-- C. Asegurar columnas nuevas en EVOLUTIONS
+ALTER TABLE public.evolutions
+  ADD COLUMN IF NOT EXISTS procedure_time time without time zone DEFAULT CURRENT_TIME,
+  ADD COLUMN IF NOT EXISTS cost numeric(12, 2) NOT NULL DEFAULT 0.00,
+  ADD COLUMN IF NOT EXISTS payment_amount numeric(12, 2) NOT NULL DEFAULT 0.00,
+  ADD COLUMN IF NOT EXISTS balance numeric(12, 2) NOT NULL DEFAULT 0.00,
+  ADD COLUMN IF NOT EXISTS patient_signature_url text,
+  ADD COLUMN IF NOT EXISTS doctor_signature_url text;
+
+-- D. Asegurar columnas nuevas en ANAMNESIS
+ALTER TABLE public.anamnesis
+  ADD COLUMN IF NOT EXISTS tratamiento_medico_actual boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS toma_medicamentos boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS alergias boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS alteracion_presion_arterial boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS embarazo boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS hepatitis boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS irradiaciones boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS discrasias_sanguineas boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS fiebre_reumatica boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS enfermedades_renales boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS inmunosupresion boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS trastornos_emocionales boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS patologia_respiratoria boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS trastornos_gastricos boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS epilepsia boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS cirugias boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS enfermedades_orales boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS otras_alteraciones boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS observaciones character varying(200) NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS antecedentes_familiares character varying(200) NOT NULL DEFAULT '';
+
+-- E. Asegurar columnas nuevas en APPOINTMENTS
+ALTER TABLE public.appointments
+  ADD COLUMN IF NOT EXISTS origin_evolution_id uuid REFERENCES public.evolutions(id) ON DELETE SET NULL;
+
+-- ----------------------------------------------------------------------------
+-- 17. ÍNDICES DE RENDIMIENTO (Performance Tuning)
+-- (Ahora que todas las columnas existen con certeza, los índices se crean sin error)
+-- ----------------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_patients_dni ON public.patients(dni_cedula);
+CREATE INDEX IF NOT EXISTS idx_patients_user_id ON public.patients(user_id);
+CREATE INDEX IF NOT EXISTS idx_doctors_user_id ON public.doctors(user_id);
+CREATE INDEX IF NOT EXISTS idx_clinical_records_patient ON public.clinical_records(patient_id);
+CREATE INDEX IF NOT EXISTS idx_clinical_records_status ON public.clinical_records(status);
+CREATE INDEX IF NOT EXISTS idx_evolutions_record ON public.evolutions(record_id);
+CREATE INDEX IF NOT EXISTS idx_tooth_states_evolution ON public.tooth_states(evolution_id);
+CREATE INDEX IF NOT EXISTS idx_materials_invima ON public.clinical_materials(invima_registration);
+CREATE INDEX IF NOT EXISTS idx_materials_lot ON public.clinical_materials(batch_lot_number);
+CREATE INDEX IF NOT EXISTS idx_evolution_materials_evo ON public.evolution_materials_used(evolution_id);
+CREATE INDEX IF NOT EXISTS idx_periodontal_exam_record ON public.periodontal_examinations(record_id);
+CREATE INDEX IF NOT EXISTS idx_periodontal_sites_exam ON public.periodontal_sites(examination_id);
+CREATE INDEX IF NOT EXISTS idx_informed_consents_patient ON public.informed_consents(patient_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_patient_time ON public.appointments(patient_id, start_time);
+CREATE INDEX IF NOT EXISTS idx_appointments_origin_evo ON public.appointments(origin_evolution_id);
+
+-- ----------------------------------------------------------------------------
+-- 18. AUTOMATIZACIÓN DE AUTENTICACIÓN (Trigger handle_new_user)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+DECLARE
+  user_role text;
+BEGIN
+  user_role := COALESCE(new.raw_user_meta_data->>'role', 'PATIENT');
+
+  IF UPPER(user_role) = 'DOCTOR' THEN
+    INSERT INTO public.doctors (
+      user_id,
+      first_name,
+      last_name,
+      email,
+      phone,
+      license_number,
+      specialty
+    ) VALUES (
+      new.id,
+      COALESCE(new.raw_user_meta_data->>'first_name', ''),
+      COALESCE(new.raw_user_meta_data->>'last_name', ''),
+      new.email,
+      new.raw_user_meta_data->>'phone',
+      COALESCE(new.raw_user_meta_data->>'license_number', 'PENDIENTE-' || SUBSTRING(new.id::text, 1, 8)),
+      COALESCE(new.raw_user_meta_data->>'specialty', 'Odontología General')
+    )
+    ON CONFLICT (license_number) DO NOTHING;
+
+  ELSE
+    -- Registro de Paciente
+    INSERT INTO public.patients (
+      user_id,
+      first_name,
+      first_last_name,
+      second_last_name,
+      dni_cedula,
+      email,
+      phone,
+      birth_date,
+      birth_place,
+      eps,
+      blood_group,
+      rh_factor,
+      consent_signed
+    ) VALUES (
+      new.id,
+      COALESCE(new.raw_user_meta_data->>'first_name', ''),
+      COALESCE(new.raw_user_meta_data->>'last_name', ''),
+      COALESCE(new.raw_user_meta_data->>'second_last_name', ''),
+      COALESCE(new.raw_user_meta_data->>'dni_cedula', 'TEMP-' || SUBSTRING(new.id::text, 1, 8)),
+      new.email,
+      COALESCE(new.raw_user_meta_data->>'phone', ''),
+      COALESCE((new.raw_user_meta_data->>'birth_date')::date, CURRENT_DATE),
+      COALESCE(new.raw_user_meta_data->>'birth_place', 'No especificado'),
+      COALESCE(new.raw_user_meta_data->>'eps', 'Particular'),
+      COALESCE(new.raw_user_meta_data->>'blood_group', 'O'),
+      COALESCE(new.raw_user_meta_data->>'rh_factor', '+'),
+      true
+    )
+    ON CONFLICT (dni_cedula) DO NOTHING;
+  END IF;
+
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ----------------------------------------------------------------------------
+-- 19. SEGURIDAD Y AISLAMIENTO DE DATOS (Row Level Security - RLS)
+-- ----------------------------------------------------------------------------
+ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.doctors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.clinical_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.evolutions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.anamnesis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.informed_consents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.informed_consent_procedures ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.treatments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.clinical_materials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.evolution_materials_used ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.periodontal_examinations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.periodontal_sites ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION public.is_doctor()
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.doctors WHERE user_id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Políticas para PATIENTS
+DROP POLICY IF EXISTS "Doctores tienen acceso completo a pacientes" ON public.patients;
+CREATE POLICY "Doctores tienen acceso completo a pacientes"
+  ON public.patients FOR ALL
+  TO authenticated
+  USING (public.is_doctor());
+
+DROP POLICY IF EXISTS "Pacientes pueden ver su propio perfil" ON public.patients;
+CREATE POLICY "Pacientes pueden ver su propio perfil"
+  ON public.patients FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Pacientes pueden actualizar sus datos personales" ON public.patients;
+CREATE POLICY "Pacientes pueden actualizar sus datos personales"
+  ON public.patients FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid());
+
+-- Políticas para HISTORIAS Y EVOLUCIONES
+DROP POLICY IF EXISTS "Doctores gestionan historias clínicas" ON public.clinical_records;
+CREATE POLICY "Doctores gestionan historias clínicas"
+  ON public.clinical_records FOR ALL
+  TO authenticated
+  USING (public.is_doctor());
+
+DROP POLICY IF EXISTS "Pacientes pueden consultar su propia historia clínica" ON public.clinical_records;
+CREATE POLICY "Pacientes pueden consultar su propia historia clínica"
+  ON public.clinical_records FOR SELECT
+  TO authenticated
+  USING (patient_id IN (SELECT id FROM public.patients WHERE user_id = auth.uid()));
+
+DROP POLICY IF EXISTS "Doctores gestionan evoluciones" ON public.evolutions;
+CREATE POLICY "Doctores gestionan evoluciones"
+  ON public.evolutions FOR ALL
+  TO authenticated
+  USING (public.is_doctor());
+
+DROP POLICY IF EXISTS "Pacientes pueden ver sus evoluciones" ON public.evolutions;
+CREATE POLICY "Pacientes pueden ver sus evoluciones"
+  ON public.evolutions FOR SELECT
+  TO authenticated
+  USING (record_id IN (
+    SELECT id FROM public.clinical_records 
+    WHERE patient_id IN (SELECT id FROM public.patients WHERE user_id = auth.uid())
+  ));
+
+-- Políticas para PERIODONTOGRAMA
+DROP POLICY IF EXISTS "Doctores gestionan exámenes periodontales" ON public.periodontal_examinations;
+CREATE POLICY "Doctores gestionan exámenes periodontales"
+  ON public.periodontal_examinations FOR ALL
+  TO authenticated
+  USING (public.is_doctor());
+
+DROP POLICY IF EXISTS "Pacientes pueden consultar sus exámenes periodontales" ON public.periodontal_examinations;
+CREATE POLICY "Pacientes pueden consultar sus exámenes periodontales"
+  ON public.periodontal_examinations FOR SELECT
+  TO authenticated
+  USING (record_id IN (
+    SELECT id FROM public.clinical_records 
+    WHERE patient_id IN (SELECT id FROM public.patients WHERE user_id = auth.uid())
+  ));
+
+DROP POLICY IF EXISTS "Doctores gestionan sitios periodontales" ON public.periodontal_sites;
+CREATE POLICY "Doctores gestionan sitios periodontales"
+  ON public.periodontal_sites FOR ALL
+  TO authenticated
+  USING (public.is_doctor());
+
+DROP POLICY IF EXISTS "Pacientes pueden consultar sus sitios periodontales" ON public.periodontal_sites;
+CREATE POLICY "Pacientes pueden consultar sus sitios periodontales"
+  ON public.periodontal_sites FOR SELECT
+  TO authenticated
+  USING (examination_id IN (
+    SELECT pe.id FROM public.periodontal_examinations pe
+    JOIN public.clinical_records cr ON pe.record_id = cr.id
+    WHERE cr.patient_id IN (SELECT id FROM public.patients WHERE user_id = auth.uid())
+  ));
+
+-- Políticas para MATERIALES (INVIMA)
+DROP POLICY IF EXISTS "Doctores gestionan inventario de materiales" ON public.clinical_materials;
+CREATE POLICY "Doctores gestionan inventario de materiales"
+  ON public.clinical_materials FOR ALL
+  TO authenticated
+  USING (public.is_doctor());
+
+DROP POLICY IF EXISTS "Doctores registran materiales consumidos en evolucion" ON public.evolution_materials_used;
+CREATE POLICY "Doctores registran materiales consumidos en evolucion"
+  ON public.evolution_materials_used FOR ALL
+  TO authenticated
+  USING (public.is_doctor());
+
+-- Políticas para CONSENTIMIENTOS INFORMADOS
+DROP POLICY IF EXISTS "Doctores gestionan consentimientos" ON public.informed_consents;
+CREATE POLICY "Doctores gestionan consentimientos"
+  ON public.informed_consents FOR ALL
+  TO authenticated
+  USING (public.is_doctor());
+
+DROP POLICY IF EXISTS "Pacientes pueden ver y firmar sus consentimientos" ON public.informed_consents;
+CREATE POLICY "Pacientes pueden ver y firmar sus consentimientos"
+  ON public.informed_consents FOR ALL
+  TO authenticated
+  USING (patient_id IN (SELECT id FROM public.patients WHERE user_id = auth.uid()));
+
+-- Políticas para CITAS
+DROP POLICY IF EXISTS "Doctores gestionan citas" ON public.appointments;
+CREATE POLICY "Doctores gestionan citas"
+  ON public.appointments FOR ALL
+  TO authenticated
+  USING (public.is_doctor());
+
+DROP POLICY IF EXISTS "Pacientes consultan y solicitan sus citas" ON public.appointments;
+CREATE POLICY "Pacientes consultan y solicitan sus citas"
+  ON public.appointments FOR SELECT
+  TO authenticated
+  USING (patient_id IN (SELECT id FROM public.patients WHERE user_id = auth.uid()));

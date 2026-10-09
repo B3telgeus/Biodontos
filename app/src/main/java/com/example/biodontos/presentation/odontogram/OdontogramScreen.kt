@@ -87,10 +87,12 @@ fun OdontogramScreen(
                 }
             }
             
-            if (state.showSelectionDialog) {
+            val selectedTooth = state.selectedTooth
+            val selectedSurface = state.selectedSurface
+            if (state.showSelectionDialog && selectedTooth != null && selectedSurface != null) {
                 ToothSelectionDialog(
-                    toothNumber = state.selectedTooth!!,
-                    surface = state.selectedSurface!!,
+                    toothNumber = selectedTooth,
+                    surface = selectedSurface,
                     comment = state.comment,
                     isSaving = state.isSaving,
                     onCommentChange = onCommentChange,

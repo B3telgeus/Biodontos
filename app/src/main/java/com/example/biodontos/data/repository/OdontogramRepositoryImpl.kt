@@ -25,13 +25,14 @@ class OdontogramRepositoryImpl : OdontogramRepository {
             // 2. Get all tooth states for this record via evolutions
             // For simplicity, we'll fetch all and group by tooth/surface in memory
             // A more efficient way would be a RPC or a complex join
+            val recordId = record.id ?: return@withContext Result.success(emptyList())
             val evolutions = SupabaseClient.client.from("evolutions")
-                .select { filter { EvolutionDto::recordId eq record.id!! } }
+                .select { filter { EvolutionDto::recordId eq recordId } }
                 .decodeList<EvolutionDto>()
             
             if (evolutions.isEmpty()) return@withContext Result.success(emptyList())
             
-            val evolutionIds = evolutions.map { it.id!! }
+            val evolutionIds = evolutions.mapNotNull { it.id }
             val toothStates = SupabaseClient.client.from("tooth_states")
                 .select { filter { ToothStateDto::evolutionId isIn evolutionIds } }
                 .decodeList<ToothStateDto>()
@@ -78,19 +79,23 @@ class OdontogramRepositoryImpl : OdontogramRepository {
                     .decodeSingle<ClinicalRecordDto>()
             }
 
+            val validRecordId = requireNotNull(record.id) { "Clinical record ID no puede ser nulo al registrar evolución" }
+
             // 2. Create Evolution
             val evolution = SupabaseClient.client.from("evolutions")
                 .insert(EvolutionDto(
-                    recordId = record.id!!,
+                    recordId = validRecordId,
                     description = comment ?: "Actualización de diente $toothNumber",
                     doctorName = "Doctor General" // Placeholder
                 )) { select() }
                 .decodeSingle<EvolutionDto>()
 
+            val validEvolutionId = requireNotNull(evolution.id) { "Evolution ID no puede ser nulo al registrar superficie" }
+
             // 3. Insert Tooth State
             SupabaseClient.client.from("tooth_states").insert(
                 ToothStateDto(
-                    evolutionId = evolution.id!!,
+                    evolutionId = validEvolutionId,
                     toothNumber = toothNumber,
                     surface = surface.name,
                     condition = condition.name
