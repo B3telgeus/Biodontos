@@ -38,6 +38,10 @@ import com.example.biodontos.presentation.auth.reset.ForgotPasswordScreen
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordViewModel
 import com.example.biodontos.presentation.odontogram.*
 import com.example.biodontos.presentation.patientportal.PatientPortalViewModelFactory
+import com.example.biodontos.presentation.patientportal.appointments.BookAppointmentRoute
+import com.example.biodontos.presentation.patientportal.appointments.BookAppointmentViewModel
+import com.example.biodontos.presentation.patientportal.appointments.MyAppointmentsRoute
+import com.example.biodontos.presentation.patientportal.appointments.MyAppointmentsViewModel
 import com.example.biodontos.presentation.patientportal.doctors.DoctorDetailRoute
 import com.example.biodontos.presentation.patientportal.doctors.DoctorDetailViewModel
 import com.example.biodontos.presentation.patientportal.doctors.DoctorSearchRoute
@@ -292,6 +296,57 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToBooking = { doctorId -> navController.navigate(BookAppointment(doctorId)) }
+            )
+        }
+
+        // --- MIS CITAS (PACIENTE) ---
+        composable<MyAppointments> {
+            val viewModel: MyAppointmentsViewModel = viewModel(factory = PatientPortalViewModelFactory.MyAppointmentsFactory)
+            PatientPortalShell(
+                selectedItem = PatientNavItem.APPOINTMENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        PatientNavItem.HOME -> navController.navigate(PatientHome)
+                        PatientNavItem.APPOINTMENTS -> {}
+                        PatientNavItem.DOCTORS -> navController.navigate(DoctorSearch)
+                        PatientNavItem.PAYMENTS -> navController.navigate(PatientPayments)
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(MyAppointments) { inclusive = true }
+                    }
+                }
+            ) {
+                MyAppointmentsRoute(
+                    viewModel = viewModel,
+                    onNavigateToReschedule = { doctorId, apptId ->
+                        navController.navigate(BookAppointment(doctorId = doctorId, rescheduleAppointmentId = apptId))
+                    },
+                    onNavigateToBookNew = {
+                        navController.navigate(DoctorSearch)
+                    }
+                )
+            }
+        }
+
+        // --- AGENDAR / REAGENDAR CITA ---
+        composable<BookAppointment> { backStackEntry ->
+            val route = backStackEntry.toRoute<BookAppointment>()
+            val viewModel: BookAppointmentViewModel = viewModel(
+                factory = PatientPortalViewModelFactory.createBookAppointmentFactory(
+                    doctorId = route.doctorId,
+                    rescheduleAppointmentId = route.rescheduleAppointmentId
+                )
+            )
+            BookAppointmentRoute(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToMyAppointments = {
+                    navController.navigate(MyAppointments) {
+                        popUpTo(BookAppointment(doctorId = route.doctorId)) { inclusive = true }
+                    }
+                }
             )
         }
 

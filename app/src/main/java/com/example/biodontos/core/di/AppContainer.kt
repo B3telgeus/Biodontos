@@ -27,12 +27,17 @@ import com.example.biodontos.domain.repository.DoctorRepository
 import com.example.biodontos.domain.scheduling.ClinicClock
 import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.domain.usecase.auth.*
-import com.example.biodontos.domain.usecase.patient.GetCurrentPatientUseCase
-import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
+import com.example.biodontos.domain.scheduling.AppointmentModificationPolicy
+import com.example.biodontos.domain.usecase.appointments.BookAppointmentUseCase
+import com.example.biodontos.domain.usecase.appointments.CancelAppointmentUseCase
+import com.example.biodontos.domain.usecase.appointments.GetAvailableSlotsUseCase
+import com.example.biodontos.domain.usecase.appointments.RescheduleAppointmentUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
 import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
+import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
 import com.example.biodontos.domain.usecase.odontogram.GetOdontogramUseCase
 import com.example.biodontos.domain.usecase.odontogram.UpdateToothUseCase
+import com.example.biodontos.domain.usecase.patient.GetCurrentPatientUseCase
 import com.example.biodontos.domain.usecase.patients.GetPatientsUseCase
 import com.example.biodontos.domain.usecase.patients.SavePatientUseCase
 
@@ -67,6 +72,12 @@ interface AppContainer {
     val searchDoctorsUseCase: SearchDoctorsUseCase
     val getDoctorDetailUseCase: GetDoctorDetailUseCase
     val getMyDoctorsUseCase: GetMyDoctorsUseCase
+
+    val appointmentModificationPolicy: AppointmentModificationPolicy
+    val getAvailableSlotsUseCase: GetAvailableSlotsUseCase
+    val bookAppointmentUseCase: BookAppointmentUseCase
+    val rescheduleAppointmentUseCase: RescheduleAppointmentUseCase
+    val cancelAppointmentUseCase: CancelAppointmentUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -176,5 +187,25 @@ class DefaultAppContainer : AppContainer {
 
     override val getMyDoctorsUseCase: GetMyDoctorsUseCase by lazy {
         GetMyDoctorsUseCase(doctorRepository, appointmentRepository)
+    }
+
+    override val appointmentModificationPolicy: AppointmentModificationPolicy by lazy {
+        AppointmentModificationPolicy(minHoursBefore = 2)
+    }
+
+    override val getAvailableSlotsUseCase: GetAvailableSlotsUseCase by lazy {
+        GetAvailableSlotsUseCase(doctorRepository, appointmentRepository, clinicClock)
+    }
+
+    override val bookAppointmentUseCase: BookAppointmentUseCase by lazy {
+        BookAppointmentUseCase(appointmentRepository, clinicClock)
+    }
+
+    override val rescheduleAppointmentUseCase: RescheduleAppointmentUseCase by lazy {
+        RescheduleAppointmentUseCase(appointmentRepository, appointmentModificationPolicy, clinicClock)
+    }
+
+    override val cancelAppointmentUseCase: CancelAppointmentUseCase by lazy {
+        CancelAppointmentUseCase(appointmentRepository, appointmentModificationPolicy, clinicClock)
     }
 }
