@@ -1,14 +1,26 @@
 package com.example.biodontos.presentation.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.example.biodontos.BiodontosApp
+import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.domain.model.UserRole
+import com.example.biodontos.presentation.admission.ClinicalAdmissionScreen
+import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModel
+import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModelFactory
 import com.example.biodontos.presentation.auth.AuthViewModelFactory
 import com.example.biodontos.presentation.auth.doctor.DoctorRegistrationEvent
 import com.example.biodontos.presentation.auth.doctor.DoctorRegistrationScreen
@@ -21,20 +33,57 @@ import com.example.biodontos.presentation.auth.onboarding.UserTypeSelectionScree
 import com.example.biodontos.presentation.auth.patient.PatientSignUpEvent
 import com.example.biodontos.presentation.auth.patient.PatientSignUpScreen
 import com.example.biodontos.presentation.auth.patient.PatientSignUpViewModel
+import com.example.biodontos.presentation.auth.patient.SignUpSuccessScreen
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordScreen
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordViewModel
-import com.example.biodontos.presentation.admission.ClinicalAdmissionScreen
-import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModel
-import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModelFactory
 import com.example.biodontos.presentation.odontogram.*
+import com.example.biodontos.presentation.patientportal.PatientPortalViewModelFactory
+import com.example.biodontos.presentation.patientportal.home.PatientHomeRoute
+import com.example.biodontos.presentation.patientportal.home.PatientHomeUiEvent
+import com.example.biodontos.presentation.patientportal.home.PatientHomeViewModel
+import com.example.biodontos.presentation.patientportal.shell.PatientNavItem
+import com.example.biodontos.presentation.patientportal.shell.PatientPortalShell
 import com.example.biodontos.presentation.patients.*
 
 @Composable
 fun BiodontosNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Onboarding
+        startDestination = SessionGate
     ) {
+        // --- GATEWAY DE SESIÓN SEGÚN ROL ---
+        composable<SessionGate> {
+            val context = LocalContext.current
+            val app = context.applicationContext as BiodontosApp
+            LaunchedEffect(Unit) {
+                val session = app.container.getCurrentSessionUseCase()
+                when (session?.role) {
+                    UserRole.DOCTOR -> {
+                        navController.navigate(PatientList) {
+                            popUpTo(SessionGate) { inclusive = true }
+                        }
+                    }
+                    UserRole.PATIENT -> {
+                        navController.navigate(PatientHome) {
+                            popUpTo(SessionGate) { inclusive = true }
+                        }
+                    }
+                    else -> {
+                        navController.navigate(Onboarding) {
+                            popUpTo(SessionGate) { inclusive = true }
+                        }
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = BiodontosDark)
+            }
+        }
+
         // --- ONBOARDING & SELECCIÓN ---
         composable<Onboarding> {
             OnboardingScreen(
@@ -60,8 +109,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel.events.collect { event ->
                     when (event) {
                         is LoginEvent.LoginSuccess -> {
-                            navController.navigate(PatientList) {
-                                popUpTo(Onboarding) { inclusive = true }
+                            navController.navigate(SessionGate) {
+                                popUpTo(Login) { inclusive = true }
                             }
                         }
                     }
@@ -90,7 +139,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
                     when (event) {
                         is DoctorRegistrationEvent.RegisteredSuccess -> {
                             navController.navigate(PatientList) {
-                                popUpTo(Onboarding) { inclusive = true }
+                                popUpTo(DoctorRegistration) { inclusive = true }
                             }
                         }
                     }
@@ -122,8 +171,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel.events.collect { event ->
                     when (event) {
                         is PatientSignUpEvent.RegisteredSuccess -> {
-                            navController.navigate(PatientList) {
-                                popUpTo(Onboarding) { inclusive = true }
+                            navController.navigate(SignUpSuccess) {
+                                popUpTo(PatientSignUp) { inclusive = true }
                             }
                         }
                     }
@@ -146,6 +195,17 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
+        // --- CONFIRMACIÓN DE REGISTRO EXITOSO (FIGMA) ---
+        composable<SignUpSuccess> {
+            SignUpSuccessScreen(
+                onLoginClick = {
+                    navController.navigate(Login) {
+                        popUpTo(SignUpSuccess) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // --- RESETEO DE CONTRASEÑA ---
         composable<ForgotPassword> {
             val viewModel: ForgotPasswordViewModel = viewModel(factory = AuthViewModelFactory.ForgotPasswordFactory)
@@ -159,7 +219,39 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- PACIENTES Y CLÍNICA (EXISTENTE) ---
+        // --- PORTAL DE PACIENTES ---
+        composable<PatientHome> {
+            val viewModel: PatientHomeViewModel = viewModel(factory = PatientPortalViewModelFactory.HomeFactory)
+            PatientPortalShell(
+                selectedItem = PatientNavItem.HOME,
+                onItemSelected = { item ->
+                    when (item) {
+                        PatientNavItem.HOME -> {}
+                        PatientNavItem.APPOINTMENTS -> navController.navigate(MyAppointments)
+                        PatientNavItem.DOCTORS -> navController.navigate(DoctorSearch)
+                        PatientNavItem.PAYMENTS -> navController.navigate(PatientPayments)
+                    }
+                },
+                onLogoutClick = {
+                    viewModel.onEvent(PatientHomeUiEvent.Logout)
+                }
+            ) {
+                PatientHomeRoute(
+                    viewModel = viewModel,
+                    onNavigateToAppointments = { navController.navigate(MyAppointments) },
+                    onNavigateToPayments = { navController.navigate(PatientPayments) },
+                    onNavigateToDoctors = { navController.navigate(DoctorSearch) },
+                    onNavigateToBooking = { doctorId -> navController.navigate(BookAppointment(doctorId)) },
+                    onNavigateToLogin = {
+                        navController.navigate(Login) {
+                            popUpTo(PatientHome) { inclusive = true }
+                        }
+                    }
+                )
+            }
+        }
+
+        // --- PACIENTES Y CLÍNICA DEL DOCTOR (EXISTENTE) ---
         composable<PatientList> {
             val viewModel: PatientListViewModel = viewModel(factory = PatientsViewModelFactory.ListFactory)
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -222,7 +314,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- PROCESO COMPLETO DE INGRESO Y ADMISIÓN CLÍNICA ---
         composable<ClinicalAdmission> {
             val viewModel: ClinicalAdmissionViewModel = viewModel(factory = ClinicalAdmissionViewModelFactory.Factory)
 

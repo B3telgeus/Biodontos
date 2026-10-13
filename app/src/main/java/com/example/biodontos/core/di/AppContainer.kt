@@ -20,7 +20,14 @@ import com.example.biodontos.domain.repository.MaterialRepository
 import com.example.biodontos.domain.repository.OdontogramRepository
 import com.example.biodontos.domain.repository.PatientRepository
 import com.example.biodontos.domain.repository.PeriodontalRepository
+import com.example.biodontos.data.repository.BillingRepositoryImpl
+import com.example.biodontos.data.repository.DoctorRepositoryImpl
+import com.example.biodontos.domain.repository.BillingRepository
+import com.example.biodontos.domain.repository.DoctorRepository
+import com.example.biodontos.domain.scheduling.ClinicClock
+import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.domain.usecase.auth.*
+import com.example.biodontos.domain.usecase.patient.GetCurrentPatientUseCase
 import com.example.biodontos.domain.usecase.odontogram.GetOdontogramUseCase
 import com.example.biodontos.domain.usecase.odontogram.UpdateToothUseCase
 import com.example.biodontos.domain.usecase.patients.GetPatientsUseCase
@@ -37,12 +44,16 @@ interface AppContainer {
     val materialRepository: MaterialRepository
     val informedConsentRepository: InformedConsentRepository
     val appointmentRepository: AppointmentRepository
+    val doctorRepository: DoctorRepository
+    val billingRepository: BillingRepository
+    val clinicClock: ClinicClock
 
     val loginUseCase: LoginUseCase
     val registerPatientAuthUseCase: RegisterPatientAuthUseCase
     val registerDoctorUseCase: RegisterDoctorUseCase
     val resetPasswordUseCase: ResetPasswordUseCase
     val getCurrentSessionUseCase: GetCurrentSessionUseCase
+    val getCurrentPatientUseCase: GetCurrentPatientUseCase
     val logoutUseCase: LogoutUseCase
 
     val getPatientsUseCase: GetPatientsUseCase
@@ -92,6 +103,18 @@ class DefaultAppContainer : AppContainer {
         AppointmentRepositoryImpl()
     }
 
+    override val doctorRepository: DoctorRepository by lazy {
+        DoctorRepositoryImpl()
+    }
+
+    override val billingRepository: BillingRepository by lazy {
+        BillingRepositoryImpl()
+    }
+
+    override val clinicClock: ClinicClock by lazy {
+        SystemClinicClock()
+    }
+
     override val loginUseCase: LoginUseCase by lazy {
         LoginUseCase(authRepository)
     }
@@ -110,6 +133,10 @@ class DefaultAppContainer : AppContainer {
 
     override val getCurrentSessionUseCase: GetCurrentSessionUseCase by lazy {
         GetCurrentSessionUseCase(authRepository)
+    }
+
+    override val getCurrentPatientUseCase: GetCurrentPatientUseCase by lazy {
+        GetCurrentPatientUseCase(authRepository, patientRepository)
     }
 
     override val logoutUseCase: LogoutUseCase by lazy {
