@@ -35,6 +35,7 @@ import com.example.biodontos.domain.usecase.appointments.RescheduleAppointmentUs
 import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
 import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
 import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
+import com.example.biodontos.domain.usecase.billing.GetPaymentSummaryUseCase
 import com.example.biodontos.domain.usecase.odontogram.GetOdontogramUseCase
 import com.example.biodontos.domain.usecase.odontogram.UpdateToothUseCase
 import com.example.biodontos.domain.usecase.patient.GetCurrentPatientUseCase
@@ -78,6 +79,7 @@ interface AppContainer {
     val bookAppointmentUseCase: BookAppointmentUseCase
     val rescheduleAppointmentUseCase: RescheduleAppointmentUseCase
     val cancelAppointmentUseCase: CancelAppointmentUseCase
+    val getPaymentSummaryUseCase: GetPaymentSummaryUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -207,5 +209,9 @@ class DefaultAppContainer : AppContainer {
 
     override val cancelAppointmentUseCase: CancelAppointmentUseCase by lazy {
         CancelAppointmentUseCase(appointmentRepository, appointmentModificationPolicy, clinicClock)
+    }
+
+    override val getPaymentSummaryUseCase: GetPaymentSummaryUseCase by lazy {
+        GetPaymentSummaryUseCase(billingRepository)
     }
 }

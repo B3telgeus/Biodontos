@@ -9,8 +9,20 @@ import com.example.biodontos.presentation.patientportal.appointments.MyAppointme
 import com.example.biodontos.presentation.patientportal.doctors.DoctorDetailViewModel
 import com.example.biodontos.presentation.patientportal.doctors.DoctorSearchViewModel
 import com.example.biodontos.presentation.patientportal.home.PatientHomeViewModel
+import com.example.biodontos.presentation.patientportal.payments.PatientPaymentsViewModel
 
 object PatientPortalViewModelFactory {
+    val PaymentsFactory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+            val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BiodontosApp
+            val c = app.container
+            return PatientPaymentsViewModel(
+                getCurrentPatientUseCase = c.getCurrentPatientUseCase,
+                getPaymentSummaryUseCase = c.getPaymentSummaryUseCase
+            ) as T
+        }
+    }
     val HomeFactory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

@@ -49,6 +49,8 @@ import com.example.biodontos.presentation.patientportal.doctors.DoctorSearchView
 import com.example.biodontos.presentation.patientportal.home.PatientHomeRoute
 import com.example.biodontos.presentation.patientportal.home.PatientHomeUiEvent
 import com.example.biodontos.presentation.patientportal.home.PatientHomeViewModel
+import com.example.biodontos.presentation.patientportal.payments.PatientPaymentsRoute
+import com.example.biodontos.presentation.patientportal.payments.PatientPaymentsViewModel
 import com.example.biodontos.presentation.patientportal.shell.PatientNavItem
 import com.example.biodontos.presentation.patientportal.shell.PatientPortalShell
 import com.example.biodontos.presentation.patients.*
@@ -348,6 +350,32 @@ fun BiodontosNavGraph(navController: NavHostController) {
                     }
                 }
             )
+        }
+
+        // --- PAGOS Y ABONOS (PACIENTE) ---
+        composable<PatientPayments> {
+            val viewModel: PatientPaymentsViewModel = viewModel(factory = PatientPortalViewModelFactory.PaymentsFactory)
+            PatientPortalShell(
+                selectedItem = PatientNavItem.PAYMENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        PatientNavItem.HOME -> navController.navigate(PatientHome)
+                        PatientNavItem.APPOINTMENTS -> navController.navigate(MyAppointments)
+                        PatientNavItem.DOCTORS -> navController.navigate(DoctorSearch)
+                        PatientNavItem.PAYMENTS -> {}
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(PatientPayments) { inclusive = true }
+                    }
+                }
+            ) {
+                PatientPaymentsRoute(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
 
         // --- PACIENTES Y CLÍNICA DEL DOCTOR (EXISTENTE) ---
