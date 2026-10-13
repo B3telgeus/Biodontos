@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.biodontos.domain.model.*
 import com.example.biodontos.domain.repository.*
+import com.example.biodontos.core.util.toUserFriendlyMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -379,11 +380,11 @@ class ClinicalAdmissionViewModel(
                             }
                         }
                         .onFailure { err ->
-                            _state.update { it.copy(isLoading = false, errorMessage = "Error en historia: ${err.message}") }
+                            _state.update { it.copy(isLoading = false, errorMessage = "Error en historia: ${err.toUserFriendlyMessage()}") }
                         }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error al guardar paciente: ${err.message}") }
+                    _state.update { it.copy(isLoading = false, errorMessage = "Error al guardar paciente: ${err.toUserFriendlyMessage()}") }
                 }
         }
     }
@@ -424,7 +425,7 @@ class ClinicalAdmissionViewModel(
                     _state.update { it.copy(isLoading = false, currentStep = 3) }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error en anamnesis: ${err.message}") }
+                    _state.update { it.copy(isLoading = false, errorMessage = "Error en anamnesis: ${err.toUserFriendlyMessage()}") }
                 }
         }
     }
@@ -495,7 +496,7 @@ class ClinicalAdmissionViewModel(
                     _state.update { it.copy(isLoading = false, currentStep = 6) }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error en consentimiento: ${err.message}") }
+                    _state.update { it.copy(isLoading = false, errorMessage = "Error en consentimiento: ${err.toUserFriendlyMessage()}") }
                 }
         }
     }
@@ -534,7 +535,7 @@ class ClinicalAdmissionViewModel(
                     _state.update { it.copy(isLoading = false, currentStep = 7) }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error en evolución: ${err.message}") }
+                    _state.update { it.copy(isLoading = false, errorMessage = "Error en evolución: ${err.toUserFriendlyMessage()}") }
                 }
         }
     }

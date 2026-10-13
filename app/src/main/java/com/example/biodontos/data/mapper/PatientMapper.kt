@@ -23,6 +23,7 @@ fun PatientDto.toDomain(): Patient {
 
     return Patient(
         id = id ?: "",
+        userId = userId,
         dniCedula = dniCedula,
         firstName = firstName,
         firstLastName = effectiveFirstLastName,
@@ -68,6 +69,7 @@ fun Patient.toDto(): PatientDto {
 
     return PatientDto(
         id = resolvedId,
+        userId = userId,
         dniCedula = dniCedula,
         firstName = firstName,
         lastNameCol = fullLastName.ifBlank { firstLastName },

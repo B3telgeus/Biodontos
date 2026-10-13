@@ -3,6 +3,7 @@ package com.example.biodontos.presentation.auth.patient
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.biodontos.core.util.Validators
+import com.example.biodontos.core.util.toUserFriendlyMessage
 import com.example.biodontos.domain.usecase.auth.RegisterPatientAuthUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -209,7 +210,7 @@ class PatientSignUpViewModel(
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = ex.message ?: "Error al registrar la cuenta de paciente"
+                        error = ex.toUserFriendlyMessage("Error al registrar la cuenta de paciente")
                     )
                 }
             }

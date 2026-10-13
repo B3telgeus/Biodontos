@@ -144,4 +144,30 @@ class ClinicalAdmissionViewModelTest {
         viewModel.onEvent(ClinicalAdmissionEvent.UpdateBirthDate("1995-08-20"))
         assertEquals(DentitionType.ADULT, viewModel.state.value.dentitionType)
     }
+
+    @Test
+    fun `Persisting anamnesis failure updates error message in state`() = runTest {
+        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
+            Patient(id = "pat-123", dniCedula = "1020304050", firstName = "Carlos", firstLastName = "Gómez")
+        )
+        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(
+            ClinicalRecord(id = "rec-456", patientId = "pat-123")
+        )
+        coEvery { anamnesisRepository.saveAnamnesis(any()) } returns Result.failure(Exception("Database connection error"))
+
+        // Advance to step 2
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateDni("1020304050"))
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Carlos"))
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Gómez"))
+        viewModel.onEvent(ClinicalAdmissionEvent.NextStep)
+        assertEquals(2, viewModel.state.value.currentStep)
+
+        // Try persisting step 2 (anamnesis)
+        viewModel.onEvent(ClinicalAdmissionEvent.NextStep)
+
+        val state = viewModel.state.value
+        assertEquals(2, state.currentStep)
+        assertEquals("Error en anamnesis: Error de conexión. Verifica tu acceso a internet.", state.errorMessage)
+        assertFalse(state.isLoading)
+    }
 }

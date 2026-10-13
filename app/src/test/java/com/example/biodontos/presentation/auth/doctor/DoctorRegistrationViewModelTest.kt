@@ -103,4 +103,28 @@ class DoctorRegistrationViewModelTest {
         assertTrue(event is DoctorRegistrationEvent.RegisteredSuccess)
         assertEquals(session, (event as DoctorRegistrationEvent.RegisteredSuccess).session)
     }
+
+    @Test
+    fun registerDoctorFailureUpdatesStateError() = runTest {
+        coEvery {
+            registerDoctorUseCase(any(), any(), any(), any(), any(), any(), any())
+        } returns Result.failure(Exception("User already registered"))
+
+        // Step 1
+        viewModel.onFirstNameChange("Carlos")
+        viewModel.onLastNameChange("Gomez")
+        viewModel.onEmailChange("carlos@biodontos.com")
+        viewModel.onPasswordChange("password123")
+        viewModel.onConfirmPasswordChange("password123")
+        viewModel.nextStep()
+
+        // Step 2
+        viewModel.onLicenseNumberChange("RM-12345")
+        viewModel.onSpecialtyChange("Ortodoncia")
+        viewModel.nextStep()
+
+        val state = viewModel.state.value
+        assertFalse(state.isLoading)
+        assertEquals("Este correo electrónico ya está registrado en el sistema.", state.error)
+    }
 }

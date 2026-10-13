@@ -114,4 +114,21 @@ class PatientMapperTest {
         assertTrue(dto.id?.isNotEmpty() == true)
         assertEquals(expectedUuid, Patient.generateIdFromDni("1098765432"))
     }
+
+    @Test
+    fun patientMapperMapsUserIdCorrectly() {
+        val dto = PatientDto(
+            id = "123",
+            userId = "user-uuid-999",
+            dniCedula = "1010",
+            firstName = "John",
+            lastName = "Doe"
+        )
+
+        val domain = dto.toDomain()
+        assertEquals("user-uuid-999", domain.userId)
+
+        val mappedDto = domain.toDto()
+        assertEquals("user-uuid-999", mappedDto.userId)
+    }
 }

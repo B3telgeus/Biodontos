@@ -38,6 +38,7 @@ data class PatientDto(
 ) {
     constructor(
         id: String? = null,
+        userId: String? = null,
         dniCedula: String,
         firstName: String,
         lastName: String,
@@ -49,6 +50,7 @@ data class PatientDto(
         birthDate: String? = null
     ) : this(
         id = id,
+        userId = userId,
         dniCedula = dniCedula,
         firstName = firstName,
         lastNameCol = lastName,

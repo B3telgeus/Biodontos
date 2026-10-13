@@ -76,6 +76,7 @@ class AuthRepositoryImpl : AuthRepository {
                 SupabaseClient.client.from("patients").upsert(
                     PatientDto(
                         id = patientId,
+                        userId = user?.id,
                         dniCedula = dniCedula.trim(),
                         firstName = firstName.trim(),
                         firstLastName = lastName.trim(),

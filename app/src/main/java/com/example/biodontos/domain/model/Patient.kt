@@ -2,6 +2,7 @@ package com.example.biodontos.domain.model
 
 data class Patient(
     val id: String = "",
+    val userId: String? = null,
     val dniCedula: String,
     val firstName: String,
     val firstLastName: String = "",

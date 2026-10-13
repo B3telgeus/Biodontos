@@ -2,6 +2,7 @@ package com.example.biodontos.presentation.auth.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.biodontos.core.util.toUserFriendlyMessage
 import com.example.biodontos.domain.usecase.auth.LoginUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,13 +56,13 @@ class LoginViewModel(
                 _state.update { it.copy(isLoading = false) }
                 _events.send(LoginEvent.LoginSuccess(session))
             }.onFailure { ex ->
-                val errorMsg = ex.message ?: "Usuario o contraseña incorrectos"
+                val errorMsg = ex.toUserFriendlyMessage("Usuario o contraseña incorrectos")
                 _state.update {
                     it.copy(
                         isLoading = false,
                         error = errorMsg,
-                        emailError = if (errorMsg.contains("invalid", ignoreCase = true) || errorMsg.contains("credencial", ignoreCase = true)) "Verifica tu correo" else null,
-                        passwordError = if (errorMsg.contains("invalid", ignoreCase = true) || errorMsg.contains("credencial", ignoreCase = true)) "Verifica tu contraseña" else null
+                        emailError = if (errorMsg.contains("incorrectos", ignoreCase = true) || errorMsg.contains("verif", ignoreCase = true)) "Verifica tu correo" else null,
+                        passwordError = if (errorMsg.contains("incorrectos", ignoreCase = true) || errorMsg.contains("verif", ignoreCase = true)) "Verifica tu contraseña" else null
                     )
                 }
             }

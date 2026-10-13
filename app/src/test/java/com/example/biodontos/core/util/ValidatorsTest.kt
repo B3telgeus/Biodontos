@@ -9,16 +9,16 @@ class ValidatorsTest {
 
     @Test
     fun validateName_withValidCharacters_returnsNull() {
-        assertNull(Validators.validateName("Carlos Andrés", "nombre"))
-        assertNull(Validators.validateName("María José Peñaloza", "nombre"))
-        assertNull(Validators.validateName("O'Connor", "apellido"))
+        assertNull(Validators.validateName("Carlos Andrés", false))
+        assertNull(Validators.validateName("María José Peñaloza", false))
+        assertNull(Validators.validateName("O'Connor", true))
     }
 
     @Test
     fun validateName_withInvalidCharacters_returnsError() {
-        assertNotNull(Validators.validateName("Carlos123", "nombre"))
-        assertNotNull(Validators.validateName("Ana@Lopez", "nombre"))
-        assertEquals("Solo se permiten letras y espacios (carácter inválido)", Validators.validateName("Carlos123", "nombre"))
+        assertNotNull(Validators.validateName("Carlos123", false))
+        assertNotNull(Validators.validateName("Ana@Lopez", false))
+        assertEquals("Error en el nombre", Validators.validateName("Carlos123", false))
     }
 
     @Test
@@ -30,7 +30,7 @@ class ValidatorsTest {
     fun validateDni_withLettersOrSymbols_returnsError() {
         val error = Validators.validateDni("102030A50")
         assertNotNull(error)
-        assertEquals("Solo se permiten números (carácter inválido)", error)
+        assertEquals("Error en el DNI", error)
     }
 
     @Test
@@ -54,7 +54,7 @@ class ValidatorsTest {
     fun validatePassword_withLessThan6Chars_returnsError() {
         val error = Validators.validatePassword("12345")
         assertNotNull(error)
-        assertEquals("La contraseña debe tener mínimo 6 caracteres", error)
+        assertEquals("Error en la contraseña (mínimo 6 caracteres)", error)
     }
 
     @Test
