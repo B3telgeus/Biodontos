@@ -10,7 +10,7 @@ fun PatientDto.toDomain(): Patient {
         firstName = firstName ?: "",
         lastName = lastName ?: "",
         consentSigned = consentSigned ?: false,
-        hasCriticalAllergies = hasCriticalAllergies ?: false
+        hasCriticalAllergies = !hasCriticalAllergies.isNullOrEmpty() && hasCriticalAllergies.lowercase() != "ninguna" && hasCriticalAllergies.lowercase() != "false"
     )
 }
 
@@ -21,6 +21,6 @@ fun Patient.toDto(): PatientDto {
         firstName = firstName,
         lastName = lastName,
         consentSigned = consentSigned,
-        hasCriticalAllergies = hasCriticalAllergies
+        hasCriticalAllergies = if (hasCriticalAllergies) "Sí" else "Ninguna"
     )
 }
