@@ -52,4 +52,31 @@ class DoctorRepositoryImpl : DoctorRepository {
             Result.failure(e)
         }
     }
+
+    override suspend fun searchDoctors(
+        query: String,
+        specialty: String?,
+        limit: Int,
+        offset: Int
+    ): Result<List<Doctor>> {
+        return try {
+            val list = SupabaseClient.client.from("doctors")
+                .select {
+                    order("first_name", order = Order.ASCENDING)
+                    range(offset.toLong(), (offset + limit - 1).toLong())
+                    filter {
+                        if (!specialty.isNullOrBlank() && specialty != "Todas" && specialty != "Todos") {
+                            eq("specialty", specialty)
+                        }
+                        if (query.isNotBlank()) {
+                            ilike("first_name", "%${query.trim()}%")
+                        }
+                    }
+                }
+                .decodeList<DoctorDto>()
+            Result.success(list.map { it.toDomain() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

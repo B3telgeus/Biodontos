@@ -28,6 +28,9 @@ import com.example.biodontos.domain.scheduling.ClinicClock
 import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.domain.usecase.auth.*
 import com.example.biodontos.domain.usecase.patient.GetCurrentPatientUseCase
+import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
+import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
+import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
 import com.example.biodontos.domain.usecase.odontogram.GetOdontogramUseCase
 import com.example.biodontos.domain.usecase.odontogram.UpdateToothUseCase
 import com.example.biodontos.domain.usecase.patients.GetPatientsUseCase
@@ -60,6 +63,10 @@ interface AppContainer {
     val savePatientUseCase: SavePatientUseCase
     val getOdontogramUseCase: GetOdontogramUseCase
     val updateToothUseCase: UpdateToothUseCase
+
+    val searchDoctorsUseCase: SearchDoctorsUseCase
+    val getDoctorDetailUseCase: GetDoctorDetailUseCase
+    val getMyDoctorsUseCase: GetMyDoctorsUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -157,5 +164,17 @@ class DefaultAppContainer : AppContainer {
 
     override val updateToothUseCase: UpdateToothUseCase by lazy {
         UpdateToothUseCase(odontogramRepository)
+    }
+
+    override val searchDoctorsUseCase: SearchDoctorsUseCase by lazy {
+        SearchDoctorsUseCase(doctorRepository)
+    }
+
+    override val getDoctorDetailUseCase: GetDoctorDetailUseCase by lazy {
+        GetDoctorDetailUseCase(doctorRepository, clinicClock)
+    }
+
+    override val getMyDoctorsUseCase: GetMyDoctorsUseCase by lazy {
+        GetMyDoctorsUseCase(doctorRepository, appointmentRepository)
     }
 }

@@ -11,7 +11,7 @@ data class DoctorDto(
     @SerialName("user_id") val userId: String? = null,
     @SerialName("first_name") val firstName: String,
     @SerialName("last_name") val lastName: String,
-    val email: String,
+    val email: String = "",
     val phone: String? = null,
     @SerialName("license_number") val licenseNumber: String = "",
     val specialty: String = "Odontología General",

@@ -33,3 +33,9 @@ data class WeeklyAvailability(
         require(slotMinutes in 10..240) { "La duración del slot debe estar entre 10 y 240 minutos" }
     }
 }
+
+data class DoctorDetail(
+    val doctor: Doctor,
+    val availability: List<WeeklyAvailability>,
+    val isAvailableToday: Boolean
+)

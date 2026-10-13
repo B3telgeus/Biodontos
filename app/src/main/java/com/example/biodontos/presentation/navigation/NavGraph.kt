@@ -38,6 +38,10 @@ import com.example.biodontos.presentation.auth.reset.ForgotPasswordScreen
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordViewModel
 import com.example.biodontos.presentation.odontogram.*
 import com.example.biodontos.presentation.patientportal.PatientPortalViewModelFactory
+import com.example.biodontos.presentation.patientportal.doctors.DoctorDetailRoute
+import com.example.biodontos.presentation.patientportal.doctors.DoctorDetailViewModel
+import com.example.biodontos.presentation.patientportal.doctors.DoctorSearchRoute
+import com.example.biodontos.presentation.patientportal.doctors.DoctorSearchViewModel
 import com.example.biodontos.presentation.patientportal.home.PatientHomeRoute
 import com.example.biodontos.presentation.patientportal.home.PatientHomeUiEvent
 import com.example.biodontos.presentation.patientportal.home.PatientHomeViewModel
@@ -249,6 +253,46 @@ fun BiodontosNavGraph(navController: NavHostController) {
                     }
                 )
             }
+        }
+
+        // --- BÚSQUEDA DE DOCTORES (PACIENTE) ---
+        composable<DoctorSearch> {
+            val viewModel: DoctorSearchViewModel = viewModel(factory = PatientPortalViewModelFactory.DoctorSearchFactory)
+            PatientPortalShell(
+                selectedItem = PatientNavItem.DOCTORS,
+                onItemSelected = { item ->
+                    when (item) {
+                        PatientNavItem.HOME -> navController.navigate(PatientHome)
+                        PatientNavItem.APPOINTMENTS -> navController.navigate(MyAppointments)
+                        PatientNavItem.DOCTORS -> {}
+                        PatientNavItem.PAYMENTS -> navController.navigate(PatientPayments)
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(DoctorSearch) { inclusive = true }
+                    }
+                }
+            ) {
+                DoctorSearchRoute(
+                    viewModel = viewModel,
+                    onNavigateToDetail = { doctorId -> navController.navigate(DoctorDetail(doctorId)) },
+                    onNavigateToBooking = { doctorId -> navController.navigate(BookAppointment(doctorId)) }
+                )
+            }
+        }
+
+        // --- DETALLE DEL DOCTOR ---
+        composable<DoctorDetail> { backStackEntry ->
+            val route = backStackEntry.toRoute<DoctorDetail>()
+            val viewModel: DoctorDetailViewModel = viewModel(
+                factory = PatientPortalViewModelFactory.createDoctorDetailFactory(route.doctorId)
+            )
+            DoctorDetailRoute(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToBooking = { doctorId -> navController.navigate(BookAppointment(doctorId)) }
+            )
         }
 
         // --- PACIENTES Y CLÍNICA DEL DOCTOR (EXISTENTE) ---
