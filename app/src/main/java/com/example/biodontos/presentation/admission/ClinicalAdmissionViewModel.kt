@@ -549,7 +549,7 @@ class ClinicalAdmissionViewModel(
                 val appointment = Appointment(
                     patientId = s.patientId,
                     doctorId = s.doctorId.ifBlank { null },
-                    startTime = "${s.nextAppointmentDate}T${s.nextAppointmentTime}:00Z",
+                    startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T${s.nextAppointmentTime}:00"),
                     reason = s.nextAppointmentReason,
                     status = AppointmentStatus.SCHEDULED,
                     isConfirmed = false

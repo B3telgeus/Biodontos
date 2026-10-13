@@ -30,6 +30,26 @@ val BiodontosWhite = Color(0xFFFFFFFF)
 val BiodontosErrorRed = Color(0xFFDC2626)
 val BiodontosErrorBg = Color(0xFFFFF1F1)
 
+// Tokens específicos del Portal de Pacientes (Figma 07_Home_Paciente)
+val BiodontosSlateBlue = Color(0xFF5B6B8E)
+val BiodontosCardTop = Color(0xFFF7F8FA)
+val BiodontosScreenBgTop = Color(0xFFE9E9EB)
+val BiodontosScreenBgBottom = Color(0xFFD4D5D8)
+val BiodontosRowHighlight = Color(0xFFE7EAF1)
+val StatusConfirmed = Color(0xFF2E7D32)
+val StatusPending = Color(0xFF575F6E)
+val StatusCancelled = Color(0xFFB3261E)
+
+val BiodontosCardGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
+    listOf(BiodontosCardTop, BiodontosSlateBlue.copy(alpha = 0.35f))
+)
+val BiodontosSoftCardGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
+    listOf(Color.White, BiodontosLightGrey)
+)
+val BiodontosScreenGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
+    listOf(BiodontosScreenBgTop, BiodontosScreenBgBottom)
+)
+
 @Composable
 fun biodontosTextFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = BiodontosInputBg,

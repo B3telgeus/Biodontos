@@ -55,6 +55,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     // Architecture & Background
+    implementation(libs.arrow.core)
+    implementation(libs.androidx.compose.material3.window.size)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.androidx.room.runtime)
@@ -73,6 +75,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
