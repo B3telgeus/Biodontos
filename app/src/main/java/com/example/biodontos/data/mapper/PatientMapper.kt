@@ -6,11 +6,11 @@ import com.example.biodontos.domain.model.Patient
 fun PatientDto.toDomain(): Patient {
     return Patient(
         id = id ?: "",
-        dniCedula = dniCedula,
-        firstName = firstName,
-        lastName = lastName,
-        consentSigned = consentSigned,
-        hasCriticalAllergies = hasCriticalAllergies
+        dniCedula = dniCedula ?: "",
+        firstName = firstName ?: "",
+        lastName = lastName ?: "",
+        consentSigned = consentSigned ?: false,
+        hasCriticalAllergies = hasCriticalAllergies ?: false
     )
 }
 
