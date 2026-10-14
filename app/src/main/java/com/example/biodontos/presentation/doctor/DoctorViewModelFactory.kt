@@ -19,7 +19,11 @@ object DoctorViewModelFactory {
                 toggleAppointmentConfirmationUseCase = c.toggleAppointmentConfirmationUseCase,
                 patientRepository = c.patientRepository,
                 logoutUseCase = c.logoutUseCase,
-                clinicClock = c.clinicClock
+                clinicClock = c.clinicClock,
+                getDoctorRecentPaymentsUseCase = c.getDoctorRecentPaymentsUseCase,
+                recordPaymentUseCase = c.recordPaymentUseCase,
+                createTreatmentUseCase = c.createTreatmentUseCase,
+                getPatientTreatmentsUseCase = c.getPatientTreatmentsUseCase
             ) as T
         }
     }

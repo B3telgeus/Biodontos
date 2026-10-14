@@ -3,6 +3,8 @@ package com.example.biodontos.presentation.doctor.home
 import androidx.compose.runtime.Immutable
 import com.example.biodontos.domain.model.CopAmount
 import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.Patient
+import com.example.biodontos.domain.model.Treatment
 import java.time.LocalDateTime
 
 @Immutable
@@ -16,9 +18,12 @@ data class DoctorAppointmentItem(
 
 @Immutable
 data class DoctorPaymentItem(
+    val id: String = "",
     val patientName: String,
+    val treatmentDescription: String = "",
     val dateStr: String,
-    val amountCop: CopAmount
+    val amountCop: CopAmount,
+    val paymentMethod: String = "EFECTIVO"
 )
 
 @Immutable
@@ -31,13 +36,35 @@ data class DoctorHomeUiState(
     val todayAppointmentsCount: Int = 0,
     val upcomingAppointments: List<DoctorAppointmentItem> = emptyList(),
     val recentPayments: List<DoctorPaymentItem> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    // Estado del diálogo de registro de abono/pago
+    val isRecordPaymentDialogOpen: Boolean = false,
+    val isRecordingPayment: Boolean = false,
+    val availablePatients: List<Patient> = emptyList(),
+    val availableTreatments: List<Treatment> = emptyList(),
+    val selectedPatient: Patient? = null,
+    val selectedTreatment: Treatment? = null,
+    val isLoadingTreatments: Boolean = false
 )
 
 sealed interface DoctorHomeUiEvent {
     data object Refresh : DoctorHomeUiEvent
     data class ToggleConfirmAppointment(val appointmentId: String, val currentConfirmed: Boolean) : DoctorHomeUiEvent
     data object Logout : DoctorHomeUiEvent
+
+    // Eventos para gestión de abonos y pagos
+    data object OpenRecordPaymentDialog : DoctorHomeUiEvent
+    data object DismissRecordPaymentDialog : DoctorHomeUiEvent
+    data class SelectPatientForPayment(val patient: Patient) : DoctorHomeUiEvent
+    data class SelectTreatmentForPayment(val treatment: Treatment?) : DoctorHomeUiEvent
+    data class SubmitPayment(
+        val patientId: String,
+        val treatmentId: String?,
+        val newTreatmentDescription: String?,
+        val newTreatmentCost: Long?,
+        val amount: Long,
+        val paymentMethod: String
+    ) : DoctorHomeUiEvent
 }
 
 sealed interface DoctorHomeUiEffect {

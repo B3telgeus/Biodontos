@@ -4,20 +4,31 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class Treatment(
-    val id: String,
+    val id: String = "",
     val patientId: PatientId,
     val description: String,
     val totalCost: CopAmount,
-    val status: String = "ACTIVE",
+    val status: String = "PENDIENTE",
     val createdAt: LocalDateTime? = null
 )
 
 data class Payment(
-    val id: String,
+    val id: String = "",
     val treatmentId: String,
     val amount: CopAmount,
     val paymentMethod: String? = null,
     val createdAt: LocalDateTime? = null
+)
+
+data class DoctorPaymentRecord(
+    val id: String,
+    val patientId: String,
+    val patientName: String,
+    val treatmentId: String,
+    val treatmentDescription: String,
+    val amount: CopAmount,
+    val paymentMethod: String,
+    val createdAt: LocalDateTime
 )
 
 data class TreatmentBalance(

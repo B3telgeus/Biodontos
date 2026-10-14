@@ -38,7 +38,11 @@ import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
 import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
 import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
+import com.example.biodontos.domain.usecase.billing.CreateTreatmentUseCase
+import com.example.biodontos.domain.usecase.billing.GetDoctorRecentPaymentsUseCase
+import com.example.biodontos.domain.usecase.billing.GetPatientTreatmentsUseCase
 import com.example.biodontos.domain.usecase.billing.GetPaymentSummaryUseCase
+import com.example.biodontos.domain.usecase.billing.RecordPaymentUseCase
 import com.example.biodontos.domain.usecase.odontogram.GetOdontogramUseCase
 import com.example.biodontos.domain.usecase.odontogram.UpdateToothUseCase
 import com.example.biodontos.domain.usecase.patient.GetCurrentPatientUseCase
@@ -86,6 +90,10 @@ interface AppContainer {
     val getCurrentDoctorUseCase: GetCurrentDoctorUseCase
     val getDoctorAppointmentsUseCase: GetDoctorAppointmentsUseCase
     val toggleAppointmentConfirmationUseCase: ToggleAppointmentConfirmationUseCase
+    val recordPaymentUseCase: RecordPaymentUseCase
+    val createTreatmentUseCase: CreateTreatmentUseCase
+    val getDoctorRecentPaymentsUseCase: GetDoctorRecentPaymentsUseCase
+    val getPatientTreatmentsUseCase: GetPatientTreatmentsUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -231,5 +239,21 @@ class DefaultAppContainer : AppContainer {
 
     override val toggleAppointmentConfirmationUseCase: ToggleAppointmentConfirmationUseCase by lazy {
         ToggleAppointmentConfirmationUseCase(appointmentRepository)
+    }
+
+    override val recordPaymentUseCase: RecordPaymentUseCase by lazy {
+        RecordPaymentUseCase(billingRepository)
+    }
+
+    override val createTreatmentUseCase: CreateTreatmentUseCase by lazy {
+        CreateTreatmentUseCase(billingRepository)
+    }
+
+    override val getDoctorRecentPaymentsUseCase: GetDoctorRecentPaymentsUseCase by lazy {
+        GetDoctorRecentPaymentsUseCase(billingRepository)
+    }
+
+    override val getPatientTreatmentsUseCase: GetPatientTreatmentsUseCase by lazy {
+        GetPatientTreatmentsUseCase(billingRepository)
     }
 }

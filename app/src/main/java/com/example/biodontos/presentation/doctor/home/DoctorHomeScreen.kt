@@ -24,19 +24,31 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
+import com.example.biodontos.domain.model.Patient
+import com.example.biodontos.domain.model.Treatment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -200,6 +212,7 @@ fun DoctorHomeScreen(
 
                                 PaymentsSummaryCard(
                                     payments = state.recentPayments,
+                                    onNewPaymentClick = { onEvent(DoctorHomeUiEvent.OpenRecordPaymentDialog) },
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -217,12 +230,25 @@ fun DoctorHomeScreen(
                                 )
 
                                 PaymentsSummaryCard(
-                                    payments = state.recentPayments
+                                    payments = state.recentPayments,
+                                    onNewPaymentClick = { onEvent(DoctorHomeUiEvent.OpenRecordPaymentDialog) }
                                 )
                             }
                         }
                     }
                 }
+            }
+
+            if (state.isRecordPaymentDialogOpen) {
+                RecordPaymentDialog(
+                    state = state,
+                    onDismiss = { onEvent(DoctorHomeUiEvent.DismissRecordPaymentDialog) },
+                    onSelectPatient = { onEvent(DoctorHomeUiEvent.SelectPatientForPayment(it)) },
+                    onSelectTreatment = { onEvent(DoctorHomeUiEvent.SelectTreatmentForPayment(it)) },
+                    onSubmit = { patientId, treatmentId, newDesc, newCost, amount, method ->
+                        onEvent(DoctorHomeUiEvent.SubmitPayment(patientId, treatmentId, newDesc, newCost, amount, method))
+                    }
+                )
             }
         }
     }
@@ -572,6 +598,7 @@ private fun AppointmentTableRow(
 @Composable
 private fun PaymentsSummaryCard(
     payments: List<DoctorPaymentItem>,
+    onNewPaymentClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -592,67 +619,419 @@ private fun PaymentsSummaryCard(
                     color = BiodontosDark
                 )
                 Text(
-                    text = "Tus últimos pagos",
+                    text = "Tus últimos pagos registrados",
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
             }
 
-            payments.forEach { payment ->
-                Row(
+            if (payments.isEmpty()) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color(0xFFF7F8FA))
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(20.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(BiodontosDark),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                tint = BiodontosWhite,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = payment.patientName,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BiodontosDark
-                            )
-                            Text(
-                                text = payment.dateStr,
-                                fontSize = 11.sp,
-                                color = BiodontosGreyText
-                            )
-                        }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "No hay abonos registrados aún",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = BiodontosGreyText
+                        )
+                        Text(
+                            text = "Pulsa el botón inferior para ingresar el primer abono.",
+                            fontSize = 11.sp,
+                            color = BiodontosGreyText
+                        )
                     }
+                }
+            } else {
+                payments.forEach { payment ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFFF7F8FA))
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(BiodontosDark),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = BiodontosWhite,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = payment.patientName,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BiodontosDark
+                                )
+                                Text(
+                                    text = "${payment.treatmentDescription} • ${payment.dateStr}",
+                                    fontSize = 11.sp,
+                                    color = BiodontosGreyText
+                                )
+                            }
+                        }
 
-                    Text(
-                        text = payment.amountCop.formatCop(),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BiodontosDark
-                    )
+                        Text(
+                            text = payment.amountCop.formatCop(),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BiodontosDark
+                        )
+                    }
                 }
             }
 
             BiodontosPillButton(
                 text = "Nuevo Pago o Abono",
                 variant = PillButtonVariant.DARK,
-                onClick = {}
+                onClick = onNewPaymentClick
             )
         }
     }
+}
+
+@Composable
+private fun RecordPaymentDialog(
+    state: DoctorHomeUiState,
+    onDismiss: () -> Unit,
+    onSelectPatient: (Patient) -> Unit,
+    onSelectTreatment: (Treatment?) -> Unit,
+    onSubmit: (patientId: String, treatmentId: String?, newDesc: String?, newCost: Long?, amount: Long, method: String) -> Unit
+) {
+    var amountInput by remember { mutableStateOf("") }
+    var selectedMethod by remember { mutableStateOf("EFECTIVO") }
+    var isNewTreatmentMode by remember(state.selectedPatient, state.availableTreatments) {
+        mutableStateOf(state.availableTreatments.isEmpty())
+    }
+    var newTreatmentDesc by remember { mutableStateOf("") }
+    var newTreatmentCostInput by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val methods = listOf("EFECTIVO", "TARJETA", "TRANSFERENCIA")
+
+    AlertDialog(
+        onDismissRequest = { if (!state.isRecordingPayment) onDismiss() },
+        shape = RoundedCornerShape(24.dp),
+        containerColor = BiodontosWhite,
+        title = {
+            Column {
+                Text(
+                    text = "Registrar Abono / Pago",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BiodontosDark
+                )
+                Text(
+                    text = "Vincula el abono al tratamiento del paciente",
+                    fontSize = 12.sp,
+                    color = BiodontosGreyText
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // 1. Selección de Paciente
+                Text(
+                    text = "1. Paciente",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BiodontosDark
+                )
+
+                if (state.selectedPatient == null) {
+                    if (state.availablePatients.isEmpty()) {
+                        Text(
+                            text = "No hay pacientes registrados en el sistema.",
+                            fontSize = 12.sp,
+                            color = BiodontosGreyText
+                        )
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            state.availablePatients.forEach { pat ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(BiodontosLightGrey)
+                                        .clickable { onSelectPatient(pat) }
+                                        .padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = pat.fullName,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = BiodontosDark
+                                        )
+                                        Text(
+                                            text = "DNI: ${pat.dniCedula}",
+                                            fontSize = 11.sp,
+                                            color = BiodontosGreyText
+                                        )
+                                    }
+                                    Text(
+                                        text = "Seleccionar",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = BiodontosDark
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFE8ECEF))
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = state.selectedPatient.fullName,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BiodontosDark
+                            )
+                            Text(
+                                text = "DNI: ${state.selectedPatient.dniCedula}",
+                                fontSize = 11.sp,
+                                color = BiodontosGreyText
+                            )
+                        }
+                        TextButton(onClick = { onDismiss() }) {
+                            Text("Cambiar", color = BiodontosDark, fontSize = 12.sp)
+                        }
+                    }
+
+                    // 2. Selección de Tratamiento
+                    Text(
+                        text = "2. Tratamiento / Concepto",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BiodontosDark
+                    )
+
+                    if (state.isLoadingTreatments) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = BiodontosDark)
+                    } else {
+                        if (state.availableTreatments.isNotEmpty()) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                val hasExisting = !isNewTreatmentMode
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(if (hasExisting) BiodontosDark else BiodontosLightGrey)
+                                        .clickable { isNewTreatmentMode = false }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Existente",
+                                        fontSize = 11.sp,
+                                        color = if (hasExisting) BiodontosWhite else BiodontosDark
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(if (isNewTreatmentMode) BiodontosDark else BiodontosLightGrey)
+                                        .clickable { 
+                                            isNewTreatmentMode = true
+                                            onSelectTreatment(null)
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Nuevo Plan",
+                                        fontSize = 11.sp,
+                                        color = if (isNewTreatmentMode) BiodontosWhite else BiodontosDark
+                                    )
+                                }
+                            }
+                        }
+
+                        if (!isNewTreatmentMode && state.availableTreatments.isNotEmpty()) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                state.availableTreatments.forEach { tr ->
+                                    val isSelected = state.selectedTreatment?.id == tr.id
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(if (isSelected) Color(0xFFD6E4FF) else BiodontosLightGrey)
+                                            .clickable { onSelectTreatment(tr) }
+                                            .padding(10.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = tr.description,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = BiodontosDark
+                                        )
+                                        Text(
+                                            text = tr.totalCost.formatCop(),
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = BiodontosDark
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            OutlinedTextField(
+                                value = newTreatmentDesc,
+                                onValueChange = { newTreatmentDesc = it },
+                                label = { Text("Descripción del Tratamiento") },
+                                placeholder = { Text("Ej. Profilaxis y Resinas, Ortodoncia") },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            OutlinedTextField(
+                                value = newTreatmentCostInput,
+                                onValueChange = { newTreatmentCostInput = it.filter { ch -> ch.isDigit() } },
+                                label = { Text("Costo Total Proyectado (COP)") },
+                                placeholder = { Text("Ej. 500000") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                    }
+
+                    // 3. Monto y Método
+                    Text(
+                        text = "3. Monto del Abono y Método",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BiodontosDark
+                    )
+
+                    OutlinedTextField(
+                        value = amountInput,
+                        onValueChange = { amountInput = it.filter { ch -> ch.isDigit() } },
+                        label = { Text("Monto a abonar (COP)") },
+                        placeholder = { Text("Ej. 150000") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        methods.forEach { method ->
+                            val isSelected = selectedMethod == method
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) BiodontosDark else BiodontosLightGrey)
+                                    .clickable { selectedMethod = method }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = method.lowercase().replaceFirstChar { it.uppercase() },
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) BiodontosWhite else BiodontosDark
+                                )
+                            }
+                        }
+                    }
+
+                    if (errorMessage != null) {
+                        Text(
+                            text = errorMessage ?: "",
+                            color = Color(0xFFD32F2F),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val pat = state.selectedPatient
+                    if (pat == null) {
+                        errorMessage = "Por favor selecciona un paciente"
+                        return@Button
+                    }
+                    val amountLong = amountInput.toLongOrNull() ?: 0L
+                    if (amountLong <= 0) {
+                        errorMessage = "El monto debe ser mayor a 0"
+                        return@Button
+                    }
+
+                    val treatmentId = if (!isNewTreatmentMode) state.selectedTreatment?.id else null
+                    if (!isNewTreatmentMode && treatmentId == null && state.availableTreatments.isNotEmpty()) {
+                        errorMessage = "Selecciona un tratamiento existente o marca 'Nuevo Plan'"
+                        return@Button
+                    }
+
+                    val newDesc = if (isNewTreatmentMode) newTreatmentDesc.trim().ifBlank { "Tratamiento Odontológico" } else null
+                    val newCost = if (isNewTreatmentMode) newTreatmentCostInput.toLongOrNull() ?: amountLong else null
+
+                    errorMessage = null
+                    onSubmit(pat.id, treatmentId, newDesc, newCost, amountLong, selectedMethod)
+                },
+                enabled = !state.isRecordingPayment && state.selectedPatient != null,
+                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                if (state.isRecordingPayment) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
+                } else {
+                    Text("Guardar Abono", color = BiodontosWhite, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !state.isRecordingPayment
+            ) {
+                Text("Cancelar", color = BiodontosDark)
+            }
+        }
+    )
 }
