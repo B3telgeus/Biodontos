@@ -35,8 +35,10 @@ import com.example.biodontos.domain.usecase.appointments.GetDoctorAppointmentsUs
 import com.example.biodontos.domain.usecase.appointments.RescheduleAppointmentUseCase
 import com.example.biodontos.domain.usecase.appointments.ToggleAppointmentConfirmationUseCase
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
+import com.example.biodontos.domain.usecase.doctor.GetDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
 import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
+import com.example.biodontos.domain.usecase.doctor.SaveDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
 import com.example.biodontos.domain.usecase.billing.CreateTreatmentUseCase
 import com.example.biodontos.domain.usecase.billing.GetDoctorRecentPaymentsUseCase
@@ -90,6 +92,8 @@ interface AppContainer {
     val getCurrentDoctorUseCase: GetCurrentDoctorUseCase
     val getDoctorAppointmentsUseCase: GetDoctorAppointmentsUseCase
     val toggleAppointmentConfirmationUseCase: ToggleAppointmentConfirmationUseCase
+    val getDoctorAvailabilityUseCase: GetDoctorAvailabilityUseCase
+    val saveDoctorAvailabilityUseCase: SaveDoctorAvailabilityUseCase
     val recordPaymentUseCase: RecordPaymentUseCase
     val createTreatmentUseCase: CreateTreatmentUseCase
     val getDoctorRecentPaymentsUseCase: GetDoctorRecentPaymentsUseCase
@@ -239,6 +243,14 @@ class DefaultAppContainer : AppContainer {
 
     override val toggleAppointmentConfirmationUseCase: ToggleAppointmentConfirmationUseCase by lazy {
         ToggleAppointmentConfirmationUseCase(appointmentRepository)
+    }
+
+    override val getDoctorAvailabilityUseCase: GetDoctorAvailabilityUseCase by lazy {
+        GetDoctorAvailabilityUseCase(doctorRepository)
+    }
+
+    override val saveDoctorAvailabilityUseCase: SaveDoctorAvailabilityUseCase by lazy {
+        SaveDoctorAvailabilityUseCase(doctorRepository)
     }
 
     override val recordPaymentUseCase: RecordPaymentUseCase by lazy {

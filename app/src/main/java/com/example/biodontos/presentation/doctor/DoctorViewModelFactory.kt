@@ -37,6 +37,11 @@ object DoctorViewModelFactory {
                 getCurrentDoctorUseCase = c.getCurrentDoctorUseCase,
                 getDoctorAppointmentsUseCase = c.getDoctorAppointmentsUseCase,
                 toggleAppointmentConfirmationUseCase = c.toggleAppointmentConfirmationUseCase,
+                getDoctorAvailabilityUseCase = c.getDoctorAvailabilityUseCase,
+                saveDoctorAvailabilityUseCase = c.saveDoctorAvailabilityUseCase,
+                bookAppointmentUseCase = c.bookAppointmentUseCase,
+                rescheduleAppointmentUseCase = c.rescheduleAppointmentUseCase,
+                cancelAppointmentUseCase = c.cancelAppointmentUseCase,
                 patientRepository = c.patientRepository,
                 clinicClock = c.clinicClock
             ) as T

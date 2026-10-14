@@ -34,3 +34,17 @@ fun DoctorAvailabilityDto.toDomain(): WeeklyAvailability {
         isActive = isActive
     )
 }
+
+fun WeeklyAvailability.toDto(): DoctorAvailabilityDto {
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+    return DoctorAvailabilityDto(
+        id = id.ifBlank { null },
+        doctorId = doctorId.value,
+        dayOfWeek = dayOfWeek.value,
+        startTime = startTime.format(timeFormatter),
+        endTime = endTime.format(timeFormatter),
+        slotMinutes = slotMinutes,
+        isActive = isActive
+    )
+}
+

@@ -4,6 +4,7 @@ import com.example.biodontos.core.network.SupabaseClient
 import com.example.biodontos.data.dto.DoctorAvailabilityDto
 import com.example.biodontos.data.dto.DoctorDto
 import com.example.biodontos.data.dto.toDomain
+import com.example.biodontos.data.dto.toDto
 import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.WeeklyAvailability
 import com.example.biodontos.domain.repository.DoctorRepository
@@ -53,12 +54,35 @@ class DoctorRepositoryImpl : DoctorRepository {
                 .select {
                     filter {
                         eq("doctor_id", doctorId)
-                        eq("is_active", true)
                     }
                     order("day_of_week", order = Order.ASCENDING)
                 }
                 .decodeList<DoctorAvailabilityDto>()
             Result.success(list.map { it.toDomain() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun saveDoctorAvailability(
+        doctorId: String,
+        availabilities: List<WeeklyAvailability>
+    ): Result<Unit> {
+        return try {
+            // Eliminar registros existentes para el doctor
+            SupabaseClient.client.from("doctor_availability")
+                .delete {
+                    filter {
+                        eq("doctor_id", doctorId)
+                    }
+                }
+
+            // Insertar los nuevos registros
+            val dtos = availabilities.map { it.toDto() }
+            if (dtos.isNotEmpty()) {
+                SupabaseClient.client.from("doctor_availability").insert(dtos)
+            }
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }

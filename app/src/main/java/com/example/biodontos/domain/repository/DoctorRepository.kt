@@ -8,6 +8,10 @@ interface DoctorRepository {
     suspend fun getDoctorById(id: String): Result<Doctor?>
     suspend fun getDoctorByUserId(userId: String): Result<Doctor?>
     suspend fun getDoctorAvailability(doctorId: String): Result<List<WeeklyAvailability>>
+    suspend fun saveDoctorAvailability(
+        doctorId: String,
+        availabilities: List<WeeklyAvailability>
+    ): Result<Unit>
     suspend fun searchDoctors(
         query: String = "",
         specialty: String? = null,
