@@ -182,9 +182,9 @@ fun EvolutionDto.toDomain(materials: List<EvolutionMaterialUsed> = emptyList()):
 )
 
 fun Evolution.toDto(): EvolutionDto = EvolutionDto(
-    id = id.ifEmpty { null },
-    recordId = recordId,
-    doctorId = doctorId.ifEmpty { null },
+    id = id.trim().ifEmpty { null },
+    recordId = recordId.trim(),
+    doctorId = doctorId.trim().ifEmpty { null },
     date = date.ifEmpty { null },
     procedureTime = procedureTime.ifEmpty { null },
     description = description,

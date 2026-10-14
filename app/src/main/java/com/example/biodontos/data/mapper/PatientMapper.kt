@@ -68,9 +68,9 @@ fun Patient.toDto(): PatientDto {
     val resolvedId = if (id.isNotBlank()) id else Patient.generateIdFromDni(dniCedula)
 
     return PatientDto(
-        id = resolvedId,
-        userId = userId,
-        dniCedula = dniCedula,
+        id = resolvedId.trim().ifEmpty { null },
+        userId = userId?.trim()?.ifEmpty { null },
+        dniCedula = dniCedula.trim(),
         firstName = firstName,
         lastNameCol = fullLastName.ifBlank { firstLastName },
         firstLastName = firstLastName,

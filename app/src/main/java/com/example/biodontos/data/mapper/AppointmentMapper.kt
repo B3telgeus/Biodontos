@@ -34,14 +34,14 @@ fun Appointment.toDto(): AppointmentDto {
     }
 
     return AppointmentDto(
-        id = id.ifEmpty { null },
-        patientId = patientId,
-        doctorId = doctorId,
-        originEvolutionId = originEvolutionId,
+        id = id.trim().ifEmpty { null },
+        patientId = patientId.trim(),
+        doctorId = doctorId?.trim()?.ifEmpty { null },
+        originEvolutionId = originEvolutionId?.trim()?.ifEmpty { null },
         startTime = startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
         endTime = endTime?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
         status = statusStr,
         isConfirmed = isConfirmed || status == AppointmentStatus.CONFIRMED,
-        reason = reason
+        reason = reason?.trim()?.ifEmpty { null }
     )
 }
