@@ -31,7 +31,10 @@ import com.example.biodontos.domain.scheduling.AppointmentModificationPolicy
 import com.example.biodontos.domain.usecase.appointments.BookAppointmentUseCase
 import com.example.biodontos.domain.usecase.appointments.CancelAppointmentUseCase
 import com.example.biodontos.domain.usecase.appointments.GetAvailableSlotsUseCase
+import com.example.biodontos.domain.usecase.appointments.GetDoctorAppointmentsUseCase
 import com.example.biodontos.domain.usecase.appointments.RescheduleAppointmentUseCase
+import com.example.biodontos.domain.usecase.appointments.ToggleAppointmentConfirmationUseCase
+import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
 import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
 import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
@@ -80,6 +83,9 @@ interface AppContainer {
     val rescheduleAppointmentUseCase: RescheduleAppointmentUseCase
     val cancelAppointmentUseCase: CancelAppointmentUseCase
     val getPaymentSummaryUseCase: GetPaymentSummaryUseCase
+    val getCurrentDoctorUseCase: GetCurrentDoctorUseCase
+    val getDoctorAppointmentsUseCase: GetDoctorAppointmentsUseCase
+    val toggleAppointmentConfirmationUseCase: ToggleAppointmentConfirmationUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -213,5 +219,17 @@ class DefaultAppContainer : AppContainer {
 
     override val getPaymentSummaryUseCase: GetPaymentSummaryUseCase by lazy {
         GetPaymentSummaryUseCase(billingRepository)
+    }
+
+    override val getCurrentDoctorUseCase: GetCurrentDoctorUseCase by lazy {
+        GetCurrentDoctorUseCase(authRepository, doctorRepository)
+    }
+
+    override val getDoctorAppointmentsUseCase: GetDoctorAppointmentsUseCase by lazy {
+        GetDoctorAppointmentsUseCase(appointmentRepository)
+    }
+
+    override val toggleAppointmentConfirmationUseCase: ToggleAppointmentConfirmationUseCase by lazy {
+        ToggleAppointmentConfirmationUseCase(appointmentRepository)
     }
 }

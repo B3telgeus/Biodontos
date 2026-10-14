@@ -6,6 +6,7 @@ interface AppointmentRepository {
     suspend fun updateConfirmationStatus(appointmentId: String, isConfirmed: Boolean): Result<Unit>
     suspend fun createAppointment(appointment: Appointment): Result<Appointment>
     suspend fun getAppointmentsByPatientId(patientId: String): Result<List<Appointment>>
+    suspend fun getAppointmentsByDoctorId(doctorId: String): Result<List<Appointment>>
     suspend fun getAppointmentById(appointmentId: String): Result<Appointment?>
     suspend fun getDoctorBusySlots(
         doctorId: String,

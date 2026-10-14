@@ -52,6 +52,20 @@ class AppointmentRepositoryImpl : AppointmentRepository {
         }
     }
 
+    override suspend fun getAppointmentsByDoctorId(doctorId: String): Result<List<Appointment>> {
+        return try {
+            val list = SupabaseClient.client.from("appointments")
+                .select {
+                    filter { eq("doctor_id", doctorId) }
+                    order("start_time", order = Order.ASCENDING)
+                }
+                .decodeList<AppointmentDto>()
+            Result.success(list.map { it.toDomain() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getAppointmentById(appointmentId: String): Result<Appointment?> {
         return try {
             val dto = SupabaseClient.client.from("appointments")

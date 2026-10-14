@@ -28,7 +28,16 @@ object ForgotPassword
 
 // --- Portal de Doctores ---
 @Serializable
+object DoctorHome
+
+@Serializable
 object PatientList
+
+@Serializable
+object DoctorAppointments
+
+@Serializable
+object DoctorDocuments
 
 @Serializable
 object PatientRegistration

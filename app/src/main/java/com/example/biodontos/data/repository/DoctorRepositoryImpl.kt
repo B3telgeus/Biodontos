@@ -36,6 +36,17 @@ class DoctorRepositoryImpl : DoctorRepository {
         }
     }
 
+    override suspend fun getDoctorByUserId(userId: String): Result<Doctor?> {
+        return try {
+            val dto = SupabaseClient.client.from("doctors")
+                .select { filter { eq("user_id", userId) } }
+                .decodeSingleOrNull<DoctorDto>()
+            Result.success(dto?.toDomain())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getDoctorAvailability(doctorId: String): Result<List<WeeklyAvailability>> {
         return try {
             val list = SupabaseClient.client.from("doctor_availability")

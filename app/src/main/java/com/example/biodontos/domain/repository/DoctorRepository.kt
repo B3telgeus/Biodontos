@@ -6,6 +6,7 @@ import com.example.biodontos.domain.model.WeeklyAvailability
 interface DoctorRepository {
     suspend fun getDoctors(): Result<List<Doctor>>
     suspend fun getDoctorById(id: String): Result<Doctor?>
+    suspend fun getDoctorByUserId(userId: String): Result<Doctor?>
     suspend fun getDoctorAvailability(doctorId: String): Result<List<WeeklyAvailability>>
     suspend fun searchDoctors(
         query: String = "",

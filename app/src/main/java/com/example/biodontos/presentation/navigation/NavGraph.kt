@@ -37,6 +37,15 @@ import com.example.biodontos.presentation.auth.patient.SignUpSuccessScreen
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordScreen
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordViewModel
 import com.example.biodontos.presentation.odontogram.*
+import com.example.biodontos.presentation.doctor.DoctorViewModelFactory
+import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsRoute
+import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsViewModel
+import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsScreen
+import com.example.biodontos.presentation.doctor.home.DoctorHomeRoute
+import com.example.biodontos.presentation.doctor.home.DoctorHomeUiEvent
+import com.example.biodontos.presentation.doctor.home.DoctorHomeViewModel
+import com.example.biodontos.presentation.doctor.shell.DoctorNavItem
+import com.example.biodontos.presentation.doctor.shell.DoctorPortalShell
 import com.example.biodontos.presentation.patientportal.PatientPortalViewModelFactory
 import com.example.biodontos.presentation.patientportal.appointments.BookAppointmentRoute
 import com.example.biodontos.presentation.patientportal.appointments.BookAppointmentViewModel
@@ -69,7 +78,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 val session = app.container.getCurrentSessionUseCase()
                 when (session?.role) {
                     UserRole.DOCTOR -> {
-                        navController.navigate(PatientList) {
+                        navController.navigate(DoctorHome) {
                             popUpTo(SessionGate) { inclusive = true }
                         }
                     }
@@ -378,7 +387,39 @@ fun BiodontosNavGraph(navController: NavHostController) {
             }
         }
 
-        // --- PACIENTES Y CLÍNICA DEL DOCTOR (EXISTENTE) ---
+        // --- PORTAL DE DOCTORES (FIGMA 08_Home_Doctor.png) ---
+        composable<DoctorHome> {
+            val viewModel: DoctorHomeViewModel = viewModel(factory = DoctorViewModelFactory.HomeFactory)
+            DoctorPortalShell(
+                selectedItem = DoctorNavItem.HOME,
+                onItemSelected = { item ->
+                    when (item) {
+                        DoctorNavItem.HOME -> {}
+                        DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
+                        DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
+                        DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                    }
+                },
+                onLogoutClick = {
+                    viewModel.onEvent(DoctorHomeUiEvent.Logout)
+                }
+            ) {
+                DoctorHomeRoute(
+                    viewModel = viewModel,
+                    onNavigateToPatients = { navController.navigate(PatientList) },
+                    onNavigateToNewPatient = { navController.navigate(PatientRegistration) },
+                    onNavigateToAppointments = { navController.navigate(DoctorAppointments) },
+                    onNavigateToDocuments = { navController.navigate(DoctorDocuments) },
+                    onNavigateToLogin = {
+                        navController.navigate(Login) {
+                            popUpTo(DoctorHome) { inclusive = true }
+                        }
+                    }
+                )
+            }
+        }
+
+        // --- LISTA DE PACIENTES (DOCTOR) ---
         composable<PatientList> {
             val viewModel: PatientListViewModel = viewModel(factory = PatientsViewModelFactory.ListFactory)
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -387,15 +428,82 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel.loadPatients()
             }
 
-            PatientListScreen(
-                state = state,
-                onAddPatientClick = { navController.navigate(PatientRegistration) },
-                onClinicalAdmissionClick = { navController.navigate(ClinicalAdmission()) },
-                onPatientClick = { patient ->
-                    navController.navigate(Odontogram(patientId = patient.id))
+            DoctorPortalShell(
+                selectedItem = DoctorNavItem.PATIENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        DoctorNavItem.HOME -> navController.navigate(DoctorHome)
+                        DoctorNavItem.PATIENTS -> {}
+                        DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
+                        DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                    }
                 },
-                onRetry = { viewModel.loadPatients() }
-            )
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(PatientList) { inclusive = true }
+                    }
+                }
+            ) {
+                PatientListScreen(
+                    state = state,
+                    onAddPatientClick = { navController.navigate(PatientRegistration) },
+                    onClinicalAdmissionClick = { navController.navigate(ClinicalAdmission()) },
+                    onPatientClick = { patient ->
+                        navController.navigate(Odontogram(patientId = patient.id))
+                    },
+                    onRetry = { viewModel.loadPatients() }
+                )
+            }
+        }
+
+        // --- AGENDA DE CITAS (DOCTOR) ---
+        composable<DoctorAppointments> {
+            val viewModel: DoctorAppointmentsViewModel = viewModel(factory = DoctorViewModelFactory.AppointmentsFactory)
+            DoctorPortalShell(
+                selectedItem = DoctorNavItem.APPOINTMENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        DoctorNavItem.HOME -> navController.navigate(DoctorHome)
+                        DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
+                        DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
+                        DoctorNavItem.APPOINTMENTS -> {}
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(DoctorAppointments) { inclusive = true }
+                    }
+                }
+            ) {
+                DoctorAppointmentsRoute(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
+
+        // --- DOCUMENTOS E HISTORIAS CLÍNICAS (DOCTOR) ---
+        composable<DoctorDocuments> {
+            DoctorPortalShell(
+                selectedItem = DoctorNavItem.DOCUMENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        DoctorNavItem.HOME -> navController.navigate(DoctorHome)
+                        DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
+                        DoctorNavItem.DOCUMENTS -> {}
+                        DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(DoctorDocuments) { inclusive = true }
+                    }
+                }
+            ) {
+                DoctorDocumentsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
 
         composable<PatientRegistration> {
