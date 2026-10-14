@@ -446,14 +446,49 @@ fun BiodontosNavGraph(navController: NavHostController) {
             ) {
                 PatientListScreen(
                     state = state,
+                    onSearchQueryChange = viewModel::onSearchQueryChange,
                     onAddPatientClick = { navController.navigate(PatientRegistration) },
                     onClinicalAdmissionClick = { navController.navigate(ClinicalAdmission()) },
                     onPatientClick = { patient ->
-                        navController.navigate(Odontogram(patientId = patient.id))
+                        navController.navigate(PatientDetail(patientId = patient.id))
                     },
                     onRetry = { viewModel.loadPatients() }
                 )
             }
+        }
+
+        // --- DETALLE / HUB CLÍNICO DEL PACIENTE ---
+        composable<PatientDetail> { backStackEntry ->
+            val route = backStackEntry.toRoute<PatientDetail>()
+            val viewModel: com.example.biodontos.presentation.patients.detail.PatientDetailViewModel = viewModel(
+                factory = PatientsViewModelFactory.createPatientDetailFactory(route.patientId)
+            )
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            com.example.biodontos.presentation.patients.detail.PatientDetailScreen(
+                state = state,
+                onTabSelected = viewModel::selectTab,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToOdontogram = { navController.navigate(Odontogram(route.patientId)) },
+                onNavigateToAdmission = { navController.navigate(ClinicalAdmission(route.patientId)) },
+                onOpenNewEvolutionDialog = viewModel::openNewEvolutionDialog,
+                onDismissNewEvolutionDialog = viewModel::dismissNewEvolutionDialog,
+                onEvolutionDescriptionChange = viewModel::onNewEvolutionDescriptionChange,
+                onEvolutionToothChange = viewModel::onNewEvolutionToothChange,
+                onEvolutionCostChange = viewModel::onNewEvolutionCostChange,
+                onEvolutionPaymentChange = viewModel::onNewEvolutionPaymentChange,
+                onSelectCatalogMaterial = viewModel::onSelectCatalogMaterial,
+                onAddMaterial = viewModel::addMaterialToEvolution,
+                onRemoveMaterial = viewModel::removeMaterialFromEvolution,
+                onSaveEvolution = viewModel::saveEvolution,
+                onOpenNewAppointmentDialog = viewModel::openNewAppointmentDialog,
+                onDismissNewAppointmentDialog = viewModel::dismissNewAppointmentDialog,
+                onAppointmentDateChange = viewModel::onNewAppointmentDateChange,
+                onAppointmentTimeChange = viewModel::onNewAppointmentTimeChange,
+                onAppointmentReasonChange = viewModel::onNewAppointmentReasonChange,
+                onSaveAppointment = viewModel::saveAppointment,
+                onClearMessages = viewModel::clearMessages
+            )
         }
 
         // --- AGENDA DE CITAS (DOCTOR) ---
@@ -501,7 +536,10 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 }
             ) {
                 DoctorDocumentsScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onPatientClick = { patientId ->
+                        navController.navigate(PatientDetail(patientId = patientId))
+                    }
                 )
             }
         }
@@ -541,6 +579,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
 
             OdontogramScreen(
                 state = state,
+                onDentitionTypeChange = viewModel::setDentitionType,
                 onSurfaceClick = viewModel::onSurfaceClick,
                 onCommentChange = viewModel::onCommentChange,
                 onUpdateCondition = viewModel::updateTooth,
@@ -549,8 +588,13 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        composable<ClinicalAdmission> {
-            val viewModel: ClinicalAdmissionViewModel = viewModel(factory = ClinicalAdmissionViewModelFactory.Factory)
+        composable<ClinicalAdmission> { backStackEntry ->
+            val route = backStackEntry.toRoute<ClinicalAdmission>()
+            val context = LocalContext.current
+            val app = context.applicationContext as BiodontosApp
+            val viewModel: ClinicalAdmissionViewModel = viewModel(
+                factory = ClinicalAdmissionViewModelFactory.createFactory(app.container, route.patientId)
+            )
 
             ClinicalAdmissionScreen(
                 viewModel = viewModel,

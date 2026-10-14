@@ -23,7 +23,8 @@ class ClinicalAdmissionViewModel(
     private val evolutionRepository: EvolutionRepository,
     private val materialRepository: MaterialRepository,
     private val informedConsentRepository: InformedConsentRepository,
-    private val appointmentRepository: AppointmentRepository
+    private val appointmentRepository: AppointmentRepository,
+    private val initialPatientId: String? = null
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ClinicalAdmissionState())
@@ -31,6 +32,140 @@ class ClinicalAdmissionViewModel(
 
     init {
         loadMaterialsCatalog()
+        if (!initialPatientId.isNullOrBlank()) {
+            loadExistingPatientData(initialPatientId)
+        }
+    }
+
+    fun loadExistingPatientData(pid: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, patientId = pid) }
+
+            // 1. Paciente
+            patientRepository.getPatientById(pid).onSuccess { patient ->
+                if (patient != null) {
+                    val detectedDentition = detectDentitionFromBirthDate(patient.birthDate)
+                    _state.update {
+                        it.copy(
+                            patientId = patient.id,
+                            dniCedula = patient.dniCedula,
+                            firstName = patient.firstName,
+                            firstLastName = patient.firstLastName,
+                            secondLastName = patient.secondLastName,
+                            birthDate = patient.birthDate,
+                            birthPlace = patient.birthPlace,
+                            eps = patient.eps,
+                            bloodGroup = patient.bloodGroup,
+                            rhFactor = patient.rhFactor,
+                            phone = patient.phone,
+                            email = patient.email ?: "",
+                            address = patient.address ?: "",
+                            occupation = patient.occupation ?: "",
+                            maritalStatus = patient.maritalStatus ?: "Soltero(a)",
+                            guardianRelationship = patient.guardianRelationship ?: "",
+                            guardianFirstName = patient.guardianFirstName ?: "",
+                            guardianLastName = patient.guardianLastName ?: "",
+                            guardianPhone = patient.guardianPhone ?: "",
+                            guardianAddress = patient.guardianAddress ?: "",
+                            lastDentalVisit = patient.lastDentalVisit ?: "",
+                            consultationReason = patient.consultationReason ?: "",
+                            currentConsultationReason = patient.currentConsultationReason ?: "",
+                            illnessHistory = patient.illnessHistory ?: "",
+                            hasCriticalAllergies = patient.hasCriticalAllergies,
+                            allergiesDescription = patient.allergiesDescription,
+                            consentSigned = patient.consentSigned,
+                            dentitionType = detectedDentition
+                        )
+                    }
+                }
+            }
+
+            // 2. Historia Clínica
+            clinicalRecordRepository.getRecordByPatientId(pid).onSuccess { record ->
+                if (record != null) {
+                    _state.update {
+                        it.copy(
+                            clinicalRecordId = record.id,
+                            dentitionType = record.dentitionType,
+                            mainDiagnosis = record.mainDiagnosis ?: "",
+                            relatedDiagnoses = record.relatedDiagnoses ?: "",
+                            complementaryExams = record.complementaryExams ?: ""
+                        )
+                    }
+
+                    // 4. Periodontograma por recordId
+                    if (record.id.isNotBlank()) {
+                        periodontalRepository.getExaminationByRecordId(record.id).onSuccess { exam ->
+                            if (exam != null) {
+                                val siteMap = exam.sites.associateBy { it.toothNumber to it.siteLocation }
+                                _state.update {
+                                    it.copy(
+                                        siteMeasurements = siteMap,
+                                        periodontalObservations = exam.generalObservations ?: ""
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Anamnesis
+            anamnesisRepository.getAnamnesisByPatientId(pid).onSuccess { anamnesis ->
+                if (anamnesis != null) {
+                    _state.update {
+                        it.copy(
+                            tratamientoMedicoActual = anamnesis.tratamientoMedicoActual,
+                            tomaMedicamentos = anamnesis.tomaMedicamentos,
+                            alergias = anamnesis.alergias,
+                            cardiopatias = anamnesis.cardiopatias,
+                            alteracionPresionArterial = anamnesis.alteracionPresionArterial,
+                            embarazo = anamnesis.embarazo,
+                            diabetes = anamnesis.diabetes,
+                            hepatitis = anamnesis.hepatitis,
+                            irradiaciones = anamnesis.irradiaciones,
+                            discrasiasSanguineas = anamnesis.discrasiasSanguineas,
+                            fiebreReumatica = anamnesis.fiebreReumatica,
+                            enfermedadesRenales = anamnesis.enfermedadesRenales,
+                            inmunosupresion = anamnesis.inmunosupresion,
+                            trastornosEmocionales = anamnesis.trastornosEmocionales,
+                            patologiaRespiratoria = anamnesis.patologiaRespiratoria,
+                            trastornosGastricos = anamnesis.trastornosGastricos,
+                            epilepsia = anamnesis.epilepsia,
+                            cirugias = anamnesis.cirugias,
+                            enfermedadesOrales = anamnesis.enfermedadesOrales,
+                            otrasAlteraciones = anamnesis.otrasAlteraciones,
+                            anamnesisObservaciones = anamnesis.observaciones ?: "",
+                            antecedentesFamiliares = anamnesis.antecedentesFamiliares ?: "",
+                            medicamentosActuales = anamnesis.medicamentosActuales ?: ""
+                        )
+                    }
+                }
+            }
+
+            // 5. Odontograma
+            odontogramRepository.getOdontogram(pid).onSuccess { teethList ->
+                val surfacesMap = teethList.associate { it.number to it.surfaceStates }
+                if (surfacesMap.isNotEmpty()) {
+                    _state.update { it.copy(teethSurfaces = surfacesMap) }
+                }
+            }
+
+            // 6. Consentimiento Informado
+            informedConsentRepository.getConsentByPatientId(pid).onSuccess { consent ->
+                if (consent != null) {
+                    _state.update {
+                        it.copy(
+                            treatmentPlanDescription = consent.treatmentSummary,
+                            consentSigned = consent.status == "SIGNED" || !consent.patientSignatureUrl.isNullOrBlank(),
+                            consentPatientSignature = consent.patientSignatureUrl ?: ""
+                        )
+                    }
+                }
+            }
+
+            _state.update { it.copy(isLoading = false) }
+        }
     }
 
     private fun loadMaterialsCatalog() {

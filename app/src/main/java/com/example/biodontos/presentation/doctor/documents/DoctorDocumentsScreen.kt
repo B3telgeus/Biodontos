@@ -37,25 +37,44 @@ import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosScreenGradient
 import com.example.biodontos.core.designsystem.BiodontosWhite
 
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.example.biodontos.BiodontosApp
+import com.example.biodontos.domain.model.Patient
+
 data class DoctorDocumentItem(
+    val patientId: String,
     val title: String,
     val patientName: String,
     val date: String,
-    val fileCount: Int
+    val status: String
 )
 
 @Composable
 fun DoctorDocumentsScreen(
     onNavigateBack: () -> Unit,
+    onPatientClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val sampleDocuments = listOf(
-        DoctorDocumentItem("Historia Clínica y Anamnesis", "Dora Hernández", "18 Mar 2026", 4),
-        DoctorDocumentItem("Consentimiento Informado - Endodoncia", "Carlos Troncoso", "19 Mar 2026", 2),
-        DoctorDocumentItem("Evolución Clínica y Odontograma", "Luis Camilo", "18 Mar 2026", 3),
-        DoctorDocumentItem("Periodontometría y Sondaje", "Sara Arias", "15 Abr 2026", 1),
-        DoctorDocumentItem("Plan de Tratamiento Ortodoncia", "Luna Estrada", "18 Mar 2026", 2)
-    )
+    val context = LocalContext.current
+    val app = context.applicationContext as BiodontosApp
+    var patients by remember { mutableStateOf<List<Patient>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        isLoading = true
+        app.container.patientRepository.getPatients()
+            .onSuccess { list ->
+                patients = list
+            }
+        isLoading = false
+    }
 
     Scaffold(containerColor = Color.Transparent) { padding ->
         Box(
@@ -100,12 +119,35 @@ fun DoctorDocumentsScreen(
                     }
                 }
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(sampleDocuments) { doc ->
-                        DocumentItemCard(doc = doc)
+                if (isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BiodontosDark)
+                    }
+                } else if (patients.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "No hay historias clínicas registradas aún.",
+                            color = BiodontosGreyText,
+                            fontSize = 14.sp
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(patients, key = { it.id }) { p ->
+                            DocumentItemCard(
+                                doc = DoctorDocumentItem(
+                                    patientId = p.id,
+                                    title = "Historia Clínica y Odontograma",
+                                    patientName = p.fullName,
+                                    date = p.birthDate,
+                                    status = if (p.consentSigned) "Consentimiento Firmado" else "Pendiente de Firma"
+                                ),
+                                onClick = { onPatientClick(p.id) }
+                            )
+                        }
                     }
                 }
             }
@@ -114,8 +156,12 @@ fun DoctorDocumentsScreen(
 }
 
 @Composable
-private fun DocumentItemCard(doc: DoctorDocumentItem) {
+private fun DocumentItemCard(
+    doc: DoctorDocumentItem,
+    onClick: () -> Unit = {}
+) {
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
@@ -157,7 +203,7 @@ private fun DocumentItemCard(doc: DoctorDocumentItem) {
                         color = BiodontosGreyText
                     )
                     Text(
-                        text = "Fecha: ${doc.date} · ${doc.fileCount} archivos adjuntos",
+                        text = "Nacimiento: ${doc.date} · Estado: ${doc.status}",
                         fontSize = 11.sp,
                         color = BiodontosGreyText
                     )

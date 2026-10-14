@@ -46,6 +46,9 @@ object PatientRegistration
 data class Odontogram(val patientId: String)
 
 @Serializable
+data class PatientDetail(val patientId: String)
+
+@Serializable
 data class ClinicalAdmission(val patientId: String? = null)
 
 // --- Portal de Pacientes ---

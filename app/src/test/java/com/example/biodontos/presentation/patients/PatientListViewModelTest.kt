@@ -50,4 +50,31 @@ class PatientListViewModelTest {
             assertEquals("Error", state.error)
         }
     }
+
+    @Test
+    fun searchQueryFiltersPatientsByNameAndDni() = runTest {
+        val patient1 = Patient("1", "10203040", "Carlos", "Gomez", true, false)
+        val patient2 = Patient("2", "98765432", "Maria", "Rodriguez", true, false)
+        coEvery { getPatientsUseCase() } returns Result.success(listOf(patient1, patient2))
+
+        val viewModel = PatientListViewModel(getPatientsUseCase)
+
+        // Búsqueda por nombre
+        viewModel.onSearchQueryChange("carlos")
+        assertEquals(1, viewModel.state.value.filteredPatients.size)
+        assertEquals("Carlos", viewModel.state.value.filteredPatients.first().firstName)
+
+        // Búsqueda por DNI
+        viewModel.onSearchQueryChange("9876")
+        assertEquals(1, viewModel.state.value.filteredPatients.size)
+        assertEquals("Maria", viewModel.state.value.filteredPatients.first().firstName)
+
+        // Búsqueda sin coincidencias
+        viewModel.onSearchQueryChange("99999999")
+        assertTrue(viewModel.state.value.filteredPatients.isEmpty())
+
+        // Limpiar búsqueda
+        viewModel.onSearchQueryChange("")
+        assertEquals(2, viewModel.state.value.filteredPatients.size)
+    }
 }

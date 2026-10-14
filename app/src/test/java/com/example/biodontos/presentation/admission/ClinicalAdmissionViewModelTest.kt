@@ -170,4 +170,57 @@ class ClinicalAdmissionViewModelTest {
         assertEquals("Error en anamnesis: Error de conexión. Verifica tu acceso a internet.", state.errorMessage)
         assertFalse(state.isLoading)
     }
+
+    @Test
+    fun `Initializing with initialPatientId loads existing patient, record and anamnesis`() = runTest {
+        val existingPatient = Patient(
+            id = "pat-999",
+            dniCedula = "80123456",
+            firstName = "Lucía",
+            firstLastName = "Mora",
+            phone = "3001234567"
+        )
+        val existingRecord = ClinicalRecord(
+            id = "rec-888",
+            patientId = "pat-999",
+            mainDiagnosis = "Pulpitis irreversible"
+        )
+        val existingAnamnesis = Anamnesis(
+            patientId = "pat-999",
+            alergias = true,
+            alergiasDescripcion = "Penicilina",
+            diabetes = true
+        )
+
+        coEvery { patientRepository.getPatientById("pat-999") } returns Result.success(existingPatient)
+        coEvery { clinicalRecordRepository.getRecordByPatientId("pat-999") } returns Result.success(existingRecord)
+        coEvery { anamnesisRepository.getAnamnesisByPatientId("pat-999") } returns Result.success(existingAnamnesis)
+        coEvery { odontogramRepository.getOdontogram("pat-999") } returns Result.success(emptyList())
+        coEvery { informedConsentRepository.getConsentByPatientId("pat-999") } returns Result.success(null)
+        coEvery { periodontalRepository.getExaminationByRecordId("rec-888") } returns Result.success(null)
+
+        val vm = ClinicalAdmissionViewModel(
+            patientRepository = patientRepository,
+            clinicalRecordRepository = clinicalRecordRepository,
+            anamnesisRepository = anamnesisRepository,
+            odontogramRepository = odontogramRepository,
+            periodontalRepository = periodontalRepository,
+            evolutionRepository = evolutionRepository,
+            materialRepository = materialRepository,
+            informedConsentRepository = informedConsentRepository,
+            appointmentRepository = appointmentRepository,
+            initialPatientId = "pat-999"
+        )
+
+        val s = vm.state.value
+        assertEquals("pat-999", s.patientId)
+        assertEquals("80123456", s.dniCedula)
+        assertEquals("Lucía", s.firstName)
+        assertEquals("Mora", s.firstLastName)
+        assertEquals("rec-888", s.clinicalRecordId)
+        assertEquals("Pulpitis irreversible", s.mainDiagnosis)
+        assertTrue(s.alergias)
+        assertTrue(s.diabetes)
+        assertFalse(s.isLoading)
+    }
 }

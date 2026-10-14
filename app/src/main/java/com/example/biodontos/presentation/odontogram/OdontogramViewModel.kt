@@ -40,6 +40,10 @@ class OdontogramViewModel(
         }
     }
 
+    fun setDentitionType(dentitionType: com.example.biodontos.domain.model.DentitionType) {
+        _state.update { it.copy(dentitionType = dentitionType) }
+    }
+
     fun onSurfaceClick(toothNumber: Int, surface: ToothSurface) {
         _state.update { 
             it.copy(
