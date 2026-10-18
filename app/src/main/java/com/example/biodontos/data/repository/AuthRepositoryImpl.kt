@@ -73,13 +73,20 @@ class AuthRepositoryImpl : AuthRepository {
             // Guardar o sincronizar también en la tabla patients de la BD
             try {
                 val patientId = user?.id ?: Patient.generateIdFromDni(dniCedula.trim())
+                val lastNameTrimmed = lastName.trim()
+                val parts = lastNameTrimmed.split(" ")
+                val firstLast = parts.firstOrNull().orEmpty()
+                val secondLast = parts.drop(1).joinToString(" ")
+
                 SupabaseClient.client.from("patients").upsert(
                     PatientDto(
                         id = patientId,
                         userId = user?.id,
                         dniCedula = dniCedula.trim(),
                         firstName = firstName.trim(),
-                        firstLastName = lastName.trim(),
+                        lastNameCol = lastNameTrimmed,
+                        firstLastName = firstLast,
+                        secondLastName = secondLast,
                         phone = phone?.trim().orEmpty(),
                         email = email.trim(),
                         criticalAllergies = "Ninguna",

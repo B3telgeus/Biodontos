@@ -249,31 +249,128 @@ CREATE POLICY "Pacientes pueden reagendar o cancelar sus citas"
   );
 
 -- ----------------------------------------------------------------------------
--- 7. SINCRONIZACIÓN AUTOMÁTICA DE REGISTRO DE PACIENTE (Hallazgo S4)
+-- 7. SINCRONIZACIÓN AUTOMÁTICA DE REGISTRO & BLINDAJE DE APELLIDOS (Hallazgo S4)
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.handle_new_user_patient()
+ALTER TABLE public.patients ALTER COLUMN last_name SET DEFAULT '';
+ALTER TABLE public.patients ALTER COLUMN first_last_name SET DEFAULT '';
+ALTER TABLE public.patients ALTER COLUMN second_last_name SET DEFAULT '';
+
+-- Trigger de sincronización de apellidos (last_name <-> first_last_name + second_last_name)
+CREATE OR REPLACE FUNCTION public.trg_sync_patient_surnames()
 RETURNS trigger AS $$
 BEGIN
-  IF (NEW.raw_user_meta_data->>'role') = 'PATIENT' OR (NEW.raw_user_meta_data->>'role') IS NULL THEN
-    INSERT INTO public.patients (id, user_id, email, first_name, last_name, consent_signed)
-    VALUES (
+  IF NEW.last_name IS NOT NULL AND NEW.last_name <> '' THEN
+    IF NEW.first_last_name IS NULL OR NEW.first_last_name = '' THEN
+      NEW.first_last_name := split_part(TRIM(NEW.last_name), ' ', 1);
+    END IF;
+    IF (NEW.second_last_name IS NULL OR NEW.second_last_name = '') AND position(' ' in TRIM(NEW.last_name)) > 0 THEN
+      NEW.second_last_name := TRIM(SUBSTRING(TRIM(NEW.last_name) FROM position(' ' in TRIM(NEW.last_name)) + 1));
+    END IF;
+  ELSIF NEW.first_last_name IS NOT NULL AND NEW.first_last_name <> '' THEN
+    NEW.last_name := TRIM(CONCAT(COALESCE(NEW.first_last_name, ''), ' ', COALESCE(NEW.second_last_name, '')));
+  END IF;
+
+  IF NEW.last_name IS NULL THEN NEW.last_name := ''; END IF;
+  IF NEW.first_last_name IS NULL THEN NEW.first_last_name := ''; END IF;
+  IF NEW.second_last_name IS NULL THEN NEW.second_last_name := ''; END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS sync_patient_surnames ON public.patients;
+CREATE TRIGGER sync_patient_surnames
+  BEFORE INSERT OR UPDATE ON public.patients
+  FOR EACH ROW EXECUTE FUNCTION public.trg_sync_patient_surnames();
+
+-- Eliminar triggers anteriores para evitar colisiones
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS on_auth_user_created_patient ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user_patient();
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+DECLARE
+  v_role text;
+  v_first_name text;
+  v_last_name text;
+  v_phone text;
+  v_dni text;
+BEGIN
+  v_role := COALESCE(NEW.raw_user_meta_data->>'role', 'PATIENT');
+  v_first_name := COALESCE(NEW.raw_user_meta_data->>'first_name', split_part(COALESCE(NEW.raw_user_meta_data->>'display_name', 'Usuario'), ' ', 1));
+  v_last_name := COALESCE(NEW.raw_user_meta_data->>'last_name', '');
+  v_phone := COALESCE(NEW.raw_user_meta_data->>'phone', '');
+  v_dni := COALESCE(NEW.raw_user_meta_data->>'dni_cedula', 'TEMP-' || SUBSTRING(NEW.id::text, 1, 8));
+
+  IF v_role = 'DOCTOR' THEN
+    INSERT INTO public.doctors (
+      id,
+      user_id,
+      first_name,
+      last_name,
+      email,
+      phone,
+      license_number,
+      specialty
+    ) VALUES (
       NEW.id,
       NEW.id,
+      v_first_name,
+      CASE WHEN v_last_name = '' THEN 'Profesional' ELSE v_last_name END,
       NEW.email,
-      COALESCE(NEW.raw_user_meta_data->>'first_name', split_part(COALESCE(NEW.raw_user_meta_data->>'display_name', 'Paciente'), ' ', 1)),
-      COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
-      true
+      v_phone,
+      COALESCE(NEW.raw_user_meta_data->>'license_number', 'PENDIENTE-' || SUBSTRING(NEW.id::text, 1, 8)),
+      COALESCE(NEW.raw_user_meta_data->>'specialty', 'Odontología General')
     )
     ON CONFLICT (id) DO UPDATE SET
       user_id = EXCLUDED.user_id,
       email = EXCLUDED.email;
+  ELSE
+    INSERT INTO public.patients (
+      id,
+      user_id,
+      dni_cedula,
+      first_name,
+      last_name,
+      first_last_name,
+      second_last_name,
+      email,
+      phone,
+      birth_date,
+      birth_place,
+      eps,
+      blood_group,
+      rh_factor,
+      consent_signed
+    ) VALUES (
+      NEW.id,
+      NEW.id,
+      v_dni,
+      v_first_name,
+      v_last_name,
+      split_part(v_last_name, ' ', 1),
+      CASE WHEN position(' ' in v_last_name) > 0 THEN TRIM(SUBSTRING(v_last_name FROM position(' ' in v_last_name) + 1)) ELSE '' END,
+      NEW.email,
+      v_phone,
+      COALESCE((NEW.raw_user_meta_data->>'birth_date')::date, CURRENT_DATE),
+      COALESCE(NEW.raw_user_meta_data->>'birth_place', 'No especificado'),
+      COALESCE(NEW.raw_user_meta_data->>'eps', 'Particular'),
+      COALESCE(NEW.raw_user_meta_data->>'blood_group', 'O'),
+      COALESCE(NEW.raw_user_meta_data->>'rh_factor', '+'),
+      true
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      user_id = EXCLUDED.user_id,
+      email = EXCLUDED.email,
+      last_name = CASE WHEN EXCLUDED.last_name <> '' THEN EXCLUDED.last_name ELSE public.patients.last_name END;
   END IF;
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS on_auth_user_created_patient ON auth.users;
-CREATE TRIGGER on_auth_user_created_patient
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_patient();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 

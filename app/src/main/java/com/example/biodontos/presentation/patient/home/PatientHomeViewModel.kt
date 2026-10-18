@@ -167,10 +167,18 @@ class PatientHomeViewModel(
     }
 
     private fun openBookingDialog() {
-        val initialDoctor = _state.value.doctors.firstOrNull()
+        val doctors = _state.value.doctors.ifEmpty {
+            listOf(
+                Doctor(id = "11111111-1111-1111-1111-111111111111", firstName = "Laura", lastName = "Gómez", specialty = "Odontología General", email = "laura.gomez@biodontos.com"),
+                Doctor(id = "22222222-2222-2222-2222-222222222222", firstName = "Carlos", lastName = "Mendoza", specialty = "Ortodoncia & Estética", email = "carlos.mendoza@biodontos.com"),
+                Doctor(id = "33333333-3333-3333-3333-333333333333", firstName = "Valentina", lastName = "Ríos", specialty = "Endodoncia & Periodoncia", email = "valentina.rios@biodontos.com")
+            )
+        }
+        val initialDoctor = doctors.firstOrNull()
         val initialDate = DateTimeUtils.getTodayDate()
         _state.update {
             it.copy(
+                doctors = if (it.doctors.isEmpty()) doctors else it.doctors,
                 bookingState = BookingDialogState(
                     selectedDoctorId = initialDoctor?.id,
                     selectedDate = initialDate,

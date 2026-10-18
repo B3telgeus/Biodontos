@@ -27,8 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.biodontos.core.designsystem.*
 import com.example.biodontos.core.util.DateTimeUtils
@@ -668,13 +668,17 @@ private fun BookingDialog(
         "Estética Dental"
     )
 
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.90f),
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.92f)
+                .padding(vertical = 12.dp, horizontal = 8.dp),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = BiodontosWhite)
+            color = BiodontosWhite
         ) {
             Column(
                 modifier = Modifier
@@ -909,13 +913,17 @@ private fun RescheduleDialog(
 ) {
     val upcomingDays = remember { DateTimeUtils.getUpcomingDays(14) }
 
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.80f),
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.88f)
+                .padding(vertical = 12.dp, horizontal = 8.dp),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = BiodontosWhite)
+            color = BiodontosWhite
         ) {
             Column(
                 modifier = Modifier
@@ -1189,11 +1197,16 @@ private fun SuccessSummaryDialog(
     state: SuccessDialogState,
     onDismiss: () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .padding(16.dp),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = BiodontosWhite)
+            color = BiodontosWhite
         ) {
             Column(
                 modifier = Modifier

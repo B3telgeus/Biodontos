@@ -9,7 +9,17 @@ import com.example.biodontos.presentation.auth.login.LoginViewModel
 import com.example.biodontos.presentation.auth.patient.PatientSignUpViewModel
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordViewModel
 
+import com.example.biodontos.presentation.auth.splash.SplashViewModel
+
 object AuthViewModelFactory {
+    val SplashFactory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+            val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BiodontosApp
+            return SplashViewModel(app.container.getCurrentSessionUseCase) as T
+        }
+    }
+
     val LoginFactory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

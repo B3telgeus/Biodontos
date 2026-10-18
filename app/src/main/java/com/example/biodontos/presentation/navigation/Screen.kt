@@ -3,6 +3,9 @@ package com.example.biodontos.presentation.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
+object Splash
+
+@Serializable
 object Onboarding
 
 @Serializable

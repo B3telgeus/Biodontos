@@ -32,6 +32,8 @@ import com.example.biodontos.presentation.patient.home.PatientHomeViewModel
 import com.example.biodontos.presentation.patient.home.PatientHomeViewModelFactory
 import com.example.biodontos.presentation.doctor.profile.DoctorProfileScreen
 import com.example.biodontos.presentation.doctor.profile.DoctorProfileViewModel
+import com.example.biodontos.presentation.auth.splash.SplashScreen
+import com.example.biodontos.presentation.auth.splash.SplashViewModel
 import com.example.biodontos.presentation.doctor.profile.DoctorProfileViewModelFactory
 import com.example.biodontos.presentation.odontogram.*
 import com.example.biodontos.presentation.patients.*
@@ -40,8 +42,31 @@ import com.example.biodontos.presentation.patients.*
 fun BiodontosNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Onboarding
+        startDestination = Splash
     ) {
+        // --- SPLASH SCREEN (INICIO CON AUTO-LOGIN) ---
+        composable<Splash> {
+            val viewModel: SplashViewModel = viewModel(factory = AuthViewModelFactory.SplashFactory)
+            SplashScreen(
+                viewModel = viewModel,
+                onNavigateToDoctor = {
+                    navController.navigate(PatientList) {
+                        popUpTo(Splash) { inclusive = true }
+                    }
+                },
+                onNavigateToPatient = {
+                    navController.navigate(PatientHome) {
+                        popUpTo(Splash) { inclusive = true }
+                    }
+                },
+                onNavigateToOnboarding = {
+                    navController.navigate(Onboarding) {
+                        popUpTo(Splash) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // --- ONBOARDING & SELECCIÓN ---
         composable<Onboarding> {
             OnboardingScreen(
