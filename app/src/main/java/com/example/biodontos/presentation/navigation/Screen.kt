@@ -24,6 +24,12 @@ object ForgotPassword
 object PatientList
 
 @Serializable
+object DoctorProfile
+
+@Serializable
+object PatientHome
+
+@Serializable
 object PatientRegistration
 
 @Serializable

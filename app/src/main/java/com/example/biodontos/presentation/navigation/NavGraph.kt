@@ -26,6 +26,13 @@ import com.example.biodontos.presentation.auth.reset.ForgotPasswordViewModel
 import com.example.biodontos.presentation.admission.ClinicalAdmissionScreen
 import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModel
 import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModelFactory
+import com.example.biodontos.domain.model.UserRole
+import com.example.biodontos.presentation.patient.home.PatientHomeScreen
+import com.example.biodontos.presentation.patient.home.PatientHomeViewModel
+import com.example.biodontos.presentation.patient.home.PatientHomeViewModelFactory
+import com.example.biodontos.presentation.doctor.profile.DoctorProfileScreen
+import com.example.biodontos.presentation.doctor.profile.DoctorProfileViewModel
+import com.example.biodontos.presentation.doctor.profile.DoctorProfileViewModelFactory
 import com.example.biodontos.presentation.odontogram.*
 import com.example.biodontos.presentation.patients.*
 
@@ -60,8 +67,14 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel.events.collect { event ->
                     when (event) {
                         is LoginEvent.LoginSuccess -> {
-                            navController.navigate(PatientList) {
-                                popUpTo(Onboarding) { inclusive = true }
+                            if (event.session.role == UserRole.PATIENT) {
+                                navController.navigate(PatientHome) {
+                                    popUpTo(Onboarding) { inclusive = true }
+                                }
+                            } else {
+                                navController.navigate(PatientList) {
+                                    popUpTo(Onboarding) { inclusive = true }
+                                }
                             }
                         }
                     }
@@ -122,7 +135,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel.events.collect { event ->
                     when (event) {
                         is PatientSignUpEvent.RegisteredSuccess -> {
-                            navController.navigate(PatientList) {
+                            navController.navigate(PatientHome) {
                                 popUpTo(Onboarding) { inclusive = true }
                             }
                         }
@@ -175,6 +188,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 onPatientClick = { patient ->
                     navController.navigate(Odontogram(patientId = patient.id))
                 },
+                onDoctorProfileClick = { navController.navigate(DoctorProfile) },
                 onRetry = { viewModel.loadPatients() }
             )
         }
@@ -232,6 +246,33 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 onAdmissionFinished = {
                     navController.navigate(PatientList) {
                         popUpTo(PatientList) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // --- HOMESCREEN DEL PACIENTE ---
+        composable<PatientHome> {
+            val viewModel: PatientHomeViewModel = viewModel(factory = PatientHomeViewModelFactory.Factory)
+            PatientHomeScreen(
+                viewModel = viewModel,
+                onNavigateToLogin = {
+                    navController.navigate(Login) {
+                        popUpTo(PatientHome) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // --- PERFIL Y AGENDA DEL DOCTOR ---
+        composable<DoctorProfile> {
+            val viewModel: DoctorProfileViewModel = viewModel(factory = DoctorProfileViewModelFactory.Factory)
+            DoctorProfileScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLogin = {
+                    navController.navigate(Login) {
+                        popUpTo(DoctorProfile) { inclusive = true }
                     }
                 }
             )

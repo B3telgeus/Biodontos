@@ -4,6 +4,7 @@ import com.example.biodontos.data.repository.AnamnesisRepositoryImpl
 import com.example.biodontos.data.repository.AppointmentRepositoryImpl
 import com.example.biodontos.data.repository.AuthRepositoryImpl
 import com.example.biodontos.data.repository.ClinicalRecordRepositoryImpl
+import com.example.biodontos.data.repository.DoctorRepositoryImpl
 import com.example.biodontos.data.repository.EvolutionRepositoryImpl
 import com.example.biodontos.data.repository.InformedConsentRepositoryImpl
 import com.example.biodontos.data.repository.MaterialRepositoryImpl
@@ -14,12 +15,14 @@ import com.example.biodontos.domain.repository.AnamnesisRepository
 import com.example.biodontos.domain.repository.AppointmentRepository
 import com.example.biodontos.domain.repository.AuthRepository
 import com.example.biodontos.domain.repository.ClinicalRecordRepository
+import com.example.biodontos.domain.repository.DoctorRepository
 import com.example.biodontos.domain.repository.EvolutionRepository
 import com.example.biodontos.domain.repository.InformedConsentRepository
 import com.example.biodontos.domain.repository.MaterialRepository
 import com.example.biodontos.domain.repository.OdontogramRepository
 import com.example.biodontos.domain.repository.PatientRepository
 import com.example.biodontos.domain.repository.PeriodontalRepository
+import com.example.biodontos.domain.usecase.appointment.*
 import com.example.biodontos.domain.usecase.auth.*
 import com.example.biodontos.domain.usecase.odontogram.GetOdontogramUseCase
 import com.example.biodontos.domain.usecase.odontogram.UpdateToothUseCase
@@ -37,6 +40,8 @@ interface AppContainer {
     val materialRepository: MaterialRepository
     val informedConsentRepository: InformedConsentRepository
     val appointmentRepository: AppointmentRepository
+    val doctorRepository: DoctorRepository
+    val guardianRepository: com.example.biodontos.domain.repository.GuardianRepository
 
     val loginUseCase: LoginUseCase
     val registerPatientAuthUseCase: RegisterPatientAuthUseCase
@@ -49,6 +54,14 @@ interface AppContainer {
     val savePatientUseCase: SavePatientUseCase
     val getOdontogramUseCase: GetOdontogramUseCase
     val updateToothUseCase: UpdateToothUseCase
+
+    val bookAppointmentUseCase: BookAppointmentUseCase
+    val rescheduleAppointmentUseCase: RescheduleAppointmentUseCase
+    val cancelAppointmentUseCase: CancelAppointmentUseCase
+    val getPatientAppointmentsUseCase: GetPatientAppointmentsUseCase
+    val getDoctorBusySlotsUseCase: GetDoctorBusySlotsUseCase
+    val confirmAppointmentUseCase: ConfirmAppointmentUseCase
+    val getDoctorAppointmentsUseCase: GetDoctorAppointmentsUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -58,6 +71,10 @@ class DefaultAppContainer : AppContainer {
 
     override val patientRepository: PatientRepository by lazy {
         PatientRepositoryImpl()
+    }
+
+    override val guardianRepository: com.example.biodontos.domain.repository.GuardianRepository by lazy {
+        com.example.biodontos.data.repository.GuardianRepositoryImpl()
     }
 
     override val odontogramRepository: OdontogramRepository by lazy {
@@ -90,6 +107,10 @@ class DefaultAppContainer : AppContainer {
 
     override val appointmentRepository: AppointmentRepository by lazy {
         AppointmentRepositoryImpl()
+    }
+
+    override val doctorRepository: DoctorRepository by lazy {
+        DoctorRepositoryImpl()
     }
 
     override val loginUseCase: LoginUseCase by lazy {
@@ -131,4 +152,33 @@ class DefaultAppContainer : AppContainer {
     override val updateToothUseCase: UpdateToothUseCase by lazy {
         UpdateToothUseCase(odontogramRepository)
     }
+
+    override val bookAppointmentUseCase: BookAppointmentUseCase by lazy {
+        BookAppointmentUseCase(appointmentRepository)
+    }
+
+    override val rescheduleAppointmentUseCase: RescheduleAppointmentUseCase by lazy {
+        RescheduleAppointmentUseCase(appointmentRepository)
+    }
+
+    override val cancelAppointmentUseCase: CancelAppointmentUseCase by lazy {
+        CancelAppointmentUseCase(appointmentRepository)
+    }
+
+    override val getPatientAppointmentsUseCase: GetPatientAppointmentsUseCase by lazy {
+        GetPatientAppointmentsUseCase(appointmentRepository)
+    }
+
+    override val getDoctorBusySlotsUseCase: GetDoctorBusySlotsUseCase by lazy {
+        GetDoctorBusySlotsUseCase(appointmentRepository)
+    }
+
+    override val confirmAppointmentUseCase: ConfirmAppointmentUseCase by lazy {
+        ConfirmAppointmentUseCase(appointmentRepository)
+    }
+
+    override val getDoctorAppointmentsUseCase: GetDoctorAppointmentsUseCase by lazy {
+        GetDoctorAppointmentsUseCase(appointmentRepository)
+    }
 }
+

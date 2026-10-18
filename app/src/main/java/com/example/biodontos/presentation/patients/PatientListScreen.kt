@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,12 +23,22 @@ fun PatientListScreen(
     onAddPatientClick: () -> Unit,
     onClinicalAdmissionClick: () -> Unit = onAddPatientClick,
     onPatientClick: (Patient) -> Unit,
+    onDoctorProfileClick: () -> Unit = {},
     onRetry: () -> Unit
 ) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Pacientes - Biodontos", fontWeight = FontWeight.Bold, color = BiodontosDark) }
+                title = { Text("Pacientes - Biodontos", fontWeight = FontWeight.Bold, color = BiodontosDark) },
+                actions = {
+                    IconButton(onClick = onDoctorProfileClick) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.Person,
+                            contentDescription = "Mi Perfil & Citas",
+                            tint = BiodontosDark
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {

@@ -11,6 +11,10 @@ fun Throwable?.toUserFriendlyMessage(defaultMessage: String = "Ocurrió un error
             "La contraseña es demasiado débil o no cumple con los requisitos mínimos."
         message.contains("nameerror") || message.contains("name error") -> 
             "Error en el nombre o formato de texto ingresado."
+        message.contains("idx_appointments_doctor_slot_unique") || message.contains("duplicate key") ->
+            "El horario seleccionado ya fue reservado por otro paciente. Por favor selecciona otra franja horaria."
+        message.contains("trg_validate_appointment_update") || message.contains("sólo el doctor asignado") || message.contains("solo el doctor asignado") ->
+            "Operación no autorizada para el estado actual de la cita."
         message.contains("network") || message.contains("connect") || message.contains("timeout") -> 
             "Error de conexión. Verifica tu acceso a internet."
         message.contains("unauthorized") || message.contains("jwt") || message.contains("session") -> 
@@ -18,3 +22,4 @@ fun Throwable?.toUserFriendlyMessage(defaultMessage: String = "Ocurrió un error
         else -> this?.message?.takeIf { it.isNotBlank() && !it.contains("exception", ignoreCase = true) } ?: defaultMessage
     }
 }
+
