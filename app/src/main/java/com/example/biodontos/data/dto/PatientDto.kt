@@ -23,6 +23,8 @@ data class PatientDto(
     val phone: String = "",
     val email: String? = null,
     val address: String? = null,
+    val locality: String? = null,
+    @SerialName("guardian_id") val guardianId: String? = null,
     @SerialName("guardian_relationship") val guardianRelationship: String? = null,
     @SerialName("guardian_first_name") val guardianFirstName: String? = null,
     @SerialName("guardian_last_name") val guardianLastName: String? = null,
@@ -47,7 +49,10 @@ data class PatientDto(
         email: String? = null,
         consentSigned: Boolean = false,
         address: String? = null,
-        birthDate: String? = null
+        birthDate: String? = null,
+        locality: String? = null,
+        guardianId: String? = null,
+        guardianRelationship: String? = null
     ) : this(
         id = id,
         userId = userId,
@@ -61,6 +66,9 @@ data class PatientDto(
         email = email,
         consentSigned = consentSigned,
         address = address,
+        locality = locality,
+        guardianId = guardianId,
+        guardianRelationship = guardianRelationship,
         birthDate = birthDate ?: ""
     )
 

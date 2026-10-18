@@ -23,7 +23,8 @@ class ClinicalAdmissionViewModel(
     private val evolutionRepository: EvolutionRepository,
     private val materialRepository: MaterialRepository,
     private val informedConsentRepository: InformedConsentRepository,
-    private val appointmentRepository: AppointmentRepository
+    private val appointmentRepository: AppointmentRepository,
+    private val guardianRepository: GuardianRepository = com.example.biodontos.data.repository.GuardianRepositoryImpl()
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ClinicalAdmissionState())
@@ -99,11 +100,31 @@ class ClinicalAdmissionViewModel(
             is ClinicalAdmissionEvent.UpdateAddress -> {
                 _state.update { it.copy(address = event.value) }
             }
+            is ClinicalAdmissionEvent.UpdateLocality -> {
+                _state.update { it.copy(locality = event.value) }
+            }
             is ClinicalAdmissionEvent.UpdateOccupation -> {
                 _state.update { it.copy(occupation = event.value) }
             }
             is ClinicalAdmissionEvent.UpdateMaritalStatus -> {
                 _state.update { it.copy(maritalStatus = event.value) }
+            }
+            is ClinicalAdmissionEvent.ToggleHasGuardian -> {
+                _state.update { it.copy(hasGuardian = event.value) }
+            }
+            is ClinicalAdmissionEvent.UpdateGuardianRelationship -> {
+                _state.update { it.copy(guardianRelationship = event.value) }
+            }
+            is ClinicalAdmissionEvent.UpdateGuardianLocality -> {
+                _state.update { it.copy(guardianLocality = event.value) }
+            }
+            is ClinicalAdmissionEvent.CopyAddressToGuardian -> {
+                _state.update {
+                    it.copy(
+                        guardianAddress = it.address,
+                        guardianLocality = it.locality
+                    )
+                }
             }
             is ClinicalAdmissionEvent.UpdateGuardian -> {
                 _state.update {
@@ -112,7 +133,8 @@ class ClinicalAdmissionViewModel(
                         guardianFirstName = event.firstName,
                         guardianLastName = event.lastName,
                         guardianPhone = event.phone,
-                        guardianAddress = event.address
+                        guardianAddress = event.address,
+                        guardianLocality = event.locality
                     )
                 }
             }
@@ -133,6 +155,53 @@ class ClinicalAdmissionViewModel(
                         allergiesDescription = event.description
                     )
                 }
+            }
+
+            // Consentimiento de Operatoria
+            is ClinicalAdmissionEvent.ToggleOperativeConsentDialog -> {
+                _state.update { it.copy(showOperativeConsentDialog = event.show) }
+            }
+            is ClinicalAdmissionEvent.UpdateOperativeConsentTreatment -> {
+                _state.update { it.copy(operativeConsentProposedTreatment = event.treatment) }
+            }
+            is ClinicalAdmissionEvent.UpdateOperativeConsentSigner -> {
+                _state.update {
+                    it.copy(
+                        operativeConsentSignerType = event.signerType,
+                        operativeConsentRepresentativeName = event.repName,
+                        operativeConsentRepresentativeId = event.repId
+                    )
+                }
+            }
+            is ClinicalAdmissionEvent.AddOperativeConsentProcedure -> {
+                _state.update { current ->
+                    val proc = InformedConsentProcedure(
+                        consentId = "",
+                        toothNumber = event.toothNumber,
+                        procedureDate = event.date
+                    )
+                    current.copy(operativeConsentProcedures = current.operativeConsentProcedures + proc)
+                }
+            }
+            is ClinicalAdmissionEvent.RemoveOperativeConsentProcedure -> {
+                _state.update { current ->
+                    val updated = current.operativeConsentProcedures.toMutableList()
+                    if (event.index in updated.indices) {
+                        updated.removeAt(event.index)
+                    }
+                    current.copy(operativeConsentProcedures = updated)
+                }
+            }
+            is ClinicalAdmissionEvent.ConfirmOperativeConsentSignatures -> {
+                _state.update {
+                    it.copy(
+                        operativeConsentPatientSignature = event.patientSig,
+                        operativeConsentDoctorSignature = event.doctorSig
+                    )
+                }
+            }
+            is ClinicalAdmissionEvent.SaveOperativeConsent -> {
+                saveOperativeConsent()
             }
 
             // Paso 2: Anamnesis
@@ -328,6 +397,25 @@ class ClinicalAdmissionViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             val effectivePatientId = s.patientId.ifBlank { Patient.generateIdFromDni(s.dniCedula) }
+
+            var resolvedGuardianId = s.guardianId
+            var resolvedGuardian: Guardian? = null
+            if (s.hasGuardian && s.guardianFirstName.isNotBlank()) {
+                val guardianToSave = Guardian(
+                    id = s.guardianId.orEmpty(),
+                    firstName = s.guardianFirstName.trim(),
+                    lastName = s.guardianLastName.trim(),
+                    phone = s.guardianPhone.trim(),
+                    address = s.guardianAddress.trim(),
+                    locality = s.guardianLocality.trim()
+                )
+                guardianRepository.saveGuardian(guardianToSave)
+                    .onSuccess { savedG ->
+                        resolvedGuardianId = savedG.id
+                        resolvedGuardian = savedG
+                    }
+            }
+
             val patient = Patient(
                 id = effectivePatientId,
                 dniCedula = s.dniCedula.trim(),
@@ -342,13 +430,16 @@ class ClinicalAdmissionViewModel(
                 phone = s.phone.trim(),
                 email = s.email.trim().ifBlank { null },
                 address = s.address.trim().ifBlank { null },
+                locality = s.locality.trim().ifBlank { null },
                 occupation = s.occupation.ifBlank { null },
                 maritalStatus = s.maritalStatus.ifBlank { null },
-                guardianRelationship = s.guardianRelationship.ifBlank { null },
-                guardianFirstName = s.guardianFirstName.ifBlank { null },
-                guardianLastName = s.guardianLastName.ifBlank { null },
-                guardianPhone = s.guardianPhone.ifBlank { null },
-                guardianAddress = s.guardianAddress.ifBlank { null },
+                guardianId = resolvedGuardianId,
+                guardianRelationship = if (s.hasGuardian) s.guardianRelationship.ifBlank { null } else null,
+                guardian = resolvedGuardian,
+                guardianFirstName = if (s.hasGuardian) s.guardianFirstName.ifBlank { null } else null,
+                guardianLastName = if (s.hasGuardian) s.guardianLastName.ifBlank { null } else null,
+                guardianPhone = if (s.hasGuardian) s.guardianPhone.ifBlank { null } else null,
+                guardianAddress = if (s.hasGuardian) s.guardianAddress.ifBlank { null } else null,
                 lastDentalVisit = s.lastDentalVisit.ifBlank { null },
                 consultationReason = s.consultationReason.ifBlank { null },
                 currentConsultationReason = s.currentConsultationReason.ifBlank { null },
@@ -563,6 +654,54 @@ class ClinicalAdmissionViewModel(
                     successMessage = "¡Proceso de ingreso clínico finalizado con éxito!"
                 )
             }
+        }
+    }
+
+    private fun saveOperativeConsent() {
+        val s = _state.value
+        val pid = s.patientId.ifBlank {
+            _state.update { it.copy(errorMessage = "Debe registrar la identificación del paciente antes de emitir el consentimiento.") }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            val consent = InformedConsent(
+                id = "",
+                patientId = pid,
+                doctorId = s.doctorId.ifBlank { "DOC-001" },
+                documentVersion = "2",
+                versionDate = "2019-06-01",
+                treatmentSummary = s.operativeConsentProposedTreatment.ifBlank { "Tratamiento de operatoria dental y obturaciones estéticas" },
+                representativeName = if (s.operativeConsentSignerType == "GUARDIAN") s.operativeConsentRepresentativeName.ifBlank { "${s.guardianFirstName} ${s.guardianLastName}".trim() } else null,
+                representativeId = if (s.operativeConsentSignerType == "GUARDIAN") s.operativeConsentRepresentativeId else null,
+                patientSignatureUrl = if (s.operativeConsentSignerType == "PATIENT") s.operativeConsentPatientSignature else null,
+                guardianSignatureUrl = if (s.operativeConsentSignerType == "GUARDIAN") s.operativeConsentPatientSignature else null,
+                doctorSignatureUrl = s.operativeConsentDoctorSignature,
+                doctorLicenseNumber = s.doctorLicense,
+                signedAt = LocalDate.now().toString(),
+                status = "SIGNED",
+                procedures = s.operativeConsentProcedures
+            )
+
+            informedConsentRepository.saveConsent(consent)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            showOperativeConsentDialog = false,
+                            operativeConsentSaved = true,
+                            successMessage = "Consentimiento de operatoria guardado y firmado correctamente"
+                        )
+                    }
+                }
+                .onFailure { err ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = err.toUserFriendlyMessage("Error al guardar consentimiento de operatoria")
+                        )
+                    }
+                }
         }
     }
 }

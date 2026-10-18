@@ -39,19 +39,35 @@ data class ClinicalAdmissionState(
     val phone: String = "",
     val email: String = "",
     val address: String = "",
+    val locality: String = "",
     val occupation: String = "",
     val maritalStatus: String = "Soltero(a)",
+    // Acudiente (guardians)
+    val hasGuardian: Boolean = false,
+    val guardianId: String? = null,
     val guardianRelationship: String = "",
     val guardianFirstName: String = "",
     val guardianLastName: String = "",
     val guardianPhone: String = "",
     val guardianAddress: String = "",
+    val guardianLocality: String = "",
     val lastDentalVisit: String = "",
     val consultationReason: String = "",
     val currentConsultationReason: String = "",
     val illnessHistory: String = "",
     val hasCriticalAllergies: Boolean = false,
     val allergiesDescription: String = "",
+
+    // --- CONSENTIMIENTO INFORMADO DE OPERATORIA (Modal Especializado) ---
+    val showOperativeConsentDialog: Boolean = false,
+    val operativeConsentProposedTreatment: String = "",
+    val operativeConsentSignerType: String = "PATIENT", // "PATIENT" o "GUARDIAN"
+    val operativeConsentRepresentativeName: String = "",
+    val operativeConsentRepresentativeId: String = "",
+    val operativeConsentPatientSignature: String = "",
+    val operativeConsentDoctorSignature: String = "",
+    val operativeConsentProcedures: List<com.example.biodontos.domain.model.InformedConsentProcedure> = emptyList(),
+    val operativeConsentSaved: Boolean = false,
 
     // --- PASO 2: Anamnesis (20 Preguntas) ---
     val tratamientoMedicoActual: Boolean = false,
@@ -135,5 +151,14 @@ data class ClinicalAdmissionState(
                 16, 55, 54, 53, 52, 11, 21, 62, 63, 64, 65, 26,
                 46, 85, 84, 83, 82, 41, 31, 72, 73, 74, 75, 36
             )
+        }
+
+    val isMinor: Boolean
+        get() = try {
+            val date = java.time.LocalDate.parse(birthDate)
+            val years = java.time.Period.between(date, java.time.LocalDate.now()).years
+            years < 18
+        } catch (_: Exception) {
+            false
         }
 }
