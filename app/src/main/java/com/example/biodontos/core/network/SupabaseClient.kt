@@ -25,5 +25,10 @@ object SupabaseClient {
         install(Postgrest)
         install(Auth)
         install(Realtime)
+
+        defaultSerializer = KotlinXSerializer(Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+        })
     }
 }
