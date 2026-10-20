@@ -18,12 +18,15 @@ data class Patient(
     val phone: String = "",
     val email: String? = null,
     val address: String? = null,
-    // Acudiente / Representante
+    val locality: String? = null,
+    // Acudiente / Representante (Relacional 1:N)
+    val guardianId: String? = null,
     val guardianRelationship: String? = null,
-    val guardianFirstName: String? = null,
-    val guardianLastName: String? = null,
-    val guardianPhone: String? = null,
-    val guardianAddress: String? = null,
+    val guardian: Guardian? = null,
+    val guardianFirstName: String? = guardian?.firstName,
+    val guardianLastName: String? = guardian?.lastName,
+    val guardianPhone: String? = guardian?.phone,
+    val guardianAddress: String? = guardian?.address,
     // Antecedentes
     val lastDentalVisit: String? = null,
     val consultationReason: String? = null,

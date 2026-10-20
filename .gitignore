@@ -13,7 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+.artifacts
 .artifacts/
 /.artifacts/
+.kotlin
 .kotlin/
 .idea/deviceManager.xml

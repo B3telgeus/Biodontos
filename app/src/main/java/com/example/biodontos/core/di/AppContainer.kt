@@ -1,10 +1,14 @@
 package com.example.biodontos.core.di
 
+import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.data.repository.AnamnesisRepositoryImpl
 import com.example.biodontos.data.repository.AppointmentRepositoryImpl
 import com.example.biodontos.data.repository.AuthRepositoryImpl
+import com.example.biodontos.data.repository.BillingRepositoryImpl
 import com.example.biodontos.data.repository.ClinicalRecordRepositoryImpl
+import com.example.biodontos.data.repository.DoctorRepositoryImpl
 import com.example.biodontos.data.repository.EvolutionRepositoryImpl
+import com.example.biodontos.data.repository.GuardianRepositoryImpl
 import com.example.biodontos.data.repository.InformedConsentRepositoryImpl
 import com.example.biodontos.data.repository.MaterialRepositoryImpl
 import com.example.biodontos.data.repository.OdontogramRepositoryImpl
@@ -13,38 +17,44 @@ import com.example.biodontos.data.repository.PeriodontalRepositoryImpl
 import com.example.biodontos.domain.repository.AnamnesisRepository
 import com.example.biodontos.domain.repository.AppointmentRepository
 import com.example.biodontos.domain.repository.AuthRepository
+import com.example.biodontos.domain.repository.BillingRepository
 import com.example.biodontos.domain.repository.ClinicalRecordRepository
+import com.example.biodontos.domain.repository.DoctorRepository
 import com.example.biodontos.domain.repository.EvolutionRepository
+import com.example.biodontos.domain.repository.GuardianRepository
 import com.example.biodontos.domain.repository.InformedConsentRepository
 import com.example.biodontos.domain.repository.MaterialRepository
 import com.example.biodontos.domain.repository.OdontogramRepository
 import com.example.biodontos.domain.repository.PatientRepository
 import com.example.biodontos.domain.repository.PeriodontalRepository
-import com.example.biodontos.data.repository.BillingRepositoryImpl
-import com.example.biodontos.data.repository.DoctorRepositoryImpl
-import com.example.biodontos.domain.repository.BillingRepository
-import com.example.biodontos.domain.repository.DoctorRepository
-import com.example.biodontos.domain.scheduling.ClinicClock
-import com.example.biodontos.core.util.SystemClinicClock
-import com.example.biodontos.domain.usecase.auth.*
 import com.example.biodontos.domain.scheduling.AppointmentModificationPolicy
+import com.example.biodontos.domain.scheduling.ClinicClock
+import com.example.biodontos.domain.usecase.appointment.ConfirmAppointmentUseCase
+import com.example.biodontos.domain.usecase.appointment.GetDoctorBusySlotsUseCase
+import com.example.biodontos.domain.usecase.appointment.GetPatientAppointmentsUseCase
 import com.example.biodontos.domain.usecase.appointments.BookAppointmentUseCase
 import com.example.biodontos.domain.usecase.appointments.CancelAppointmentUseCase
 import com.example.biodontos.domain.usecase.appointments.GetAvailableSlotsUseCase
 import com.example.biodontos.domain.usecase.appointments.GetDoctorAppointmentsUseCase
 import com.example.biodontos.domain.usecase.appointments.RescheduleAppointmentUseCase
 import com.example.biodontos.domain.usecase.appointments.ToggleAppointmentConfirmationUseCase
+import com.example.biodontos.domain.usecase.auth.GetCurrentSessionUseCase
+import com.example.biodontos.domain.usecase.auth.LoginUseCase
+import com.example.biodontos.domain.usecase.auth.LogoutUseCase
+import com.example.biodontos.domain.usecase.auth.RegisterDoctorUseCase
+import com.example.biodontos.domain.usecase.auth.RegisterPatientAuthUseCase
+import com.example.biodontos.domain.usecase.auth.ResetPasswordUseCase
+import com.example.biodontos.domain.usecase.billing.CreateTreatmentUseCase
+import com.example.biodontos.domain.usecase.billing.GetDoctorRecentPaymentsUseCase
+import com.example.biodontos.domain.usecase.billing.GetPatientTreatmentsUseCase
+import com.example.biodontos.domain.usecase.billing.GetPaymentSummaryUseCase
+import com.example.biodontos.domain.usecase.billing.RecordPaymentUseCase
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
 import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
 import com.example.biodontos.domain.usecase.doctor.SaveDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
-import com.example.biodontos.domain.usecase.billing.CreateTreatmentUseCase
-import com.example.biodontos.domain.usecase.billing.GetDoctorRecentPaymentsUseCase
-import com.example.biodontos.domain.usecase.billing.GetPatientTreatmentsUseCase
-import com.example.biodontos.domain.usecase.billing.GetPaymentSummaryUseCase
-import com.example.biodontos.domain.usecase.billing.RecordPaymentUseCase
 import com.example.biodontos.domain.usecase.odontogram.GetOdontogramUseCase
 import com.example.biodontos.domain.usecase.odontogram.UpdateToothUseCase
 import com.example.biodontos.domain.usecase.patient.GetCurrentPatientUseCase
@@ -54,6 +64,7 @@ import com.example.biodontos.domain.usecase.patients.SavePatientUseCase
 interface AppContainer {
     val authRepository: AuthRepository
     val patientRepository: PatientRepository
+    val guardianRepository: GuardianRepository
     val odontogramRepository: OdontogramRepository
     val clinicalRecordRepository: ClinicalRecordRepository
     val anamnesisRepository: AnamnesisRepository
@@ -98,6 +109,10 @@ interface AppContainer {
     val createTreatmentUseCase: CreateTreatmentUseCase
     val getDoctorRecentPaymentsUseCase: GetDoctorRecentPaymentsUseCase
     val getPatientTreatmentsUseCase: GetPatientTreatmentsUseCase
+
+    val getPatientAppointmentsUseCase: GetPatientAppointmentsUseCase
+    val getDoctorBusySlotsUseCase: GetDoctorBusySlotsUseCase
+    val confirmAppointmentUseCase: ConfirmAppointmentUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -107,6 +122,10 @@ class DefaultAppContainer : AppContainer {
 
     override val patientRepository: PatientRepository by lazy {
         PatientRepositoryImpl()
+    }
+
+    override val guardianRepository: GuardianRepository by lazy {
+        GuardianRepositoryImpl()
     }
 
     override val odontogramRepository: OdontogramRepository by lazy {
@@ -267,5 +286,17 @@ class DefaultAppContainer : AppContainer {
 
     override val getPatientTreatmentsUseCase: GetPatientTreatmentsUseCase by lazy {
         GetPatientTreatmentsUseCase(billingRepository)
+    }
+
+    override val getPatientAppointmentsUseCase: GetPatientAppointmentsUseCase by lazy {
+        GetPatientAppointmentsUseCase(appointmentRepository)
+    }
+
+    override val getDoctorBusySlotsUseCase: GetDoctorBusySlotsUseCase by lazy {
+        GetDoctorBusySlotsUseCase(appointmentRepository)
+    }
+
+    override val confirmAppointmentUseCase: ConfirmAppointmentUseCase by lazy {
+        ConfirmAppointmentUseCase(appointmentRepository)
     }
 }

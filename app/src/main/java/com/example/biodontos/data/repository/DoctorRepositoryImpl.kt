@@ -29,7 +29,14 @@ class DoctorRepositoryImpl : DoctorRepository {
     override suspend fun getDoctorById(id: String): Result<Doctor?> {
         return try {
             val dto = SupabaseClient.client.from("doctors")
-                .select { filter { eq("id", id) } }
+                .select {
+                    filter {
+                        or {
+                            eq("id", id)
+                            eq("user_id", id)
+                        }
+                    }
+                }
                 .decodeSingleOrNull<DoctorDto>()
             Result.success(dto?.toDomain())
         } catch (e: Exception) {

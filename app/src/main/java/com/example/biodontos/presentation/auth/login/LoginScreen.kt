@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -42,6 +43,9 @@ fun LoginScreen(
     onBackClick: () -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
+    val configuration = LocalConfiguration.current
+    val isTabletLandscape = configuration.screenWidthDp > 700
+
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
             Color(0xFFFFFFFF),
@@ -50,12 +54,11 @@ fun LoginScreen(
         )
     )
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundBrush)
     ) {
-        val isTabletLandscape = maxWidth > 700.dp
 
         IconButton(
             onClick = onBackClick,

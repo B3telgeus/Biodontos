@@ -76,12 +76,14 @@ class AuthRepositoryImpl : AuthRepository {
                 val trimmedLastName = lastName.trim()
                 val firstLastName = trimmedLastName.split(" ").firstOrNull() ?: trimmedLastName
                 val secondLastName = trimmedLastName.split(" ").drop(1).joinToString(" ")
+
                 SupabaseClient.client.from("patients").upsert(
                     PatientDto(
                         id = patientId,
                         userId = user?.id,
                         dniCedula = dniCedula.trim(),
                         firstName = firstName.trim(),
+                        lastNameCol = trimmedLastName,
                         firstLastName = firstLastName,
                         secondLastName = secondLastName,
                         phone = phone?.trim().orEmpty(),

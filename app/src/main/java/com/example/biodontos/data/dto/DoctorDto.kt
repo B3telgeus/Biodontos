@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DoctorDto(
-    val id: String,
+    val id: String = "",
     @SerialName("user_id") val userId: String? = null,
     @SerialName("first_name") val firstName: String,
     @SerialName("last_name") val lastName: String,
@@ -20,7 +20,20 @@ data class DoctorDto(
 )
 
 fun DoctorDto.toDomain(): Doctor = Doctor(
-    id = DoctorId(id),
+    id = DoctorId(id.ifEmpty { userId ?: "" }),
+    userId = userId,
+    firstName = firstName,
+    lastName = lastName,
+    specialty = specialty,
+    licenseNumber = licenseNumber,
+    email = email,
+    phone = phone,
+    bio = bio,
+    photoUrl = photoUrl
+)
+
+fun Doctor.toDto(): DoctorDto = DoctorDto(
+    id = id.value,
     userId = userId,
     firstName = firstName,
     lastName = lastName,

@@ -9,14 +9,17 @@ data class Doctor(
     val firstName: String,
     val lastName: String,
     val specialty: String,
-    val licenseNumber: String,
-    val email: String,
+    val licenseNumber: String = "",
+    val email: String = "",
     val phone: String? = null,
     val bio: String? = null,
     val photoUrl: String? = null
 ) {
     val displayName: String
         get() = "Dr. $firstName $lastName".trim()
+
+    val fullName: String
+        get() = "Dr(a). $firstName $lastName".trim()
 }
 
 data class WeeklyAvailability(

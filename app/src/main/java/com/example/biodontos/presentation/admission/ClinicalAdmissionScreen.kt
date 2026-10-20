@@ -16,6 +16,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.biodontos.core.designsystem.*
 import com.example.biodontos.domain.model.*
 import com.example.biodontos.presentation.components.SignaturePad
@@ -41,12 +44,35 @@ fun ClinicalAdmissionScreen(
     onNavigateBack: () -> Unit,
     onAdmissionFinished: () -> Unit
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.isFinished) {
         if (state.isFinished) {
             onAdmissionFinished()
         }
+    }
+
+    if (state.showOperativeConsentDialog) {
+        OperativeConsentDialog(
+            state = state,
+            onDismiss = { viewModel.onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(false)) },
+            onUpdateTreatment = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentTreatment(it)) },
+            onUpdateSigner = { signerType, repName, repId ->
+                viewModel.onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentSigner(signerType, repName, repId))
+            },
+            onAddProcedure = { tooth, date ->
+                viewModel.onEvent(ClinicalAdmissionEvent.AddOperativeConsentProcedure(tooth, date))
+            },
+            onRemoveProcedure = { index ->
+                viewModel.onEvent(ClinicalAdmissionEvent.RemoveOperativeConsentProcedure(index))
+            },
+            onConfirmSignatures = { pSig, dSig ->
+                viewModel.onEvent(ClinicalAdmissionEvent.ConfirmOperativeConsentSignatures(pSig, dSig))
+            },
+            onSaveConsent = {
+                viewModel.onEvent(ClinicalAdmissionEvent.SaveOperativeConsent)
+            }
+        )
     }
 
     Scaffold(
@@ -74,6 +100,21 @@ fun ClinicalAdmissionScreen(
                             contentDescription = "Volver",
                             tint = BiodontosDark
                         )
+                    }
+                },
+                actions = {
+                    FilledTonalButton(
+                        onClick = { viewModel.onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true)) },
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = Zafiro.copy(alpha = 0.12f),
+                            contentColor = Zafiro
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Consentimiento Operatoria", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BiodontosWhite)
@@ -433,14 +474,216 @@ private fun Step1IdentificationContent(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            OutlinedTextField(
-                value = state.address,
-                onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateAddress(it)) },
-                label = { Text("Dirección de Residencia") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = biodontosTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = state.address,
+                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateAddress(it)) },
+                    label = { Text("Dirección de Residencia") },
+                    modifier = Modifier.weight(1.3f),
+                    colors = biodontosTextFieldColors(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                OutlinedTextField(
+                    value = state.locality,
+                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateLocality(it)) },
+                    label = { Text("Localidad / Barrio") },
+                    placeholder = { Text("Ej: Suba, Kennedy...") },
+                    modifier = Modifier.weight(1f),
+                    colors = biodontosTextFieldColors(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+
+            // Alerta visual médica si el paciente es menor de 18 años
+            if (state.isMinor) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFFFFBEB),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFDE68A)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = Color(0xFFD97706),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Paciente menor de edad: se sugiere registrar acudiente o representante legal para fines médico-legales y consentimiento informado.",
+                            fontSize = 12.sp,
+                            color = Color(0xFF92400E)
+                        )
+                    }
+                }
+            }
+
+            // Tarjeta de Acudiente / Acompañante
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = SlateLight.copy(alpha = 0.45f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, SlateLight),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = BiodontosDark,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Acudiente o Acompañante",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = BiodontosDark
+                            )
+                        }
+                        Switch(
+                            checked = state.hasGuardian,
+                            onCheckedChange = { viewModel.onEvent(ClinicalAdmissionEvent.ToggleHasGuardian(it)) }
+                        )
+                    }
+
+                    AnimatedVisibility(visible = state.hasGuardian) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            OutlinedTextField(
+                                value = state.guardianRelationship,
+                                onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateGuardianRelationship(it)) },
+                                label = { Text("Parentesco o Relación *") },
+                                placeholder = { Text("Ej: Madre, Padre, Tutor Legal...") },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = biodontosTextFieldColors(),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = state.guardianFirstName,
+                                    onValueChange = { firstName ->
+                                        viewModel.onEvent(
+                                            ClinicalAdmissionEvent.UpdateGuardian(
+                                                relationship = state.guardianRelationship,
+                                                firstName = firstName,
+                                                lastName = state.guardianLastName,
+                                                phone = state.guardianPhone,
+                                                address = state.guardianAddress,
+                                                locality = state.guardianLocality
+                                            )
+                                        )
+                                    },
+                                    label = { Text("Nombres Acudiente *") },
+                                    modifier = Modifier.weight(1f),
+                                    colors = biodontosTextFieldColors(),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                OutlinedTextField(
+                                    value = state.guardianLastName,
+                                    onValueChange = { lastName ->
+                                        viewModel.onEvent(
+                                            ClinicalAdmissionEvent.UpdateGuardian(
+                                                relationship = state.guardianRelationship,
+                                                firstName = state.guardianFirstName,
+                                                lastName = lastName,
+                                                phone = state.guardianPhone,
+                                                address = state.guardianAddress,
+                                                locality = state.guardianLocality
+                                            )
+                                        )
+                                    },
+                                    label = { Text("Apellidos Acudiente") },
+                                    modifier = Modifier.weight(1f),
+                                    colors = biodontosTextFieldColors(),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            }
+
+                            OutlinedTextField(
+                                value = state.guardianPhone,
+                                onValueChange = { phone ->
+                                    viewModel.onEvent(
+                                        ClinicalAdmissionEvent.UpdateGuardian(
+                                            relationship = state.guardianRelationship,
+                                            firstName = state.guardianFirstName,
+                                            lastName = state.guardianLastName,
+                                            phone = phone,
+                                            address = state.guardianAddress,
+                                            locality = state.guardianLocality
+                                        )
+                                    )
+                                },
+                                label = { Text("Teléfono de Contacto del Acudiente") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = biodontosTextFieldColors(),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Dirección de residencia del acudiente",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = BiodontosGreyText
+                                )
+                                TextButton(onClick = { viewModel.onEvent(ClinicalAdmissionEvent.CopyAddressToGuardian) }) {
+                                    Text("📋 Misma del paciente", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = state.guardianAddress,
+                                    onValueChange = { addr ->
+                                        viewModel.onEvent(
+                                            ClinicalAdmissionEvent.UpdateGuardian(
+                                                relationship = state.guardianRelationship,
+                                                firstName = state.guardianFirstName,
+                                                lastName = state.guardianLastName,
+                                                phone = state.guardianPhone,
+                                                address = addr,
+                                                locality = state.guardianLocality
+                                            )
+                                        )
+                                    },
+                                    label = { Text("Dirección Acudiente") },
+                                    modifier = Modifier.weight(1.3f),
+                                    colors = biodontosTextFieldColors(),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                OutlinedTextField(
+                                    value = state.guardianLocality,
+                                    onValueChange = { loc ->
+                                        viewModel.onEvent(ClinicalAdmissionEvent.UpdateGuardianLocality(loc))
+                                    },
+                                    label = { Text("Localidad Acudiente") },
+                                    modifier = Modifier.weight(1f),
+                                    colors = biodontosTextFieldColors(),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             // Motivo de Consulta
             Text(
@@ -933,6 +1176,17 @@ private fun Step5TreatmentConsentContent(
                         lineHeight = 16.sp
                     )
                 }
+            }
+
+            OutlinedButton(
+                onClick = { viewModel.onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true)) },
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Zafiro),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Emitir Consentimiento Detallado de Operatoria (Por Diente / Recomendaciones)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
 
             // Pad de Firma

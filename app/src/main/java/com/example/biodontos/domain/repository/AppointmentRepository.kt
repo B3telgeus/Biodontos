@@ -1,6 +1,7 @@
 package com.example.biodontos.domain.repository
 
 import com.example.biodontos.domain.model.Appointment
+import java.time.LocalDateTime
 
 interface AppointmentRepository {
     suspend fun updateConfirmationStatus(appointmentId: String, isConfirmed: Boolean): Result<Unit>
@@ -8,15 +9,28 @@ interface AppointmentRepository {
     suspend fun getAppointmentsByPatientId(patientId: String): Result<List<Appointment>>
     suspend fun getAppointmentsByDoctorId(doctorId: String): Result<List<Appointment>>
     suspend fun getAppointmentById(appointmentId: String): Result<Appointment?>
+
     suspend fun getDoctorBusySlots(
         doctorId: String,
-        from: java.time.LocalDateTime,
-        to: java.time.LocalDateTime
-    ): Result<List<ClosedRange<java.time.LocalDateTime>>>
+        from: LocalDateTime,
+        to: LocalDateTime
+    ): Result<List<ClosedRange<LocalDateTime>>>
+
+    suspend fun getDoctorBusySlots(doctorId: String, date: String): Result<List<String>>
+
+    suspend fun getAppointmentsByDoctorAndDate(doctorId: String, date: String): Result<List<Appointment>>
+
     suspend fun rescheduleAppointment(
         appointmentId: String,
-        newStartTime: java.time.LocalDateTime,
-        newEndTime: java.time.LocalDateTime
+        newStartTime: LocalDateTime,
+        newEndTime: LocalDateTime
     ): Result<Unit>
-    suspend fun cancelAppointment(appointmentId: String): Result<Unit>
+
+    suspend fun rescheduleAppointment(
+        appointmentId: String,
+        newStartTime: String,
+        newEndTime: String? = null
+    ): Result<Unit>
+
+    suspend fun cancelAppointment(appointmentId: String, reason: String? = null): Result<Unit>
 }

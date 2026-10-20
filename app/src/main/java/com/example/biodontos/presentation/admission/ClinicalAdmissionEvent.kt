@@ -23,14 +23,20 @@ sealed interface ClinicalAdmissionEvent {
     data class UpdatePhone(val value: String) : ClinicalAdmissionEvent
     data class UpdateEmail(val value: String) : ClinicalAdmissionEvent
     data class UpdateAddress(val value: String) : ClinicalAdmissionEvent
+    data class UpdateLocality(val value: String) : ClinicalAdmissionEvent
     data class UpdateOccupation(val value: String) : ClinicalAdmissionEvent
     data class UpdateMaritalStatus(val value: String) : ClinicalAdmissionEvent
+    data class ToggleHasGuardian(val value: Boolean) : ClinicalAdmissionEvent
+    data class UpdateGuardianRelationship(val value: String) : ClinicalAdmissionEvent
+    data class UpdateGuardianLocality(val value: String) : ClinicalAdmissionEvent
+    data object CopyAddressToGuardian : ClinicalAdmissionEvent
     data class UpdateGuardian(
         val relationship: String,
         val firstName: String,
         val lastName: String,
         val phone: String,
-        val address: String
+        val address: String,
+        val locality: String = ""
     ) : ClinicalAdmissionEvent
     data class UpdateAntecedents(
         val lastVisit: String,
@@ -39,6 +45,15 @@ sealed interface ClinicalAdmissionEvent {
         val illnessHistory: String
     ) : ClinicalAdmissionEvent
     data class UpdateAllergies(val hasAllergies: Boolean, val description: String) : ClinicalAdmissionEvent
+
+    // Consentimiento de Operatoria (Modal Especializado)
+    data class ToggleOperativeConsentDialog(val show: Boolean) : ClinicalAdmissionEvent
+    data class UpdateOperativeConsentTreatment(val treatment: String) : ClinicalAdmissionEvent
+    data class UpdateOperativeConsentSigner(val signerType: String, val repName: String, val repId: String) : ClinicalAdmissionEvent
+    data class AddOperativeConsentProcedure(val toothNumber: Int, val date: String) : ClinicalAdmissionEvent
+    data class RemoveOperativeConsentProcedure(val index: Int) : ClinicalAdmissionEvent
+    data class ConfirmOperativeConsentSignatures(val patientSig: String, val doctorSig: String) : ClinicalAdmissionEvent
+    data object SaveOperativeConsent : ClinicalAdmissionEvent
 
     // Paso 2: Anamnesis
     data class ToggleAnamnesisQuestion(val questionKey: String, val value: Boolean) : ClinicalAdmissionEvent

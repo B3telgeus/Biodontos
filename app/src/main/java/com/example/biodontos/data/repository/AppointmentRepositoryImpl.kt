@@ -7,7 +7,29 @@ import com.example.biodontos.data.mapper.toDto
 import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.repository.AppointmentRepository
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.rpc
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+@Serializable
+private data class BusySlotDto(
+    @SerialName("start_time")
+    val startTime: String,
+    @SerialName("end_time")
+    val endTime: String? = null
+)
+
+@Serializable
+private data class BusySlotsParams(
+    @SerialName("p_doctor_id")
+    val doctorId: String,
+    @SerialName("p_date")
+    val date: String
+)
 
 class AppointmentRepositoryImpl : AppointmentRepository {
 
@@ -77,14 +99,33 @@ class AppointmentRepositoryImpl : AppointmentRepository {
         }
     }
 
+    override suspend fun getAppointmentsByDoctorAndDate(doctorId: String, date: String): Result<List<Appointment>> {
+        return try {
+            val list = SupabaseClient.client.from("appointments")
+                .select {
+                    filter {
+                        eq("doctor_id", doctorId)
+                        neq("status", "CANCELLED")
+                    }
+                }
+                .decodeList<AppointmentDto>()
+            val filtered = list
+                .map { it.toDomain() }
+                .filter { it.startTime.startsWith(date) }
+            Result.success(filtered)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getDoctorBusySlots(
         doctorId: String,
-        from: java.time.LocalDateTime,
-        to: java.time.LocalDateTime
-    ): Result<List<ClosedRange<java.time.LocalDateTime>>> {
+        from: LocalDateTime,
+        to: LocalDateTime
+    ): Result<List<ClosedRange<LocalDateTime>>> {
         return try {
-            val fromIso = from.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            val toIso = to.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            val fromIso = from.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            val toIso = to.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             val list = SupabaseClient.client.from("appointments")
                 .select {
                     filter {
@@ -106,14 +147,42 @@ class AppointmentRepositoryImpl : AppointmentRepository {
         }
     }
 
+    override suspend fun getDoctorBusySlots(doctorId: String, date: String): Result<List<String>> {
+        return try {
+            val list = SupabaseClient.client.postgrest.rpc(
+                "get_doctor_busy_slots",
+                BusySlotsParams(doctorId, date)
+            ).decodeList<BusySlotDto>()
+            Result.success(list.map { it.startTime })
+        } catch (e: Exception) {
+            // Fallback defensivo si la migración de RPC aún no ha sido ejecutada en el backend
+            try {
+                val list = SupabaseClient.client.from("appointments")
+                    .select {
+                        filter {
+                            eq("doctor_id", doctorId)
+                            neq("status", "CANCELLED")
+                        }
+                    }
+                    .decodeList<AppointmentDto>()
+                val filtered = list
+                    .filter { it.startTime.startsWith(date) }
+                    .map { it.startTime }
+                Result.success(filtered)
+            } catch (_: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
     override suspend fun rescheduleAppointment(
         appointmentId: String,
-        newStartTime: java.time.LocalDateTime,
-        newEndTime: java.time.LocalDateTime
+        newStartTime: LocalDateTime,
+        newEndTime: LocalDateTime
     ): Result<Unit> {
         return try {
-            val startIso = newStartTime.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            val endIso = newEndTime.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            val startIso = newStartTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            val endIso = newEndTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             SupabaseClient.client.from("appointments").update(
                 {
                     set("start_time", startIso)
@@ -130,12 +199,39 @@ class AppointmentRepositoryImpl : AppointmentRepository {
         }
     }
 
-    override suspend fun cancelAppointment(appointmentId: String): Result<Unit> {
+    override suspend fun rescheduleAppointment(
+        appointmentId: String,
+        newStartTime: String,
+        newEndTime: String?
+    ): Result<Unit> {
+        return try {
+            SupabaseClient.client.from("appointments").update(
+                {
+                    set("start_time", newStartTime)
+                    if (newEndTime != null) {
+                        set("end_time", newEndTime)
+                    }
+                    set("status", "SCHEDULED")
+                    set("confirmation_status", false)
+                }
+            ) {
+                filter { eq("id", appointmentId) }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun cancelAppointment(appointmentId: String, reason: String?): Result<Unit> {
         return try {
             SupabaseClient.client.from("appointments").update(
                 {
                     set("status", "CANCELLED")
                     set("confirmation_status", false)
+                    if (!reason.isNullOrBlank()) {
+                        set("reason", reason)
+                    }
                 }
             ) {
                 filter { eq("id", appointmentId) }

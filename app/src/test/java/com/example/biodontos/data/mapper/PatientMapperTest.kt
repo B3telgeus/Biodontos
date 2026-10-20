@@ -131,4 +131,28 @@ class PatientMapperTest {
         val mappedDto = domain.toDto()
         assertEquals("user-uuid-999", mappedDto.userId)
     }
+
+    @Test
+    fun patientMapperMapsLocalityAndGuardianIdCorrectly() {
+        val dto = PatientDto(
+            id = "pat-55",
+            dniCedula = "80999000",
+            firstName = "Andres",
+            lastName = "Perez",
+            address = "Av 68 # 24-00",
+            locality = "Kennedy",
+            guardianId = "g-uuid-77",
+            guardianRelationship = "Madre"
+        )
+
+        val domain = dto.toDomain()
+        assertEquals("Kennedy", domain.locality)
+        assertEquals("g-uuid-77", domain.guardianId)
+        assertEquals("Madre", domain.guardianRelationship)
+
+        val mappedDto = domain.toDto()
+        assertEquals("Kennedy", mappedDto.locality)
+        assertEquals("g-uuid-77", mappedDto.guardianId)
+        assertEquals("Madre", mappedDto.guardianRelationship)
+    }
 }

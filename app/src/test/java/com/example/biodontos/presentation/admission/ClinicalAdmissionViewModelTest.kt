@@ -27,6 +27,7 @@ class ClinicalAdmissionViewModelTest {
     private val materialRepository: MaterialRepository = mockk(relaxed = true)
     private val informedConsentRepository: InformedConsentRepository = mockk(relaxed = true)
     private val appointmentRepository: AppointmentRepository = mockk(relaxed = true)
+    private val guardianRepository: GuardianRepository = mockk(relaxed = true)
 
     private lateinit var viewModel: ClinicalAdmissionViewModel
 
@@ -54,7 +55,8 @@ class ClinicalAdmissionViewModelTest {
             evolutionRepository = evolutionRepository,
             materialRepository = materialRepository,
             informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository
+            appointmentRepository = appointmentRepository,
+            guardianRepository = guardianRepository
         )
     }
 
@@ -209,6 +211,7 @@ class ClinicalAdmissionViewModelTest {
             materialRepository = materialRepository,
             informedConsentRepository = informedConsentRepository,
             appointmentRepository = appointmentRepository,
+            guardianRepository = guardianRepository,
             initialPatientId = "pat-999"
         )
 
@@ -222,5 +225,102 @@ class ClinicalAdmissionViewModelTest {
         assertTrue(s.alergias)
         assertTrue(s.diabetes)
         assertFalse(s.isLoading)
+    }
+
+    @Test
+    fun `Step 1 saves guardian and associates guardian_id to patient when hasGuardian is true`() = runTest {
+        val savedGuardian = Guardian(
+            id = "g-uuid-999",
+            firstName = "Elena",
+            lastName = "Suarez",
+            phone = "3151112233",
+            address = "Calle 80 # 10-20",
+            locality = "Engativá"
+        )
+        coEvery { guardianRepository.saveGuardian(any()) } returns Result.success(savedGuardian)
+
+        var capturedPatient: Patient? = null
+        coEvery { patientRepository.createOrUpdatePatient(any()) } answers {
+            capturedPatient = firstArg()
+            Result.success(requireNotNull(capturedPatient) { "capturedPatient is null" })
+        }
+        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(
+            ClinicalRecord(id = "rec-1", patientId = "pat-1")
+        )
+
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateDni("1050607080"))
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Mateo"))
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Gomez"))
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateAddress("Calle 80 # 10-20"))
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateLocality("Engativá"))
+        viewModel.onEvent(ClinicalAdmissionEvent.ToggleHasGuardian(true))
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateGuardianRelationship("Madre"))
+        viewModel.onEvent(
+            ClinicalAdmissionEvent.UpdateGuardian(
+                relationship = "Madre",
+                firstName = "Elena",
+                lastName = "Suarez",
+                phone = "3151112233",
+                address = "Calle 80 # 10-20",
+                locality = "Engativá"
+            )
+        )
+
+        // Advance step 1
+        viewModel.onEvent(ClinicalAdmissionEvent.NextStep)
+
+        assertEquals(2, viewModel.state.value.currentStep)
+        assertNotNull(capturedPatient)
+        assertEquals("Engativá", capturedPatient?.locality)
+        assertEquals("g-uuid-999", capturedPatient?.guardianId)
+        assertEquals("Madre", capturedPatient?.guardianRelationship)
+        assertEquals("Elena", capturedPatient?.guardianFirstName)
+    }
+
+    @Test
+    fun `isMinor is true when patient birthDate indicates less than 18 years`() {
+        // Adult born in 1990
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateBirthDate("1990-01-01"))
+        assertFalse(viewModel.state.value.isMinor)
+
+        // Minor born in 2015
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateBirthDate("2015-05-20"))
+        assertTrue(viewModel.state.value.isMinor)
+    }
+
+    @Test
+    fun `Operative consent saves informed consent and procedures correctly`() = runTest {
+        coEvery { informedConsentRepository.saveConsent(any()) } returns Result.success(
+            InformedConsent(
+                id = "consent-123",
+                patientId = "pat-100",
+                doctorId = "DOC-001",
+                treatmentSummary = "Resinas compuestas"
+            )
+        )
+
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateDni("10102020"))
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Laura"))
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Rios"))
+        viewModel.onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true))
+        assertTrue(viewModel.state.value.showOperativeConsentDialog)
+
+        viewModel.onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentTreatment("Restauraciones estéticas en resina"))
+        viewModel.onEvent(ClinicalAdmissionEvent.AddOperativeConsentProcedure(toothNumber = 26, date = "2026-10-18"))
+        viewModel.onEvent(ClinicalAdmissionEvent.ConfirmOperativeConsentSignatures("patient_sig_data", "doctor_sig_data"))
+
+        // Set patientId for saving consent
+        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
+            Patient(id = "pat-100", dniCedula = "10102020", firstName = "Laura", firstLastName = "Rios")
+        )
+        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-100", patientId = "pat-100"))
+        viewModel.onEvent(ClinicalAdmissionEvent.NextStep)
+
+        viewModel.onEvent(ClinicalAdmissionEvent.SaveOperativeConsent)
+
+        val state = viewModel.state.value
+        assertFalse(state.showOperativeConsentDialog)
+        assertTrue(state.operativeConsentSaved)
+        assertEquals("Consentimiento de operatoria guardado y firmado correctamente", state.successMessage)
     }
 }
