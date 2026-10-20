@@ -394,4 +394,73 @@ class ClinicalAdmissionViewModelTest {
         assertEquals("consentimiento_preop_pat-200_${java.time.LocalDate.now()}_sig_paciente", capturedConsent?.patientSignatureUrl)
         assertEquals("consentimiento_preop_pat-200_${java.time.LocalDate.now()}_sig_doctor", capturedConsent?.doctorSignatureUrl)
     }
+
+    @Test
+    fun `Periodontal examination uses existing clinic doctor from doctorRepository when no session exists`() = runTest {
+        val doctorRepo: DoctorRepository = mockk()
+        val clinicDoctor = Doctor(
+            id = DoctorId("55555555-5555-5555-5555-555555555555"),
+            userId = "user-doc-55",
+            firstName = "Erika",
+            lastName = "Bejarano",
+            specialty = "Periodoncia",
+            email = "erika.b@biodontos.com",
+            licenseNumber = "OD-98234-COL"
+        )
+        coEvery { doctorRepo.getDoctors() } returns Result.success(listOf(clinicDoctor))
+
+        var capturedExam: PeriodontalExamination? = null
+        coEvery { periodontalRepository.saveExamination(any()) } answers {
+            capturedExam = firstArg()
+            Result.success(capturedExam!!)
+        }
+
+        val vmWithClinicDoc = ClinicalAdmissionViewModel(
+            patientRepository = patientRepository,
+            clinicalRecordRepository = clinicalRecordRepository,
+            anamnesisRepository = anamnesisRepository,
+            odontogramRepository = odontogramRepository,
+            periodontalRepository = periodontalRepository,
+            evolutionRepository = evolutionRepository,
+            materialRepository = materialRepository,
+            informedConsentRepository = informedConsentRepository,
+            appointmentRepository = appointmentRepository,
+            guardianRepository = guardianRepository,
+            doctorRepository = doctorRepo
+        )
+
+        advanceUntilIdle()
+
+        // El doctor del estado debe ser el primer doctor de la clínica
+        assertEquals("55555555-5555-5555-5555-555555555555", vmWithClinicDoc.state.value.doctorId)
+        assertEquals("Erika Bejarano", vmWithClinicDoc.state.value.doctorName)
+
+        // Simulamos avanzar al paso 4 (Periodontograma) y persistir
+        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-300", patientId = "pat-300"))
+        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
+            Patient(id = "pat-300", dniCedula = "80991122", firstName = "Daniel", firstLastName = "Cruz")
+        )
+        coEvery { anamnesisRepository.saveAnamnesis(any()) } returns Result.success(Anamnesis(patientId = "pat-300"))
+        coEvery { odontogramRepository.updateToothState(any(), any(), any(), any(), any()) } returns Result.success(Unit)
+
+        vmWithClinicDoc.onEvent(ClinicalAdmissionEvent.UpdateDni("80991122"))
+        vmWithClinicDoc.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Daniel"))
+        vmWithClinicDoc.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Cruz"))
+        // Paso 1 -> 2
+        vmWithClinicDoc.onEvent(ClinicalAdmissionEvent.NextStep)
+        advanceUntilIdle()
+        // Paso 2 -> 3
+        vmWithClinicDoc.onEvent(ClinicalAdmissionEvent.NextStep)
+        advanceUntilIdle()
+        // Paso 3 -> 4
+        vmWithClinicDoc.onEvent(ClinicalAdmissionEvent.NextStep)
+        advanceUntilIdle()
+        // Paso 4 -> 5 (Persiste periodontograma)
+        vmWithClinicDoc.onEvent(ClinicalAdmissionEvent.NextStep)
+        advanceUntilIdle()
+
+        assertNotNull(capturedExam)
+        assertEquals("55555555-5555-5555-5555-555555555555", capturedExam?.doctorId)
+        assertEquals(5, vmWithClinicDoc.state.value.currentStep)
+    }
 }

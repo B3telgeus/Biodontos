@@ -43,15 +43,29 @@ class ClinicalAdmissionViewModel(
     }
 
     private fun loadCurrentDoctor() {
-        val useCase = getCurrentDoctorUseCase ?: return
         viewModelScope.launch {
-            useCase().onSuccess { doctor ->
-                if (doctor != null) {
+            val fromUseCase = getCurrentDoctorUseCase?.invoke()?.getOrNull()
+            if (fromUseCase != null) {
+                _state.update {
+                    it.copy(
+                        doctorId = fromUseCase.id.value,
+                        doctorName = "${fromUseCase.firstName} ${fromUseCase.lastName}".trim(),
+                        doctorLicense = fromUseCase.licenseNumber
+                    )
+                }
+                return@launch
+            }
+
+            // Fallback dinámico: Si no hay doctor en la sesión actual, consultar los especialistas de la clínica
+            val repo = doctorRepository ?: return@launch
+            repo.getDoctors().onSuccess { doctors ->
+                val fallbackDoctor = doctors.firstOrNull()
+                if (fallbackDoctor != null) {
                     _state.update {
                         it.copy(
-                            doctorId = doctor.id.value,
-                            doctorName = "${doctor.firstName} ${doctor.lastName}".trim(),
-                            doctorLicense = doctor.licenseNumber
+                            doctorId = fallbackDoctor.id.value,
+                            doctorName = "${fallbackDoctor.firstName} ${fallbackDoctor.lastName}".trim(),
+                            doctorLicense = fallbackDoctor.licenseNumber
                         )
                     }
                 }
@@ -61,10 +75,10 @@ class ClinicalAdmissionViewModel(
 
     private fun resolveDoctorUuid(candidateId: String): String {
         val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-        return if (candidateId.isNotBlank() && uuidRegex.matches(candidateId)) {
-            candidateId
-        } else {
-            DEFAULT_DOCTOR_UUID
+        return when {
+            candidateId.isNotBlank() && uuidRegex.matches(candidateId) -> candidateId
+            _state.value.doctorId.isNotBlank() && uuidRegex.matches(_state.value.doctorId) -> _state.value.doctorId
+            else -> DEFAULT_DOCTOR_UUID
         }
     }
 
@@ -717,7 +731,7 @@ class ClinicalAdmissionViewModel(
                     _state.update { it.copy(isLoading = false, currentStep = 5) }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error en periodontograma: ${err.message}") }
+                    _state.update { it.copy(isLoading = false, errorMessage = "Error en periodontograma: ${err.toUserFriendlyMessage()}") }
                 }
         }
     }

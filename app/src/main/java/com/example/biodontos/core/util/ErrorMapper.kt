@@ -23,6 +23,8 @@ fun Throwable?.toUserFriendlyMessage(defaultMessage: String = "Ocurrió un error
             "Identificador de doctor o paciente con formato inválido. Verifique la sesión activa."
         message.contains("informed_consents_doctor_id_fkey") ->
             "El odontólogo asignado no se encuentra registrado en el sistema clínico."
+        message.contains("periodontal_examinations_doctor_id_fkey") || message.contains("preiodontal_examinations_doctor_id_fkey") ->
+            "El odontólogo responsable no se encuentra registrado en el sistema clínico. Verifique la sesión o ejecute la migración de especialistas."
         message.contains("unauthorized") || message.contains("jwt") || message.contains("session") -> 
             "Sesión expirada o no autorizada. Por favor, inicia sesión nuevamente."
         else -> this?.message?.takeIf { it.isNotBlank() && !it.contains("exception", ignoreCase = true) } ?: defaultMessage

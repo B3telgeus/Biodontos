@@ -41,6 +41,13 @@ class ErrorMapperTest {
     }
 
     @Test
+    fun mapsPeriodontalDoctorForeignKeyErrorCorrectly() {
+        val exception = Exception("""insert or update on table "periodontal_examinations" violates foreign key constraint "preiodontal_examinations_doctor_id_fkey" Key is not present in table "doctors"""")
+        val friendlyMessage = exception.toUserFriendlyMessage()
+        assertEquals("El odontólogo responsable no se encuentra registrado en el sistema clínico. Verifique la sesión o ejecute la migración de especialistas.", friendlyMessage)
+    }
+
+    @Test
     fun returnsDefaultMessageOnNullOrUnknown() {
         val friendlyMessage = null.toUserFriendlyMessage("Por defecto")
         assertEquals("Por defecto", friendlyMessage)
