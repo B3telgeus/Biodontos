@@ -56,6 +56,7 @@ class ClinicalAdmissionViewModelFactory(
                 evolutionRepository = container.evolutionRepository,
                 materialRepository = container.materialRepository,
                 informedConsentRepository = container.informedConsentRepository,
+                appointmentRepository = container.appointmentRepository,
                 guardianRepository = container.guardianRepository,
                 initialPatientId = patientId
             )

@@ -19,6 +19,7 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DoctorProfileViewModelTest {
@@ -40,7 +41,7 @@ class DoctorProfileViewModelTest {
     )
 
     private val dummyDoctor = Doctor(
-        id = "doc-uid-1",
+        id = DoctorId("doc-uid-1"),
         userId = "doc-uid-1",
         firstName = "Carlos",
         lastName = "Mendoza",
@@ -64,7 +65,7 @@ class DoctorProfileViewModelTest {
         id = "apt-pending",
         patientId = "patient-1",
         doctorId = "doc-uid-1",
-        startTime = "2026-10-25 10:00:00",
+        startTime = LocalDateTime.of(2026, 10, 25, 10, 0),
         status = AppointmentStatus.SCHEDULED,
         isConfirmed = false,
         reason = "Valoración General"
@@ -74,7 +75,7 @@ class DoctorProfileViewModelTest {
         id = "apt-confirmed",
         patientId = "patient-1",
         doctorId = "doc-uid-1",
-        startTime = "2026-10-26 14:00:00",
+        startTime = LocalDateTime.of(2026, 10, 26, 14, 0),
         status = AppointmentStatus.SCHEDULED,
         isConfirmed = true,
         reason = "Control de brackets"

@@ -111,7 +111,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
                 .decodeList<AppointmentDto>()
             val filtered = list
                 .map { it.toDomain() }
-                .filter { it.startTime.startsWith(date) }
+                .filter { it.startTime.toString().startsWith(date) }
             Result.success(filtered)
         } catch (e: Exception) {
             Result.failure(e)

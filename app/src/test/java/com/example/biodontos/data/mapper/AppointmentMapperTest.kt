@@ -8,6 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDateTime
 
 class AppointmentMapperTest {
 
@@ -31,9 +32,9 @@ class AppointmentMapperTest {
         assertEquals("pat-456", domain.patientId)
         assertEquals("doc-789", domain.doctorId)
         assertEquals("evo-1", domain.originEvolutionId)
-        assertEquals("2026-10-25T08:00:00-05:00", domain.startTime)
-        assertEquals("2026-10-25T09:00:00-05:00", domain.endTime)
-        assertEquals(AppointmentStatus.SCHEDULED, domain.status)
+        assertEquals(Appointment.parseDateTime("2026-10-25T08:00:00-05:00"), domain.startTime)
+        assertEquals(Appointment.parseDateTime("2026-10-25T09:00:00-05:00"), domain.endTime)
+        assertEquals(AppointmentStatus.CONFIRMED, domain.status)
         assertTrue(domain.isConfirmed)
         assertEquals("Revisión semestral", domain.reason)
     }
@@ -52,7 +53,7 @@ class AppointmentMapperTest {
         val domain = dto.toDomain()
 
         assertEquals("", domain.id)
-        assertEquals(AppointmentStatus.SCHEDULED, domain.status)
+        assertEquals(AppointmentStatus.PENDING, domain.status)
         assertFalse(domain.isConfirmed)
         assertNull(domain.doctorId)
     }
@@ -64,7 +65,7 @@ class AppointmentMapperTest {
             patientId = "pat-456",
             doctorId = "doc-789",
             originEvolutionId = "evo-1",
-            startTime = "2026-10-25T08:00:00-05:00",
+            startTime = LocalDateTime.of(2026, 10, 25, 8, 0, 0),
             endTime = null,
             status = AppointmentStatus.CANCELLED,
             isConfirmed = false,
@@ -77,7 +78,7 @@ class AppointmentMapperTest {
         assertEquals("pat-456", dto.patientId)
         assertEquals("doc-789", dto.doctorId)
         assertEquals("evo-1", dto.originEvolutionId)
-        assertEquals("2026-10-25T08:00:00-05:00", dto.startTime)
+        assertEquals("2026-10-25T08:00:00", dto.startTime)
         assertNull(dto.endTime)
         assertEquals("CANCELLED", dto.status)
         assertFalse(dto.isConfirmed)
@@ -90,7 +91,7 @@ class AppointmentMapperTest {
             id = "",
             patientId = "pat-456",
             doctorId = "doc-789",
-            startTime = "2026-10-25T08:00:00-05:00",
+            startTime = LocalDateTime.of(2026, 10, 25, 8, 0, 0),
             status = AppointmentStatus.SCHEDULED,
             isConfirmed = false
         )

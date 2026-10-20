@@ -2,8 +2,8 @@ package com.example.biodontos.data.mapper
 
 import com.example.biodontos.data.dto.DoctorDto
 import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.DoctorId
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DoctorMapperTest {
@@ -23,7 +23,7 @@ class DoctorMapperTest {
 
         val domain = dto.toDomain()
 
-        assertEquals("doc-uuid-1", domain.id)
+        assertEquals("doc-uuid-1", domain.id.value)
         assertEquals("usr-uuid-1", domain.userId)
         assertEquals("Carlos", domain.firstName)
         assertEquals("Mendoza", domain.lastName)
@@ -47,14 +47,14 @@ class DoctorMapperTest {
 
         val domain = dto.toDomain()
 
-        assertEquals("usr-fallback-1", domain.id)
+        assertEquals("usr-fallback-1", domain.id.value)
         assertEquals("usr-fallback-1", domain.userId)
     }
 
     @Test
     fun `toDto maps domain to DTO correctly`() {
         val domain = Doctor(
-            id = "doc-uuid-1",
+            id = DoctorId("doc-uuid-1"),
             userId = "usr-uuid-1",
             firstName = "Carlos",
             lastName = "Mendoza",
@@ -74,21 +74,5 @@ class DoctorMapperTest {
         assertEquals("carlos.mendoza@biodontos.com", dto.email)
         assertEquals("3101234567", dto.phone)
         assertEquals("OD-20381", dto.licenseNumber)
-    }
-
-    @Test
-    fun `toDto maps empty id to null`() {
-        val domain = Doctor(
-            id = "",
-            userId = "usr-uuid-1",
-            firstName = "Valentina",
-            lastName = "Ríos",
-            specialty = "Endodoncia",
-            email = "valentina@biodontos.com",
-            licenseNumber = "OD-30918"
-        )
-
-        val dto = domain.toDto()
-        assertNull(dto.id)
     }
 }

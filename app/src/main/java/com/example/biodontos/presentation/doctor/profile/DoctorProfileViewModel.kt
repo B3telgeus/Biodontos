@@ -6,6 +6,7 @@ import com.example.biodontos.core.util.toUserFriendlyMessage
 import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.DoctorId
 import com.example.biodontos.domain.model.Patient
 import com.example.biodontos.domain.repository.DoctorRepository
 import com.example.biodontos.domain.repository.PatientRepository
@@ -62,7 +63,7 @@ class DoctorProfileViewModel(
 
             val doctorResult = doctorRepository.getDoctorByUserId(session.id)
             val doctor = doctorResult.getOrNull() ?: Doctor(
-                id = session.id,
+                id = DoctorId(session.id),
                 userId = session.id,
                 firstName = session.displayName.split(" ").firstOrNull() ?: "Doctor",
                 lastName = session.displayName.split(" ").drop(1).joinToString(" ").ifEmpty { "Especialista" },
@@ -71,7 +72,7 @@ class DoctorProfileViewModel(
             )
 
             _state.update { it.copy(doctor = doctor) }
-            loadAppointmentsForDoctor(doctor.id)
+            loadAppointmentsForDoctor(doctor.id.value)
             _state.update { it.copy(isLoading = false) }
         }
     }
@@ -106,7 +107,7 @@ class DoctorProfileViewModel(
             val result = confirmAppointmentUseCase(appointmentId)
             result.onSuccess {
                 _effects.send(DoctorProfileEffect.ShowToast("Cita confirmada correctamente"))
-                val doctorId = _state.value.doctor?.id ?: ""
+                val doctorId = _state.value.doctor?.id?.value ?: ""
                 if (doctorId.isNotEmpty()) {
                     loadAppointmentsForDoctor(doctorId)
                 }
@@ -123,7 +124,7 @@ class DoctorProfileViewModel(
             val result = cancelAppointmentUseCase(appointmentId, reason ?: "Cancelada por el odontólogo")
             result.onSuccess {
                 _effects.send(DoctorProfileEffect.ShowToast("Cita cancelada"))
-                val doctorId = _state.value.doctor?.id ?: ""
+                val doctorId = _state.value.doctor?.id?.value ?: ""
                 if (doctorId.isNotEmpty()) {
                     loadAppointmentsForDoctor(doctorId)
                 }

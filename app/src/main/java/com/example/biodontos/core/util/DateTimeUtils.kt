@@ -72,11 +72,21 @@ object DateTimeUtils {
         }
     }
 
+    fun isUpcoming(dateTime: LocalDateTime): Boolean {
+        return dateTime.atZone(CLINICAL_ZONE).isAfter(ZonedDateTime.now(CLINICAL_ZONE))
+    }
+
     fun isUpcoming(dateTimeStr: String): Boolean {
         val zdt = parseToClinicalZonedDateTime(dateTimeStr) ?: return false
         val now = ZonedDateTime.now(CLINICAL_ZONE)
         return zdt.isAfter(now)
     }
+
+    fun formatToReadableDate(dateTime: LocalDateTime): String = formatToReadableDate(dateTime.toString())
+
+    fun formatToShortDate(dateTime: LocalDateTime): String = formatToShortDate(dateTime.toString())
+
+    fun extractTime(dateTime: LocalDateTime): String = extractTime(dateTime.toString())
 
     fun formatToReadableDate(dateTimeStr: String): String {
         val zdt = parseToClinicalZonedDateTime(dateTimeStr)
