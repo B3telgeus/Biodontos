@@ -52,7 +52,12 @@ fun OdontogramScreen(
             )
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .padding(padding)
+                .consumeWindowInsets(padding)
+                .fillMaxSize()
+        ) {
             if (state.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else {
@@ -182,7 +187,12 @@ fun OdontogramScreen(
             }
             
             state.error?.let {
-                Snackbar(modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)) {
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .padding(16.dp)
+                ) {
                     Text(it)
                 }
             }

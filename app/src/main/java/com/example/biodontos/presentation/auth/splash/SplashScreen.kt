@@ -99,6 +99,7 @@ fun SplashScreen(
             modifier = Modifier
                 .scale(scale)
                 .alpha(alpha)
+                .safeDrawingPadding()
                 .padding(horizontal = 32.dp)
         ) {
             // Emblema con sombra y borde sutil

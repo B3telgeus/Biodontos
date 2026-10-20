@@ -43,6 +43,7 @@ fun OnboardingScreen(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
+                    .safeDrawingPadding()
                     .padding(48.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -143,6 +144,7 @@ fun OnboardingScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .safeDrawingPadding()
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center

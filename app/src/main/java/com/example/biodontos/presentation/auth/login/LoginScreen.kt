@@ -79,6 +79,8 @@ fun LoginScreen(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
+                    .safeDrawingPadding()
+                    .imePadding()
                     .padding(32.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -138,6 +140,8 @@ fun LoginScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .safeDrawingPadding()
+                    .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,

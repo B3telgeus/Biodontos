@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -112,7 +114,11 @@ fun DoctorPortalShell(
     ) {
         if (isExpandedScreen) {
             // Layout Tablet / Landscape (#151A24 NavigationRail estilo 08_Home_Doctor.png)
-            Row(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding()
+            ) {
                 NavigationRail(
                     containerColor = BiodontosDark,
                     contentColor = BiodontosWhite,
@@ -222,6 +228,7 @@ fun DoctorPortalShell(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
+                        .consumeWindowInsets(padding)
                 ) {
                     content()
                 }

@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -108,12 +110,10 @@ fun BookAppointmentScreen(
         containerColor = Color(0xFFE9E9EB),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            // Barra inferior con botón de confirmación
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BiodontosWhite)
-                    .padding(16.dp)
+            // Barra inferior con botón de confirmación consciente de insets
+            com.example.biodontos.core.designsystem.insets.BiodontosBottomActionBar(
+                containerColor = BiodontosWhite,
+                contentPadding = PaddingValues(16.dp)
             ) {
                 BiodontosPillButton(
                     text = when {
@@ -134,6 +134,8 @@ fun BookAppointmentScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+                .imePadding()
                 .padding(horizontal = 16.dp)
         ) {
             // Barra superior

@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -72,7 +74,11 @@ fun PatientPortalShell(
     ) {
         if (isExpandedScreen) {
             // Layout Tablet / Horizontal (Estilo Figma)
-            Row(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding()
+            ) {
                 // Navigation Rail Izquierdo Oscuro #151A24
                 NavigationRail(
                     containerColor = BiodontosDark,
@@ -183,6 +189,7 @@ fun PatientPortalShell(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
+                        .consumeWindowInsets(padding)
                 ) {
                     content()
                 }

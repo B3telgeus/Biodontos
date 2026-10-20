@@ -81,7 +81,9 @@ fun PatientSignUpScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .consumeWindowInsets(padding)
+                .imePadding(),
             contentAlignment = Alignment.TopCenter
         ) {
             Card(

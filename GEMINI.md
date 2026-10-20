@@ -99,6 +99,22 @@ Debes cumplir estrictamente con las siguientes **REGLAS de arquitectura, diseño
    - **ViewModels:** Usar `Turbine` y `StandardTestDispatcher` de `kotlinx-coroutines-test` para verificar estados `StateFlow` y eventos.
    - **Lógica Clínica:** Testear validaciones de rangos FDI, cálculo de CAL periodontal y transformaciones de coordenadas.
 
+## 6. EDGE-TO-EDGE, SISTEMA DE INSETS Y PROTECCIÓN DE UI
+
+1. **Obligatoriedad de Edge-to-Edge:**
+   - La aplicación ejecuta `enableEdgeToEdge()` de forma obligatoria (Android 15+ / compileSdk 36). Ningún componente visual debe asumir márgenes fijos del sistema operativo.
+   
+2. **Prohibición en Scaffold.bottomBar sin Insets:**
+   - Queda estrictamente PROHIBIDO renderizar cajas (`Box`), superficies (`Surface`) o filas (`Row`) propias directamente en el slot `Scaffold.bottomBar` sin aplicar `com.example.biodontos.core.designsystem.insets.BiodontosBottomActionBar` o `Modifier.bottomActionInsets()`. Los botones al pie ("Guardar y Continuar", "Confirmar Reserva", etc.) deben quedar siempre por encima de la barra de navegación del sistema y elevarse automáticamente con el teclado virtual (IME).
+
+3. **Consumo de Insets en Shells y Scaffolds Anidados:**
+   - Cuando una pantalla se renderice dentro de un contenedor shell (`DoctorPortalShell`, `PatientPortalShell`), el shell debe consumir los insets (`.padding(padding).consumeWindowInsets(padding)`).
+   - Todo `Scaffold` anidado dentro de un shell DEBE declarar explícitamente `contentWindowInsets = WindowInsets(0, 0, 0, 0)` para prevenir paddings dobles indeseados.
+
+4. **Formularios y Teclado Virtual (IME):**
+   - En pantallas con formularios y campos de entrada de texto, siempre se debe encadenar `.consumeWindowInsets(padding).imePadding()` o utilizar `BiodontosFormColumn` para garantizar que el botón de confirmación o el último campo no queden tapados por el teclado en pantallas compactas o modales de diálogo.
+   - En listas con FloatingActionButton (`ExtendedFloatingActionButton`), la lista (`LazyColumn`) debe definir `contentPadding` con al menos `bottom = 88.dp` para permitir que el último elemento sea accesible sin interferencia del botón flotante.
+
 ---
 
 ## FEW-SHOT EXAMPLES (EJEMPLOS DE REFERENCIA)

@@ -18,3 +18,4 @@ Para la guía detallada de orquestación, consulta [.agents/workflows/quality-ga
 3. **Privacidad HIPAA:** Comprobar que no existan datos de pacientes (PHI) en logs ni trazas de consola.
 4. **Calidad Kotlin:** Prohibido el uso de `!!`.
 5. **Pruebas y Build:** Ejecutar `./gradlew testDebugUnitTest` y `./gradlew lintDebug`.
+6. **Edge-to-Edge e Insets (UI):** Comprobar que en `presentation` ningún botón al pie se use en `Scaffold.bottomBar` sin `BiodontosBottomActionBar`, y que pantallas con formulario incluyan `consumeWindowInsets` o `BiodontosFormColumn`.

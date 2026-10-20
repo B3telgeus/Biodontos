@@ -60,6 +60,7 @@ fun UserTypeSelectionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding)
                 .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {

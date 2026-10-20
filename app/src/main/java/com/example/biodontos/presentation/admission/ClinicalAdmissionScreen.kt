@@ -121,16 +121,14 @@ fun ClinicalAdmissionScreen(
             )
         },
         bottomBar = {
-            // Barra inferior de navegación de pasos
-            Surface(
-                color = BiodontosWhite,
+            // Barra inferior de navegación de pasos consciente de insets
+            com.example.biodontos.core.designsystem.insets.BiodontosBottomActionBar(
+                containerColor = BiodontosWhite,
                 shadowElevation = 8.dp,
-                modifier = Modifier.fillMaxWidth()
+                contentPadding = PaddingValues(16.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -175,6 +173,8 @@ fun ClinicalAdmissionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding)
+                .imePadding()
                 .background(BiodontosLightGrey)
         ) {
             // Indicador Horizontal de Pasos

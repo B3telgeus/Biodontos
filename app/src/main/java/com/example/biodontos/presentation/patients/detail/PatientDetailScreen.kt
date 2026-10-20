@@ -151,6 +151,8 @@ fun PatientDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding)
+                .imePadding()
                 .background(BiodontosLightGrey)
         ) {
             // Tabs de Navegación del Hub
@@ -181,7 +183,7 @@ fun PatientDetailScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     when (state.selectedTab) {

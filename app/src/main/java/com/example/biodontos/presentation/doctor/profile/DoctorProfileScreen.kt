@@ -58,6 +58,7 @@ fun DoctorProfileScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {
@@ -103,6 +104,7 @@ fun DoctorProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding)
         ) {
             if (state.isLoading && state.doctor == null) {
                 CircularProgressIndicator(

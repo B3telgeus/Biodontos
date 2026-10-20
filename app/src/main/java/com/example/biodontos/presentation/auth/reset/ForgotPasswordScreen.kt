@@ -64,6 +64,8 @@ fun ForgotPasswordScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding)
+                .imePadding()
                 .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {

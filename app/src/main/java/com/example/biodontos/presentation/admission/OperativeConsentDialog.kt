@@ -67,6 +67,8 @@ fun OperativeConsentDialog(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .navigationBarsPadding()
+                    .imePadding()
                     .padding(20.dp)
             ) {
                 // Cabecera Institucional

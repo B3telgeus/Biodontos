@@ -65,6 +65,8 @@ fun PatientListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding)
+                .imePadding()
         ) {
             // Barra de Búsqueda
             OutlinedTextField(
@@ -128,7 +130,7 @@ fun PatientListScreen(
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
+                        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(state.filteredPatients, key = { it.id }) { patient ->
