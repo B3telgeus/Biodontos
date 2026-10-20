@@ -17,6 +17,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.sp
+import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.core.designsystem.BiodontosInputBg
+import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.domain.model.DentitionType
 import com.example.biodontos.domain.model.Tooth
 import com.example.biodontos.domain.model.ToothCondition
 
@@ -24,6 +33,7 @@ import com.example.biodontos.domain.model.ToothCondition
 @Composable
 fun OdontogramScreen(
     state: OdontogramState,
+    onDentitionTypeChange: (DentitionType) -> Unit = {},
     onSurfaceClick: (Int, com.example.biodontos.domain.model.ToothSurface) -> Unit,
     onCommentChange: (String) -> Unit,
     onUpdateCondition: (ToothCondition) -> Unit,
@@ -33,7 +43,7 @@ fun OdontogramScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Odontograma Adulto") },
+                title = { Text("Odontograma FDI Interactivo", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
@@ -53,33 +63,103 @@ fun OdontogramScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Upper Teeth
-                    Text("Superior", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    // Selector de tipo de dentición
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        listOf(
+                            DentitionType.ADULT to "Adulto (32)",
+                            DentitionType.CHILD to "Infantil (20)",
+                            DentitionType.MIXED to "Mixta"
+                        ).forEach { (type, label) ->
+                            val isSelected = state.dentitionType == type
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (isSelected) BiodontosDark else BiodontosInputBg,
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .clickable { onDentitionTypeChange(type) }
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) BiodontosWhite else BiodontosDark,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Leyenda clínica
+                    FlowRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        ToothCondition.entries.forEach { cond ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(cond.color, CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(cond.name, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+
+                    // Maxilar Superior
+                    Text(
+                        "Maxilar Superior (Cuadrantes 1 y 2 / 5 y 6)",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
                         QuadrantView(
-                            toothNumbers = listOf(18, 17, 16, 15, 14, 13, 12, 11),
+                            toothNumbers = state.upperLeftQuadrant,
                             state = state,
                             onSurfaceClick = onSurfaceClick
                         )
                         QuadrantView(
-                            toothNumbers = listOf(21, 22, 23, 24, 25, 26, 27, 28),
+                            toothNumbers = state.upperRightQuadrant,
                             state = state,
                             onSurfaceClick = onSurfaceClick
                         )
                     }
                     
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Lower Teeth
-                    Text("Inferior", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    // Mandíbula Inferior
+                    Text(
+                        "Mandíbula Inferior (Cuadrantes 4 y 3 / 8 y 7)",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
                         QuadrantView(
-                            toothNumbers = listOf(48, 47, 46, 45, 44, 43, 42, 41),
+                            toothNumbers = state.lowerLeftQuadrant,
                             state = state,
                             onSurfaceClick = onSurfaceClick
                         )
                         QuadrantView(
-                            toothNumbers = listOf(31, 32, 33, 34, 35, 36, 37, 38),
+                            toothNumbers = state.lowerRightQuadrant,
                             state = state,
                             onSurfaceClick = onSurfaceClick
                         )

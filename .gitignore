@@ -12,5 +12,8 @@
 /captures
 .externalNativeBuild
 .cxx
+local.properties
 .artifacts/
+/.artifacts/
 .kotlin/
+.idea/deviceManager.xml

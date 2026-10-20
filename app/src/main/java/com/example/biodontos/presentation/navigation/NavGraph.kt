@@ -1,14 +1,26 @@
 package com.example.biodontos.presentation.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.example.biodontos.BiodontosApp
+import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.domain.model.UserRole
+import com.example.biodontos.presentation.admission.ClinicalAdmissionScreen
+import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModel
+import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModelFactory
 import com.example.biodontos.presentation.auth.AuthViewModelFactory
 import com.example.biodontos.presentation.auth.doctor.DoctorRegistrationEvent
 import com.example.biodontos.presentation.auth.doctor.DoctorRegistrationScreen
@@ -21,20 +33,76 @@ import com.example.biodontos.presentation.auth.onboarding.UserTypeSelectionScree
 import com.example.biodontos.presentation.auth.patient.PatientSignUpEvent
 import com.example.biodontos.presentation.auth.patient.PatientSignUpScreen
 import com.example.biodontos.presentation.auth.patient.PatientSignUpViewModel
+import com.example.biodontos.presentation.auth.patient.SignUpSuccessScreen
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordScreen
 import com.example.biodontos.presentation.auth.reset.ForgotPasswordViewModel
-import com.example.biodontos.presentation.admission.ClinicalAdmissionScreen
-import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModel
-import com.example.biodontos.presentation.admission.ClinicalAdmissionViewModelFactory
 import com.example.biodontos.presentation.odontogram.*
+import com.example.biodontos.presentation.doctor.DoctorViewModelFactory
+import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsRoute
+import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsViewModel
+import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsScreen
+import com.example.biodontos.presentation.doctor.home.DoctorHomeRoute
+import com.example.biodontos.presentation.doctor.home.DoctorHomeUiEvent
+import com.example.biodontos.presentation.doctor.home.DoctorHomeViewModel
+import com.example.biodontos.presentation.doctor.shell.DoctorNavItem
+import com.example.biodontos.presentation.doctor.shell.DoctorPortalShell
+import com.example.biodontos.presentation.patientportal.PatientPortalViewModelFactory
+import com.example.biodontos.presentation.patientportal.appointments.BookAppointmentRoute
+import com.example.biodontos.presentation.patientportal.appointments.BookAppointmentViewModel
+import com.example.biodontos.presentation.patientportal.appointments.MyAppointmentsRoute
+import com.example.biodontos.presentation.patientportal.appointments.MyAppointmentsViewModel
+import com.example.biodontos.presentation.patientportal.doctors.DoctorDetailRoute
+import com.example.biodontos.presentation.patientportal.doctors.DoctorDetailViewModel
+import com.example.biodontos.presentation.patientportal.doctors.DoctorSearchRoute
+import com.example.biodontos.presentation.patientportal.doctors.DoctorSearchViewModel
+import com.example.biodontos.presentation.patientportal.home.PatientHomeRoute
+import com.example.biodontos.presentation.patientportal.home.PatientHomeUiEvent
+import com.example.biodontos.presentation.patientportal.home.PatientHomeViewModel
+import com.example.biodontos.presentation.patientportal.payments.PatientPaymentsRoute
+import com.example.biodontos.presentation.patientportal.payments.PatientPaymentsViewModel
+import com.example.biodontos.presentation.patientportal.shell.PatientNavItem
+import com.example.biodontos.presentation.patientportal.shell.PatientPortalShell
 import com.example.biodontos.presentation.patients.*
 
 @Composable
 fun BiodontosNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Onboarding
+        startDestination = SessionGate
     ) {
+        // --- GATEWAY DE SESIÓN SEGÚN ROL ---
+        composable<SessionGate> {
+            val context = LocalContext.current
+            val app = context.applicationContext as BiodontosApp
+            LaunchedEffect(Unit) {
+                val session = app.container.getCurrentSessionUseCase()
+                when (session?.role) {
+                    UserRole.DOCTOR -> {
+                        navController.navigate(DoctorHome) {
+                            popUpTo(SessionGate) { inclusive = true }
+                        }
+                    }
+                    UserRole.PATIENT -> {
+                        navController.navigate(PatientHome) {
+                            popUpTo(SessionGate) { inclusive = true }
+                        }
+                    }
+                    else -> {
+                        navController.navigate(Onboarding) {
+                            popUpTo(SessionGate) { inclusive = true }
+                        }
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = BiodontosDark)
+            }
+        }
+
         // --- ONBOARDING & SELECCIÓN ---
         composable<Onboarding> {
             OnboardingScreen(
@@ -60,8 +128,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel.events.collect { event ->
                     when (event) {
                         is LoginEvent.LoginSuccess -> {
-                            navController.navigate(PatientList) {
-                                popUpTo(Onboarding) { inclusive = true }
+                            navController.navigate(SessionGate) {
+                                popUpTo(Login) { inclusive = true }
                             }
                         }
                     }
@@ -90,7 +158,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
                     when (event) {
                         is DoctorRegistrationEvent.RegisteredSuccess -> {
                             navController.navigate(PatientList) {
-                                popUpTo(Onboarding) { inclusive = true }
+                                popUpTo(DoctorRegistration) { inclusive = true }
                             }
                         }
                     }
@@ -122,8 +190,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel.events.collect { event ->
                     when (event) {
                         is PatientSignUpEvent.RegisteredSuccess -> {
-                            navController.navigate(PatientList) {
-                                popUpTo(Onboarding) { inclusive = true }
+                            navController.navigate(SignUpSuccess) {
+                                popUpTo(PatientSignUp) { inclusive = true }
                             }
                         }
                     }
@@ -146,6 +214,17 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
+        // --- CONFIRMACIÓN DE REGISTRO EXITOSO (FIGMA) ---
+        composable<SignUpSuccess> {
+            SignUpSuccessScreen(
+                onLoginClick = {
+                    navController.navigate(Login) {
+                        popUpTo(SignUpSuccess) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // --- RESETEO DE CONTRASEÑA ---
         composable<ForgotPassword> {
             val viewModel: ForgotPasswordViewModel = viewModel(factory = AuthViewModelFactory.ForgotPasswordFactory)
@@ -159,7 +238,188 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- PACIENTES Y CLÍNICA (EXISTENTE) ---
+        // --- PORTAL DE PACIENTES ---
+        composable<PatientHome> {
+            val viewModel: PatientHomeViewModel = viewModel(factory = PatientPortalViewModelFactory.HomeFactory)
+            PatientPortalShell(
+                selectedItem = PatientNavItem.HOME,
+                onItemSelected = { item ->
+                    when (item) {
+                        PatientNavItem.HOME -> {}
+                        PatientNavItem.APPOINTMENTS -> navController.navigate(MyAppointments)
+                        PatientNavItem.DOCTORS -> navController.navigate(DoctorSearch)
+                        PatientNavItem.PAYMENTS -> navController.navigate(PatientPayments)
+                    }
+                },
+                onLogoutClick = {
+                    viewModel.onEvent(PatientHomeUiEvent.Logout)
+                }
+            ) {
+                PatientHomeRoute(
+                    viewModel = viewModel,
+                    onNavigateToAppointments = { navController.navigate(MyAppointments) },
+                    onNavigateToPayments = { navController.navigate(PatientPayments) },
+                    onNavigateToDoctors = { navController.navigate(DoctorSearch) },
+                    onNavigateToBooking = { doctorId -> navController.navigate(BookAppointment(doctorId)) },
+                    onNavigateToLogin = {
+                        navController.navigate(Login) {
+                            popUpTo(PatientHome) { inclusive = true }
+                        }
+                    }
+                )
+            }
+        }
+
+        // --- BÚSQUEDA DE DOCTORES (PACIENTE) ---
+        composable<DoctorSearch> {
+            val viewModel: DoctorSearchViewModel = viewModel(factory = PatientPortalViewModelFactory.DoctorSearchFactory)
+            PatientPortalShell(
+                selectedItem = PatientNavItem.DOCTORS,
+                onItemSelected = { item ->
+                    when (item) {
+                        PatientNavItem.HOME -> navController.navigate(PatientHome)
+                        PatientNavItem.APPOINTMENTS -> navController.navigate(MyAppointments)
+                        PatientNavItem.DOCTORS -> {}
+                        PatientNavItem.PAYMENTS -> navController.navigate(PatientPayments)
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(DoctorSearch) { inclusive = true }
+                    }
+                }
+            ) {
+                DoctorSearchRoute(
+                    viewModel = viewModel,
+                    onNavigateToDetail = { doctorId -> navController.navigate(DoctorDetail(doctorId)) },
+                    onNavigateToBooking = { doctorId -> navController.navigate(BookAppointment(doctorId)) }
+                )
+            }
+        }
+
+        // --- DETALLE DEL DOCTOR ---
+        composable<DoctorDetail> { backStackEntry ->
+            val route = backStackEntry.toRoute<DoctorDetail>()
+            val viewModel: DoctorDetailViewModel = viewModel(
+                factory = PatientPortalViewModelFactory.createDoctorDetailFactory(route.doctorId)
+            )
+            DoctorDetailRoute(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToBooking = { doctorId -> navController.navigate(BookAppointment(doctorId)) }
+            )
+        }
+
+        // --- MIS CITAS (PACIENTE) ---
+        composable<MyAppointments> {
+            val viewModel: MyAppointmentsViewModel = viewModel(factory = PatientPortalViewModelFactory.MyAppointmentsFactory)
+            PatientPortalShell(
+                selectedItem = PatientNavItem.APPOINTMENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        PatientNavItem.HOME -> navController.navigate(PatientHome)
+                        PatientNavItem.APPOINTMENTS -> {}
+                        PatientNavItem.DOCTORS -> navController.navigate(DoctorSearch)
+                        PatientNavItem.PAYMENTS -> navController.navigate(PatientPayments)
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(MyAppointments) { inclusive = true }
+                    }
+                }
+            ) {
+                MyAppointmentsRoute(
+                    viewModel = viewModel,
+                    onNavigateToReschedule = { doctorId, apptId ->
+                        navController.navigate(BookAppointment(doctorId = doctorId, rescheduleAppointmentId = apptId))
+                    },
+                    onNavigateToBookNew = {
+                        navController.navigate(DoctorSearch)
+                    }
+                )
+            }
+        }
+
+        // --- AGENDAR / REAGENDAR CITA ---
+        composable<BookAppointment> { backStackEntry ->
+            val route = backStackEntry.toRoute<BookAppointment>()
+            val viewModel: BookAppointmentViewModel = viewModel(
+                factory = PatientPortalViewModelFactory.createBookAppointmentFactory(
+                    doctorId = route.doctorId,
+                    rescheduleAppointmentId = route.rescheduleAppointmentId
+                )
+            )
+            BookAppointmentRoute(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToMyAppointments = {
+                    navController.navigate(MyAppointments) {
+                        popUpTo(BookAppointment(doctorId = route.doctorId)) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // --- PAGOS Y ABONOS (PACIENTE) ---
+        composable<PatientPayments> {
+            val viewModel: PatientPaymentsViewModel = viewModel(factory = PatientPortalViewModelFactory.PaymentsFactory)
+            PatientPortalShell(
+                selectedItem = PatientNavItem.PAYMENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        PatientNavItem.HOME -> navController.navigate(PatientHome)
+                        PatientNavItem.APPOINTMENTS -> navController.navigate(MyAppointments)
+                        PatientNavItem.DOCTORS -> navController.navigate(DoctorSearch)
+                        PatientNavItem.PAYMENTS -> {}
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(PatientPayments) { inclusive = true }
+                    }
+                }
+            ) {
+                PatientPaymentsRoute(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
+
+        // --- PORTAL DE DOCTORES (FIGMA 08_Home_Doctor.png) ---
+        composable<DoctorHome> {
+            val viewModel: DoctorHomeViewModel = viewModel(factory = DoctorViewModelFactory.HomeFactory)
+            DoctorPortalShell(
+                selectedItem = DoctorNavItem.HOME,
+                onItemSelected = { item ->
+                    when (item) {
+                        DoctorNavItem.HOME -> {}
+                        DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
+                        DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
+                        DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                    }
+                },
+                onLogoutClick = {
+                    viewModel.onEvent(DoctorHomeUiEvent.Logout)
+                }
+            ) {
+                DoctorHomeRoute(
+                    viewModel = viewModel,
+                    onNavigateToPatients = { navController.navigate(PatientList) },
+                    onNavigateToNewPatient = { navController.navigate(PatientRegistration) },
+                    onNavigateToAppointments = { navController.navigate(DoctorAppointments) },
+                    onNavigateToDocuments = { navController.navigate(DoctorDocuments) },
+                    onNavigateToLogin = {
+                        navController.navigate(Login) {
+                            popUpTo(DoctorHome) { inclusive = true }
+                        }
+                    }
+                )
+            }
+        }
+
+        // --- LISTA DE PACIENTES (DOCTOR) ---
         composable<PatientList> {
             val viewModel: PatientListViewModel = viewModel(factory = PatientsViewModelFactory.ListFactory)
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -168,15 +428,120 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel.loadPatients()
             }
 
-            PatientListScreen(
-                state = state,
-                onAddPatientClick = { navController.navigate(PatientRegistration) },
-                onClinicalAdmissionClick = { navController.navigate(ClinicalAdmission()) },
-                onPatientClick = { patient ->
-                    navController.navigate(Odontogram(patientId = patient.id))
+            DoctorPortalShell(
+                selectedItem = DoctorNavItem.PATIENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        DoctorNavItem.HOME -> navController.navigate(DoctorHome)
+                        DoctorNavItem.PATIENTS -> {}
+                        DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
+                        DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                    }
                 },
-                onRetry = { viewModel.loadPatients() }
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(PatientList) { inclusive = true }
+                    }
+                }
+            ) {
+                PatientListScreen(
+                    state = state,
+                    onSearchQueryChange = viewModel::onSearchQueryChange,
+                    onAddPatientClick = { navController.navigate(PatientRegistration) },
+                    onClinicalAdmissionClick = { navController.navigate(ClinicalAdmission()) },
+                    onPatientClick = { patient ->
+                        navController.navigate(PatientDetail(patientId = patient.id))
+                    },
+                    onRetry = { viewModel.loadPatients() }
+                )
+            }
+        }
+
+        // --- DETALLE / HUB CLÍNICO DEL PACIENTE ---
+        composable<PatientDetail> { backStackEntry ->
+            val route = backStackEntry.toRoute<PatientDetail>()
+            val viewModel: com.example.biodontos.presentation.patients.detail.PatientDetailViewModel = viewModel(
+                factory = PatientsViewModelFactory.createPatientDetailFactory(route.patientId)
             )
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            com.example.biodontos.presentation.patients.detail.PatientDetailScreen(
+                state = state,
+                onTabSelected = viewModel::selectTab,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToOdontogram = { navController.navigate(Odontogram(route.patientId)) },
+                onNavigateToAdmission = { navController.navigate(ClinicalAdmission(route.patientId)) },
+                onOpenNewEvolutionDialog = viewModel::openNewEvolutionDialog,
+                onDismissNewEvolutionDialog = viewModel::dismissNewEvolutionDialog,
+                onEvolutionDescriptionChange = viewModel::onNewEvolutionDescriptionChange,
+                onEvolutionToothChange = viewModel::onNewEvolutionToothChange,
+                onEvolutionCostChange = viewModel::onNewEvolutionCostChange,
+                onEvolutionPaymentChange = viewModel::onNewEvolutionPaymentChange,
+                onSelectCatalogMaterial = viewModel::onSelectCatalogMaterial,
+                onAddMaterial = viewModel::addMaterialToEvolution,
+                onRemoveMaterial = viewModel::removeMaterialFromEvolution,
+                onSaveEvolution = viewModel::saveEvolution,
+                onOpenNewAppointmentDialog = viewModel::openNewAppointmentDialog,
+                onDismissNewAppointmentDialog = viewModel::dismissNewAppointmentDialog,
+                onAppointmentDateChange = viewModel::onNewAppointmentDateChange,
+                onAppointmentTimeChange = viewModel::onNewAppointmentTimeChange,
+                onAppointmentReasonChange = viewModel::onNewAppointmentReasonChange,
+                onSaveAppointment = viewModel::saveAppointment,
+                onClearMessages = viewModel::clearMessages
+            )
+        }
+
+        // --- AGENDA DE CITAS (DOCTOR) ---
+        composable<DoctorAppointments> {
+            val viewModel: DoctorAppointmentsViewModel = viewModel(factory = DoctorViewModelFactory.AppointmentsFactory)
+            DoctorPortalShell(
+                selectedItem = DoctorNavItem.APPOINTMENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        DoctorNavItem.HOME -> navController.navigate(DoctorHome)
+                        DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
+                        DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
+                        DoctorNavItem.APPOINTMENTS -> {}
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(DoctorAppointments) { inclusive = true }
+                    }
+                }
+            ) {
+                DoctorAppointmentsRoute(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
+
+        // --- DOCUMENTOS E HISTORIAS CLÍNICAS (DOCTOR) ---
+        composable<DoctorDocuments> {
+            DoctorPortalShell(
+                selectedItem = DoctorNavItem.DOCUMENTS,
+                onItemSelected = { item ->
+                    when (item) {
+                        DoctorNavItem.HOME -> navController.navigate(DoctorHome)
+                        DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
+                        DoctorNavItem.DOCUMENTS -> {}
+                        DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(DoctorDocuments) { inclusive = true }
+                    }
+                }
+            ) {
+                DoctorDocumentsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onPatientClick = { patientId ->
+                        navController.navigate(PatientDetail(patientId = patientId))
+                    }
+                )
+            }
         }
 
         composable<PatientRegistration> {
@@ -214,6 +579,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
 
             OdontogramScreen(
                 state = state,
+                onDentitionTypeChange = viewModel::setDentitionType,
                 onSurfaceClick = viewModel::onSurfaceClick,
                 onCommentChange = viewModel::onCommentChange,
                 onUpdateCondition = viewModel::updateTooth,
@@ -222,9 +588,13 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- PROCESO COMPLETO DE INGRESO Y ADMISIÓN CLÍNICA ---
-        composable<ClinicalAdmission> {
-            val viewModel: ClinicalAdmissionViewModel = viewModel(factory = ClinicalAdmissionViewModelFactory.Factory)
+        composable<ClinicalAdmission> { backStackEntry ->
+            val route = backStackEntry.toRoute<ClinicalAdmission>()
+            val context = LocalContext.current
+            val app = context.applicationContext as BiodontosApp
+            val viewModel: ClinicalAdmissionViewModel = viewModel(
+                factory = ClinicalAdmissionViewModelFactory.createFactory(app.container, route.patientId)
+            )
 
             ClinicalAdmissionScreen(
                 viewModel = viewModel,

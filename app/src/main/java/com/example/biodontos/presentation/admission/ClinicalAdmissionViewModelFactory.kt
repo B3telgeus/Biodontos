@@ -7,31 +7,46 @@ import com.example.biodontos.BiodontosApp
 import com.example.biodontos.core.di.AppContainer
 
 class ClinicalAdmissionViewModelFactory(
-    private val appContainer: AppContainer
+    private val appContainer: AppContainer,
+    private val patientId: String? = null
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return createViewModel(appContainer) as T
+        return createViewModel(appContainer, patientId) as T
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
         val application = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as? BiodontosApp
         val container = application?.container ?: appContainer
-        return createViewModel(container) as T
+        return createViewModel(container, patientId) as T
     }
 
     companion object {
+        fun createFactory(container: AppContainer, patientId: String? = null): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return createViewModel(container, patientId) as T
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+                    return createViewModel(container, patientId) as T
+                }
+            }
+        }
+
         val Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                 val application = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BiodontosApp
-                return createViewModel(application.container) as T
+                return createViewModel(application.container, null) as T
             }
         }
 
-        private fun createViewModel(container: AppContainer): ClinicalAdmissionViewModel {
+        private fun createViewModel(container: AppContainer, patientId: String?): ClinicalAdmissionViewModel {
             return ClinicalAdmissionViewModel(
                 patientRepository = container.patientRepository,
                 clinicalRecordRepository = container.clinicalRecordRepository,
@@ -41,7 +56,8 @@ class ClinicalAdmissionViewModelFactory(
                 evolutionRepository = container.evolutionRepository,
                 materialRepository = container.materialRepository,
                 informedConsentRepository = container.informedConsentRepository,
-                appointmentRepository = container.appointmentRepository
+                appointmentRepository = container.appointmentRepository,
+                initialPatientId = patientId
             )
         }
     }

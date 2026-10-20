@@ -43,9 +43,11 @@ data class Patient(
         hasCriticalAllergies: Boolean = false,
         allergiesDescription: String = if (hasCriticalAllergies) "Alergias presentes" else "Ninguna",
         phone: String? = null,
-        email: String? = null
+        email: String? = null,
+        userId: String? = null
     ) : this(
         id = id,
+        userId = userId,
         dniCedula = dniCedula,
         firstName = firstName,
         firstLastName = lastName.trim().split(" ").firstOrNull() ?: lastName,

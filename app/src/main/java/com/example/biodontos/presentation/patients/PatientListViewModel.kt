@@ -42,4 +42,8 @@ class PatientListViewModel(
                 }
         }
     }
+
+    fun onSearchQueryChange(query: String) {
+        _state.update { it.copy(searchQuery = query) }
+    }
 }

@@ -19,6 +19,8 @@ firebaseMessaging = "24.0.0"
 ksp = "2.0.21-1.0.25"
 mockk = "1.13.13"
 coroutinesTest = "1.9.0"
+arrow = "1.2.1"
+turbine = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -56,6 +58,9 @@ ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.r
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+arrow-core = { group = "io.arrow-kt", name = "arrow-core", version.ref = "arrow" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+androidx-compose-material3-window-size = { group = "androidx.compose.material3", name = "material3-window-size-class" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

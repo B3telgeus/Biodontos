@@ -16,10 +16,18 @@ import androidx.compose.ui.text.font.FontWeight
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosWhite
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import com.example.biodontos.core.designsystem.BiodontosGreyText
+import com.example.biodontos.core.designsystem.biodontosTextFieldColors
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientListScreen(
     state: PatientListState,
+    onSearchQueryChange: (String) -> Unit = {},
     onAddPatientClick: () -> Unit,
     onClinicalAdmissionClick: () -> Unit = onAddPatientClick,
     onPatientClick: (Patient) -> Unit,
@@ -43,34 +51,82 @@ fun PatientListScreen(
             }
         }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (state.error != null) {
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(text = state.error, color = MaterialTheme.colorScheme.error)
-                    Button(onClick = onRetry) {
-                        Text("Reintentar")
+            // Barra de Búsqueda
+            OutlinedTextField(
+                value = state.searchQuery,
+                onValueChange = onSearchQueryChange,
+                placeholder = { Text("Buscar paciente por nombre o DNI...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Buscar",
+                        tint = BiodontosGreyText
+                    )
+                },
+                trailingIcon = {
+                    if (state.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Limpiar",
+                                tint = BiodontosGreyText
+                            )
+                        }
                     }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(state.patients, key = { it.id }) { patient ->
-                        PatientItem(
-                            patient = patient,
-                            onClick = { onPatientClick(patient) }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                colors = biodontosTextFieldColors(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (state.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else if (state.error != null) {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = state.error, color = MaterialTheme.colorScheme.error)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = onRetry) {
+                            Text("Reintentar")
+                        }
+                    }
+                } else if (state.filteredPatients.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (state.searchQuery.isBlank()) "No hay pacientes registrados aún."
+                            else "No se encontraron pacientes para \"${state.searchQuery}\"",
+                            color = BiodontosGreyText,
+                            style = MaterialTheme.typography.bodyMedium
                         )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(state.filteredPatients, key = { it.id }) { patient ->
+                            PatientItem(
+                                patient = patient,
+                                onClick = { onPatientClick(patient) }
+                            )
+                        }
                     }
                 }
             }
@@ -85,25 +141,53 @@ fun PatientItem(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = patient.fullName,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "DNI: ${patient.dniCedula}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            if (patient.hasCriticalAllergies) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = BiodontosDark.copy(alpha = 0.08f),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = BiodontosDark
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "⚠ Alergias Críticas",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.labelSmall
+                    text = patient.fullName,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = BiodontosDark
                 )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "DNI: ${patient.dniCedula} ${if (patient.phone.isNotBlank()) "· Tel: ${patient.phone}" else ""}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = BiodontosGreyText
+                )
+                if (patient.hasCriticalAllergies) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "⚠ Alergias: ${patient.allergiesDescription.ifBlank { "Críticas" }}",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
             }
         }
     }
