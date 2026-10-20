@@ -65,9 +65,35 @@ class DoctorRepositoryImpl : DoctorRepository {
                     order("day_of_week", order = Order.ASCENDING)
                 }
                 .decodeList<DoctorAvailabilityDto>()
-            Result.success(list.map { it.toDomain() })
+
+            if (list.isEmpty()) {
+                Result.success(createDefaultAvailability(doctorId))
+            } else {
+                Result.success(list.map { it.toDomain() })
+            }
         } catch (e: Exception) {
-            Result.failure(e)
+            val msg = e.message?.lowercase().orEmpty()
+            if (msg.contains("could not find") || msg.contains("doctor_availability") || msg.contains("pgrst200") || msg.contains("404")) {
+                Result.success(createDefaultAvailability(doctorId))
+            } else {
+                Result.failure(e)
+            }
+        }
+    }
+
+    private fun createDefaultAvailability(doctorId: String): List<WeeklyAvailability> {
+        val docId = com.example.biodontos.domain.model.DoctorId(doctorId)
+        return java.time.DayOfWeek.entries.map { day ->
+            val isWeekday = day.value in 1..5
+            WeeklyAvailability(
+                id = "",
+                doctorId = docId,
+                dayOfWeek = day,
+                startTime = java.time.LocalTime.of(8, 0),
+                endTime = if (isWeekday) java.time.LocalTime.of(17, 0) else java.time.LocalTime.of(13, 0),
+                slotMinutes = 30,
+                isActive = isWeekday
+            )
         }
     }
 

@@ -17,6 +17,8 @@ fun Throwable?.toUserFriendlyMessage(defaultMessage: String = "Ocurrió un error
             "Operación no autorizada para el estado actual de la cita."
         message.contains("network") || message.contains("connect") || message.contains("timeout") -> 
             "Error de conexión. Verifica tu acceso a internet."
+        message.contains("could not find the table") || message.contains("doctor_availability") || message.contains("pgrst200") ->
+            "La tabla de horarios está en proceso de sincronización con la nube. Por favor, ejecuta el script de migración SQL en Supabase."
         message.contains("unauthorized") || message.contains("jwt") || message.contains("session") -> 
             "Sesión expirada o no autorizada. Por favor, inicia sesión nuevamente."
         else -> this?.message?.takeIf { it.isNotBlank() && !it.contains("exception", ignoreCase = true) } ?: defaultMessage

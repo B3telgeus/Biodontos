@@ -2,6 +2,7 @@ package com.example.biodontos.presentation.doctor.appointments
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.biodontos.core.util.toUserFriendlyMessage
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.DoctorId
 import com.example.biodontos.domain.model.WeeklyAvailability
@@ -350,7 +351,7 @@ class DoctorAppointmentsViewModel(
                 },
                 onFailure = { error ->
                     _uiState.update { it.copy(isSavingAvailability = false) }
-                    _effects.send(DoctorAppointmentsUiEffect.ShowMessage(error.message ?: "Error al guardar el horario"))
+                    _effects.send(DoctorAppointmentsUiEffect.ShowMessage(error.toUserFriendlyMessage("Error al guardar el horario")))
                 }
             )
         }
