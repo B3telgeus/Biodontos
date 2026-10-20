@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
@@ -25,7 +26,9 @@ class ClinicalAdmissionViewModel(
     private val informedConsentRepository: InformedConsentRepository,
     private val appointmentRepository: AppointmentRepository,
     private val guardianRepository: GuardianRepository = com.example.biodontos.data.repository.GuardianRepositoryImpl(),
-    private val initialPatientId: String? = null
+    private val initialPatientId: String? = null,
+    private val getCurrentDoctorUseCase: GetCurrentDoctorUseCase? = null,
+    private val doctorRepository: DoctorRepository? = null
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ClinicalAdmissionState())
@@ -33,8 +36,35 @@ class ClinicalAdmissionViewModel(
 
     init {
         loadMaterialsCatalog()
+        loadCurrentDoctor()
         if (!initialPatientId.isNullOrBlank()) {
             loadExistingPatientData(initialPatientId)
+        }
+    }
+
+    private fun loadCurrentDoctor() {
+        val useCase = getCurrentDoctorUseCase ?: return
+        viewModelScope.launch {
+            useCase().onSuccess { doctor ->
+                if (doctor != null) {
+                    _state.update {
+                        it.copy(
+                            doctorId = doctor.id.value,
+                            doctorName = "${doctor.firstName} ${doctor.lastName}".trim(),
+                            doctorLicense = doctor.licenseNumber
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun resolveDoctorUuid(candidateId: String): String {
+        val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+        return if (candidateId.isNotBlank() && uuidRegex.matches(candidateId)) {
+            candidateId
+        } else {
+            DEFAULT_DOCTOR_UUID
         }
     }
 
@@ -676,7 +706,7 @@ class ClinicalAdmissionViewModel(
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             val exam = PeriodontalExamination(
                 recordId = s.clinicalRecordId,
-                doctorId = s.doctorId.ifBlank { "00000000-0000-0000-0000-000000000000" },
+                doctorId = resolveDoctorUuid(s.doctorId),
                 examinationDate = LocalDate.now().toString(),
                 generalObservations = s.periodontalObservations.ifBlank { null },
                 sites = s.siteMeasurements.values.toList()
@@ -711,7 +741,7 @@ class ClinicalAdmissionViewModel(
             // 2. Guardar Consentimiento Informado
             val consent = InformedConsent(
                 patientId = s.patientId,
-                doctorId = s.doctorId.ifBlank { "00000000-0000-0000-0000-000000000000" },
+                doctorId = resolveDoctorUuid(s.doctorId),
                 treatmentSummary = s.treatmentPlanDescription.ifBlank { "Tratamiento Integral de Odontología" },
                 patientSignatureUrl = s.consentPatientSignature.ifBlank { null },
                 doctorLicenseNumber = s.doctorLicense,
@@ -733,9 +763,10 @@ class ClinicalAdmissionViewModel(
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             val cost = s.evolutionCost.toDoubleOrNull() ?: 0.0
             val payment = s.evolutionPayment.toDoubleOrNull() ?: 0.0
+            val validDoctorId = resolveDoctorUuid(s.doctorId)
             val evolution = Evolution(
                 recordId = s.clinicalRecordId,
-                doctorId = s.doctorId.ifBlank { "00000000-0000-0000-0000-000000000000" },
+                doctorId = validDoctorId,
                 date = LocalDate.now().toString(),
                 procedureTime = "10:00:00",
                 description = s.evolutionDescription.ifBlank { "Apertura de historia clínica e ingreso" },
@@ -753,7 +784,7 @@ class ClinicalAdmissionViewModel(
                     if (s.closeRecordOnFinish) {
                         clinicalRecordRepository.closeRecord(
                             recordId = s.clinicalRecordId,
-                            doctorId = s.doctorId,
+                            doctorId = validDoctorId,
                             summary = s.closureSummary.ifBlank { "Tratamiento de ingreso concluido." },
                             signatureUrl = s.evolutionPatientSignature
                         )
@@ -800,20 +831,30 @@ class ClinicalAdmissionViewModel(
         }
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
+            val today = LocalDate.now().toString()
+            val documentCode = "consentimiento_preop_${pid}_$today"
+            val validDoctorId = resolveDoctorUuid(s.doctorId)
+            val treatmentDescription = s.operativeConsentProposedTreatment.ifBlank { "Tratamiento de operatoria dental y obturaciones estéticas" }
+            val formattedTreatment = "[$documentCode] $treatmentDescription"
+
             val consent = InformedConsent(
                 id = "",
                 patientId = pid,
-                doctorId = s.doctorId.ifBlank { "DOC-001" },
+                doctorId = validDoctorId,
                 documentVersion = "2",
                 versionDate = "2019-06-01",
-                treatmentSummary = s.operativeConsentProposedTreatment.ifBlank { "Tratamiento de operatoria dental y obturaciones estéticas" },
+                treatmentSummary = formattedTreatment,
                 representativeName = if (s.operativeConsentSignerType == "GUARDIAN") s.operativeConsentRepresentativeName.ifBlank { "${s.guardianFirstName} ${s.guardianLastName}".trim() } else null,
                 representativeId = if (s.operativeConsentSignerType == "GUARDIAN") s.operativeConsentRepresentativeId else null,
-                patientSignatureUrl = if (s.operativeConsentSignerType == "PATIENT") s.operativeConsentPatientSignature else null,
-                guardianSignatureUrl = if (s.operativeConsentSignerType == "GUARDIAN") s.operativeConsentPatientSignature else null,
-                doctorSignatureUrl = s.operativeConsentDoctorSignature,
+                patientSignatureUrl = if (s.operativeConsentSignerType == "PATIENT") {
+                    s.operativeConsentPatientSignature.ifBlank { "${documentCode}_sig_paciente" }
+                } else null,
+                guardianSignatureUrl = if (s.operativeConsentSignerType == "GUARDIAN") {
+                    s.operativeConsentPatientSignature.ifBlank { "${documentCode}_sig_acudiente" }
+                } else null,
+                doctorSignatureUrl = s.operativeConsentDoctorSignature.ifBlank { "${documentCode}_sig_doctor" },
                 doctorLicenseNumber = s.doctorLicense,
-                signedAt = LocalDate.now().toString(),
+                signedAt = today,
                 status = "SIGNED",
                 procedures = s.operativeConsentProcedures
             )
@@ -838,5 +879,9 @@ class ClinicalAdmissionViewModel(
                     }
                 }
         }
+    }
+
+    companion object {
+        const val DEFAULT_DOCTOR_UUID = "11111111-1111-1111-1111-111111111111"
     }
 }

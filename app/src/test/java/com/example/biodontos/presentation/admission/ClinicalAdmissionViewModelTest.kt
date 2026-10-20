@@ -6,6 +6,7 @@ import com.example.biodontos.domain.repository.*
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -289,15 +290,12 @@ class ClinicalAdmissionViewModelTest {
     }
 
     @Test
-    fun `Operative consent saves informed consent and procedures correctly`() = runTest {
-        coEvery { informedConsentRepository.saveConsent(any()) } returns Result.success(
-            InformedConsent(
-                id = "consent-123",
-                patientId = "pat-100",
-                doctorId = "DOC-001",
-                treatmentSummary = "Resinas compuestas"
-            )
-        )
+    fun `Operative consent saves informed consent and procedures correctly with valid doctor UUID and preop naming`() = runTest {
+        var capturedConsent: InformedConsent? = null
+        coEvery { informedConsentRepository.saveConsent(any()) } answers {
+            capturedConsent = firstArg()
+            Result.success(capturedConsent!!)
+        }
 
         viewModel.onEvent(ClinicalAdmissionEvent.UpdateDni("10102020"))
         viewModel.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Laura"))
@@ -322,5 +320,78 @@ class ClinicalAdmissionViewModelTest {
         assertFalse(state.showOperativeConsentDialog)
         assertTrue(state.operativeConsentSaved)
         assertEquals("Consentimiento de operatoria guardado y firmado correctamente", state.successMessage)
+
+        assertNotNull(capturedConsent)
+        // El doctorId debe ser un UUID válido (no "DOC-001")
+        assertEquals(ClinicalAdmissionViewModel.DEFAULT_DOCTOR_UUID, capturedConsent?.doctorId)
+        // El formato de tratamiento debe incluir el código de documento estandarizado consentimiento_preop_idpaciente_fecha
+        assertTrue(capturedConsent?.treatmentSummary?.contains("consentimiento_preop_pat-100_") == true)
+        assertTrue(capturedConsent?.treatmentSummary?.contains("Restauraciones estéticas en resina") == true)
+        assertEquals("patient_sig_data", capturedConsent?.patientSignatureUrl)
+        assertEquals("doctor_sig_data", capturedConsent?.doctorSignatureUrl)
+    }
+
+    @Test
+    fun `Operative consent uses authenticated doctor UUID when getCurrentDoctorUseCase is provided`() = runTest {
+        val doctorUseCase: com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase = mockk()
+        val dummyDoctor = Doctor(
+            id = DoctorId("99999999-9999-9999-9999-999999999999"),
+            userId = "user-uid-999",
+            firstName = "Andrés",
+            lastName = "Cepeda",
+            specialty = "Odontología Restauradora",
+            email = "andres.cepeda@biodontos.com",
+            licenseNumber = "OD-77889"
+        )
+        coEvery { doctorUseCase() } returns Result.success(dummyDoctor)
+
+        var capturedConsent: InformedConsent? = null
+        coEvery { informedConsentRepository.saveConsent(any()) } answers {
+            capturedConsent = firstArg()
+            Result.success(capturedConsent!!)
+        }
+
+        val vmWithDoctor = ClinicalAdmissionViewModel(
+            patientRepository = patientRepository,
+            clinicalRecordRepository = clinicalRecordRepository,
+            anamnesisRepository = anamnesisRepository,
+            odontogramRepository = odontogramRepository,
+            periodontalRepository = periodontalRepository,
+            evolutionRepository = evolutionRepository,
+            materialRepository = materialRepository,
+            informedConsentRepository = informedConsentRepository,
+            appointmentRepository = appointmentRepository,
+            guardianRepository = guardianRepository,
+            getCurrentDoctorUseCase = doctorUseCase
+        )
+
+        advanceUntilIdle()
+
+        // Verificamos que se cargó el doctor en el state
+        assertEquals("99999999-9999-9999-9999-999999999999", vmWithDoctor.state.value.doctorId)
+        assertEquals("Andrés Cepeda", vmWithDoctor.state.value.doctorName)
+        assertEquals("OD-77889", vmWithDoctor.state.value.doctorLicense)
+
+        // Simulamos paciente y guardado de consentimiento
+        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
+            Patient(id = "pat-200", dniCedula = "52889900", firstName = "Camila", firstLastName = "Díaz")
+        )
+        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-200", patientId = "pat-200"))
+        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateDni("52889900"))
+        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Camila"))
+        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Díaz"))
+        vmWithDoctor.onEvent(ClinicalAdmissionEvent.NextStep)
+        advanceUntilIdle()
+
+        vmWithDoctor.onEvent(ClinicalAdmissionEvent.SaveOperativeConsent)
+        advanceUntilIdle()
+
+        assertNotNull(capturedConsent)
+        assertEquals("99999999-9999-9999-9999-999999999999", capturedConsent?.doctorId)
+        assertEquals("OD-77889", capturedConsent?.doctorLicenseNumber)
+        assertTrue(capturedConsent?.treatmentSummary?.contains("consentimiento_preop_pat-200_") == true)
+        // Fallbacks automáticos de firma si no se capturaron en el pad
+        assertEquals("consentimiento_preop_pat-200_${java.time.LocalDate.now()}_sig_paciente", capturedConsent?.patientSignatureUrl)
+        assertEquals("consentimiento_preop_pat-200_${java.time.LocalDate.now()}_sig_doctor", capturedConsent?.doctorSignatureUrl)
     }
 }

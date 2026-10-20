@@ -27,6 +27,20 @@ class ErrorMapperTest {
     }
 
     @Test
+    fun mapsInvalidUuidSyntaxCorrectly() {
+        val exception = Exception("""ERROR: invalid input syntax for uuid: "DOC-001"""")
+        val friendlyMessage = exception.toUserFriendlyMessage()
+        assertEquals("Identificador de doctor o paciente con formato inválido. Verifique la sesión activa.", friendlyMessage)
+    }
+
+    @Test
+    fun mapsDoctorForeignKeyErrorCorrectly() {
+        val exception = Exception("""insert or update on table "informed_consents" violates foreign key constraint "informed_consents_doctor_id_fkey"""")
+        val friendlyMessage = exception.toUserFriendlyMessage()
+        assertEquals("El odontólogo asignado no se encuentra registrado en el sistema clínico.", friendlyMessage)
+    }
+
+    @Test
     fun returnsDefaultMessageOnNullOrUnknown() {
         val friendlyMessage = null.toUserFriendlyMessage("Por defecto")
         assertEquals("Por defecto", friendlyMessage)

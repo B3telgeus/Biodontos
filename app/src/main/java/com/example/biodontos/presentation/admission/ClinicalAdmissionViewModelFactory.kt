@@ -58,7 +58,9 @@ class ClinicalAdmissionViewModelFactory(
                 informedConsentRepository = container.informedConsentRepository,
                 appointmentRepository = container.appointmentRepository,
                 guardianRepository = container.guardianRepository,
-                initialPatientId = patientId
+                initialPatientId = patientId,
+                getCurrentDoctorUseCase = container.getCurrentDoctorUseCase,
+                doctorRepository = container.doctorRepository
             )
         }
     }
