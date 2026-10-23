@@ -62,7 +62,7 @@ fun OnboardingScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Tu salud dental, organizada fácilmente.",
+                        text = "Tu salud dental, organizada fácilmente!",
                         fontSize = 20.sp,
                         color = BiodontosGreyText,
                         lineHeight = 28.sp
@@ -157,7 +157,7 @@ fun OnboardingScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Tu salud dental, organizada fácilmente.",
+                    text = "Tu salud dental, organizada fácilmente!",
                     fontSize = 16.sp,
                     color = BiodontosGreyText,
                     textAlign = TextAlign.Center
