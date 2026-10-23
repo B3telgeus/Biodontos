@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.auth.onboarding
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,10 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 
@@ -54,6 +57,15 @@ fun OnboardingScreen(
                         .padding(end = 32.dp),
                     verticalArrangement = Arrangement.Center
                 ) {
+                    // Imagen personalizada del Diente (Tablet)
+                    Image(
+                        painter = painterResource(id = R.drawable.diente),
+                        contentDescription = "Logo Biodontos",
+                        modifier = Modifier
+                            .size(110.dp)
+                            .offset(y = (-8).dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "¡SONRÍE!",
                         fontSize = 54.sp,
@@ -149,6 +161,15 @@ fun OnboardingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                // Imagen personalizada del Diente (Móvil)
+                Image(
+                    painter = painterResource(id = R.drawable.diente),
+                    contentDescription = "Logo Biodontos",
+                    modifier = Modifier
+                        .size(90.dp)
+                        .offset(y = (-12).dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = "¡SONRÍE!",
                     fontSize = 42.sp,
