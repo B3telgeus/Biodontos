@@ -79,7 +79,7 @@ fun UserTypeSelectionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "¡Nos encanta tenerte acá!",
+                        text = "¡Nos alegra mucho tenerte por acá!",
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark,
@@ -87,7 +87,7 @@ fun UserTypeSelectionScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Selecciona la opción que mejor te represente:",
+                        text = "Por favor, selecciona la opción que mejor te represente:",
                         fontSize = 18.sp,
                         color = BiodontosGreyText,
                         textAlign = TextAlign.Center
