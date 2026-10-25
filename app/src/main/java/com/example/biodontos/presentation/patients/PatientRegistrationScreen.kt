@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.patients
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -13,9 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 
 @OptIn(ExperimentalMaterial3Api::class)
+@VisibleForTesting
 @Composable
 fun PatientRegistrationScreen(
     state: PatientRegistrationState,
@@ -204,5 +208,72 @@ fun PatientRegistrationScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientRegistrationLoadingPreview() {
+    DentalTheme {
+        PatientRegistrationScreen(
+            state = PatientRegistrationState(isLoading = true),
+            onDniChange = {},
+            onFirstNameChange = {},
+            onLastNameChange = {},
+            onPhoneChange = {},
+            onConsentChange = {},
+            onAllergiesChange = {},
+            onAllergiesDescriptionChange = {},
+            onSaveClick = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientRegistrationSuccessPreview() {
+    DentalTheme {
+        PatientRegistrationScreen(
+            state = PatientRegistrationState(
+                dniCedula = "10203040",
+                firstName = "Juan",
+                lastName = "Pérez",
+                phone = "3009876543",
+                consentSigned = true
+            ),
+            onDniChange = {},
+            onFirstNameChange = {},
+            onLastNameChange = {},
+            onPhoneChange = {},
+            onConsentChange = {},
+            onAllergiesChange = {},
+            onAllergiesDescriptionChange = {},
+            onSaveClick = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientRegistrationErrorPreview() {
+    DentalTheme {
+        PatientRegistrationScreen(
+            state = PatientRegistrationState(
+                dniError = "El DNI es obligatorio",
+                firstNameError = "El nombre es obligatorio",
+                error = "Verifique los datos ingresados."
+            ),
+            onDniChange = {},
+            onFirstNameChange = {},
+            onLastNameChange = {},
+            onPhoneChange = {},
+            onConsentChange = {},
+            onAllergiesChange = {},
+            onAllergiesDescriptionChange = {},
+            onSaveClick = {},
+            onBackClick = {}
+        )
     }
 }

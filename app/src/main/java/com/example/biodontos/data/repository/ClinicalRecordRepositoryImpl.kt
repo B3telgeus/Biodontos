@@ -8,7 +8,9 @@ import com.example.biodontos.domain.model.ClinicalRecord
 import com.example.biodontos.domain.model.ClinicalRecordStatus
 import com.example.biodontos.domain.repository.ClinicalRecordRepository
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 import java.time.Instant
+import kotlinx.coroutines.CancellationException
 
 class ClinicalRecordRepositoryImpl : ClinicalRecordRepository {
 
@@ -19,6 +21,23 @@ class ClinicalRecordRepositoryImpl : ClinicalRecordRepository {
                 .decodeSingleOrNull<ClinicalRecordDto>()
             Result.success(result?.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getRecordsByPatientId(patientId: String): Result<List<ClinicalRecord>> {
+        return try {
+            val records = SupabaseClient.client.from("clinical_records")
+                .select {
+                    filter { eq("patient_id", patientId) }
+                    order("created_at", order = Order.DESCENDING)
+                }
+                .decodeList<ClinicalRecordDto>()
+                .map { it.toDomain() }
+            Result.success(records)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -26,17 +45,12 @@ class ClinicalRecordRepositoryImpl : ClinicalRecordRepository {
     override suspend fun saveRecord(record: ClinicalRecord): Result<ClinicalRecord> {
         return try {
             val dto = record.toDto()
-            val saved = if (record.id.isBlank()) {
-                SupabaseClient.client.from("clinical_records").upsert(dto) {
-                    select()
-                }.decodeSingle<ClinicalRecordDto>()
-            } else {
-                SupabaseClient.client.from("clinical_records").upsert(dto) {
-                    select()
-                }.decodeSingle<ClinicalRecordDto>()
-            }
+            val saved = SupabaseClient.client.from("clinical_records").upsert(dto) {
+                select()
+            }.decodeSingle<ClinicalRecordDto>()
             Result.success(saved.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -62,6 +76,7 @@ class ClinicalRecordRepositoryImpl : ClinicalRecordRepository {
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

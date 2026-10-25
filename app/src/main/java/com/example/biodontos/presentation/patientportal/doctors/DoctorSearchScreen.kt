@@ -44,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,9 +52,11 @@ import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.DoctorId
 
 @Composable
 fun DoctorSearchRoute(
@@ -359,5 +362,52 @@ private fun DoctorItemCard(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorSearchLoadingPreview() {
+    DentalTheme {
+        DoctorSearchScreen(
+            state = DoctorSearchUiState(isLoading = true),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorSearchSuccessPreview() {
+    DentalTheme {
+        DoctorSearchScreen(
+            state = DoctorSearchUiState(
+                isLoading = false,
+                doctors = listOf(
+                    Doctor(
+                        id = DoctorId("doc-1"),
+                        firstName = "Carlos",
+                        lastName = "Restrepo",
+                        specialty = "Ortodoncia",
+                        bio = "Especialista en diseño de sonrisa y ortodoncia invisible."
+                    )
+                )
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorSearchErrorPreview() {
+    DentalTheme {
+        DoctorSearchScreen(
+            state = DoctorSearchUiState(
+                isLoading = false,
+                errorMessage = "Error al consultar el directorio de especialistas."
+            ),
+            onEvent = {}
+        )
     }
 }

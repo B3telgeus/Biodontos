@@ -65,7 +65,7 @@ class DoctorProfileViewModelTest {
         id = "apt-pending",
         patientId = "patient-1",
         doctorId = "doc-uid-1",
-        startTime = LocalDateTime.of(2026, 10, 25, 10, 0),
+        startTime = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0),
         status = AppointmentStatus.SCHEDULED,
         isConfirmed = false,
         reason = "Valoración General"
@@ -75,7 +75,7 @@ class DoctorProfileViewModelTest {
         id = "apt-confirmed",
         patientId = "patient-1",
         doctorId = "doc-uid-1",
-        startTime = LocalDateTime.of(2026, 10, 26, 14, 0),
+        startTime = LocalDateTime.now().plusDays(2).withHour(14).withMinute(0),
         status = AppointmentStatus.SCHEDULED,
         isConfirmed = true,
         reason = "Control de brackets"

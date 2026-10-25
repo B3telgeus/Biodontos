@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.odontogram
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -21,15 +22,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.domain.model.DentitionType
 import com.example.biodontos.domain.model.Tooth
 import com.example.biodontos.domain.model.ToothCondition
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@VisibleForTesting
 @Composable
 fun OdontogramScreen(
     state: OdontogramState,
@@ -290,5 +294,56 @@ fun ToothSelectionDialog(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OdontogramLoadingPreview() {
+    DentalTheme {
+        OdontogramScreen(
+            state = OdontogramState(isLoading = true),
+            onSurfaceClick = { _, _ -> },
+            onCommentChange = {},
+            onUpdateCondition = {},
+            onDismissDialog = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OdontogramSuccessPreview() {
+    DentalTheme {
+        OdontogramScreen(
+            state = OdontogramState(
+                isLoading = false,
+                dentitionType = DentitionType.ADULT
+            ),
+            onSurfaceClick = { _, _ -> },
+            onCommentChange = {},
+            onUpdateCondition = {},
+            onDismissDialog = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OdontogramErrorPreview() {
+    DentalTheme {
+        OdontogramScreen(
+            state = OdontogramState(
+                isLoading = false,
+                error = "No fue posible sincronizar el odontograma del paciente."
+            ),
+            onSurfaceClick = { _, _ -> },
+            onCommentChange = {},
+            onUpdateCondition = {},
+            onDismissDialog = {},
+            onBackClick = {}
+        )
     }
 }

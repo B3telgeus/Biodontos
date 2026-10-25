@@ -1,5 +1,8 @@
 package com.example.biodontos.presentation.patients
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class PatientRegistrationState(
     val dniCedula: String = "",
     val firstName: String = "",

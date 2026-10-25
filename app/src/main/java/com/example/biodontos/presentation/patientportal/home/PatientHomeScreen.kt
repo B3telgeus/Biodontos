@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,13 +50,18 @@ import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosRowHighlight
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.Esmeralda
 import com.example.biodontos.core.designsystem.components.AppointmentStatusChip
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.DateBadge
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.domain.model.Appointment
+import com.example.biodontos.domain.model.AppointmentStatus
+import com.example.biodontos.domain.model.CopAmount
 import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.DoctorId
+import java.time.LocalDateTime
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -599,5 +605,66 @@ private fun DoctorsCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientHomeLoadingPreview() {
+    DentalTheme {
+        PatientHomeScreen(
+            state = PatientHomeUiState(isLoading = true),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientHomeSuccessPreview() {
+    val nextApt = Appointment(
+        id = "apt-1",
+        patientId = "pat-1",
+        doctorId = "doc-1",
+        doctorName = "Dr. Carlos Restrepo",
+        startTime = LocalDateTime.of(2026, 10, 26, 9, 0),
+        status = AppointmentStatus.CONFIRMED,
+        isConfirmed = true,
+        reason = "Control de Ortodoncia"
+    )
+    DentalTheme {
+        PatientHomeScreen(
+            state = PatientHomeUiState(
+                isLoading = false,
+                patientName = "Laura Martínez",
+                nextAppointment = nextApt,
+                upcomingAppointments = listOf(nextApt),
+                pendingBalance = CopAmount(150000L),
+                doctors = listOf(
+                    Doctor(
+                        id = DoctorId("doc-1"),
+                        firstName = "Carlos",
+                        lastName = "Restrepo",
+                        specialty = "Ortodoncia"
+                    )
+                )
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientHomeErrorPreview() {
+    DentalTheme {
+        PatientHomeScreen(
+            state = PatientHomeUiState(
+                isLoading = false,
+                patientName = "Laura Martínez",
+                errorMessage = "No se pudo actualizar tu resumen clínico."
+            ),
+            onEvent = {}
+        )
     }
 }

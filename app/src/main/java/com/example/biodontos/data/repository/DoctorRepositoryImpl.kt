@@ -10,6 +10,7 @@ import com.example.biodontos.domain.model.WeeklyAvailability
 import com.example.biodontos.domain.repository.DoctorRepository
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.CancellationException
 
 class DoctorRepositoryImpl : DoctorRepository {
 
@@ -22,6 +23,7 @@ class DoctorRepositoryImpl : DoctorRepository {
                 .decodeList<DoctorDto>()
             Result.success(list.map { it.toDomain() })
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -40,6 +42,7 @@ class DoctorRepositoryImpl : DoctorRepository {
                 .decodeSingleOrNull<DoctorDto>()
             Result.success(dto?.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -51,6 +54,7 @@ class DoctorRepositoryImpl : DoctorRepository {
                 .decodeSingleOrNull<DoctorDto>()
             Result.success(dto?.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -72,6 +76,7 @@ class DoctorRepositoryImpl : DoctorRepository {
                 Result.success(list.map { it.toDomain() })
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             val msg = e.message?.lowercase().orEmpty()
             if (msg.contains("could not find") || msg.contains("doctor_availability") || msg.contains("pgrst200") || msg.contains("404")) {
                 Result.success(createDefaultAvailability(doctorId))
@@ -117,6 +122,7 @@ class DoctorRepositoryImpl : DoctorRepository {
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -144,6 +150,7 @@ class DoctorRepositoryImpl : DoctorRepository {
                 .decodeList<DoctorDto>()
             Result.success(list.map { it.toDomain() })
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

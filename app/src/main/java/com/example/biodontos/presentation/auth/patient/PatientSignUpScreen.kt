@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.auth.patient
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,11 +26,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.biodontos.core.designsystem.*
 
 @OptIn(ExperimentalMaterial3Api::class)
+@VisibleForTesting
 @Composable
 fun PatientSignUpScreen(
     state: PatientSignUpState,
@@ -434,5 +437,82 @@ fun PatientSignUpScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientSignUpLoadingPreview() {
+    DentalTheme {
+        PatientSignUpScreen(
+            state = PatientSignUpState(
+                currentStep = 1,
+                isLoading = true
+            ),
+            onFirstNameChange = {},
+            onLastNameChange = {},
+            onDniChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onPasswordChange = {},
+            onConfirmPasswordChange = {},
+            onTermsAcceptedChange = {},
+            onTogglePasswordVisibility = {},
+            onNextClick = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientSignUpSuccessPreview() {
+    DentalTheme {
+        PatientSignUpScreen(
+            state = PatientSignUpState(
+                currentStep = 1,
+                firstName = "Laura",
+                lastName = "Martínez",
+                dniCedula = "1032456789",
+                phone = "3004567890"
+            ),
+            onFirstNameChange = {},
+            onLastNameChange = {},
+            onDniChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onPasswordChange = {},
+            onConfirmPasswordChange = {},
+            onTermsAcceptedChange = {},
+            onTogglePasswordVisibility = {},
+            onNextClick = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientSignUpErrorPreview() {
+    DentalTheme {
+        PatientSignUpScreen(
+            state = PatientSignUpState(
+                currentStep = 1,
+                firstNameError = "El nombre es obligatorio",
+                dniError = "El documento debe contener solo números",
+                error = "Complete todos los campos obligatorios."
+            ),
+            onFirstNameChange = {},
+            onLastNameChange = {},
+            onDniChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onPasswordChange = {},
+            onConfirmPasswordChange = {},
+            onTermsAcceptedChange = {},
+            onTogglePasswordVisibility = {},
+            onNextClick = {},
+            onBackClick = {}
+        )
     }
 }

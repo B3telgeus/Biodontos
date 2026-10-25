@@ -7,6 +7,7 @@ import com.example.biodontos.data.mapper.toDto
 import com.example.biodontos.domain.model.Guardian
 import com.example.biodontos.domain.repository.GuardianRepository
 import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.CancellationException
 
 class GuardianRepositoryImpl : GuardianRepository {
 
@@ -17,6 +18,7 @@ class GuardianRepositoryImpl : GuardianRepository {
                 .decodeSingleOrNull<GuardianDto>()
             Result.success(result?.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -29,6 +31,7 @@ class GuardianRepositoryImpl : GuardianRepository {
             }.decodeSingle<GuardianDto>()
             Result.success(savedDto.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

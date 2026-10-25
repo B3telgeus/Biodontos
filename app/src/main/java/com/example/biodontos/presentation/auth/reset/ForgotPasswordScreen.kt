@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.auth.reset
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,11 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.biodontos.core.designsystem.*
 
 @OptIn(ExperimentalMaterial3Api::class)
+@VisibleForTesting
 @Composable
 fun ForgotPasswordScreen(
     state: ForgotPasswordState,
@@ -225,5 +228,54 @@ fun ForgotPasswordScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ForgotPasswordLoadingPreview() {
+    DentalTheme {
+        ForgotPasswordScreen(
+            state = ForgotPasswordState(
+                email = "paciente@biodontos.com",
+                isLoading = true
+            ),
+            onEmailChange = {},
+            onSubmitClick = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ForgotPasswordSuccessPreview() {
+    DentalTheme {
+        ForgotPasswordScreen(
+            state = ForgotPasswordState(
+                email = "paciente@biodontos.com",
+                isSubmittedSuccess = true
+            ),
+            onEmailChange = {},
+            onSubmitClick = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ForgotPasswordErrorPreview() {
+    DentalTheme {
+        ForgotPasswordScreen(
+            state = ForgotPasswordState(
+                email = "correo-invalido",
+                emailError = "Formato de correo electrónico inválido",
+                error = "No se encontró ninguna cuenta asociada a este correo."
+            ),
+            onEmailChange = {},
+            onSubmitClick = {},
+            onBackClick = {}
+        )
     }
 }

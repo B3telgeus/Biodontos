@@ -9,6 +9,7 @@ import com.example.biodontos.domain.model.PeriodontalExamination
 import com.example.biodontos.domain.repository.PeriodontalRepository
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.CancellationException
 
 class PeriodontalRepositoryImpl : PeriodontalRepository {
 
@@ -34,6 +35,7 @@ class PeriodontalRepositoryImpl : PeriodontalRepository {
             val sites = sitesDto.map { it.toDomain() }
             Result.success(examDto.toDomain(sites))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -55,6 +57,7 @@ class PeriodontalRepositoryImpl : PeriodontalRepository {
 
             Result.success(savedExam.toDomain(examination.sites))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

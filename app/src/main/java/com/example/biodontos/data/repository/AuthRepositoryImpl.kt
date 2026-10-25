@@ -9,6 +9,7 @@ import com.example.biodontos.domain.repository.AuthRepository
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
@@ -43,6 +44,7 @@ class AuthRepositoryImpl : AuthRepository {
                 )
             )
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -92,7 +94,8 @@ class AuthRepositoryImpl : AuthRepository {
                         consentSigned = true
                     )
                 )
-            } catch (_: Exception) {
+            } catch (syncEx: Exception) {
+                if (syncEx is CancellationException) throw syncEx
                 // Silencioso si la tabla tiene RLS o si el usuario aún requiere confirmación por email
             }
 
@@ -104,6 +107,7 @@ class AuthRepositoryImpl : AuthRepository {
             )
             Result.success(session)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -145,7 +149,8 @@ class AuthRepositoryImpl : AuthRepository {
                         phone?.let { put("phone", it.trim()) }
                     }
                 )
-            } catch (_: Exception) {
+            } catch (syncEx: Exception) {
+                if (syncEx is CancellationException) throw syncEx
                 // Silencioso si ya está manejado por trigger o RLS
             }
 
@@ -157,6 +162,7 @@ class AuthRepositoryImpl : AuthRepository {
             )
             Result.success(session)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -166,6 +172,7 @@ class AuthRepositoryImpl : AuthRepository {
             SupabaseClient.client.auth.resetPasswordForEmail(email.trim())
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -193,6 +200,7 @@ class AuthRepositoryImpl : AuthRepository {
             SupabaseClient.client.auth.signOut()
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

@@ -24,5 +24,6 @@ data class ClinicalRecord(
     val closedAt: String? = null,
     val closedByDoctorId: String? = null,
     val closureSummary: String? = null,
-    val closureSignatureUrl: String? = null
+    val closureSignatureUrl: String? = null,
+    val openedAt: String? = null
 )

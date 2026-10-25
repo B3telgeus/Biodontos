@@ -15,5 +15,6 @@ data class ClinicalRecordDto(
     @SerialName("closed_at") val closedAt: String? = null,
     @SerialName("closed_by_doctor_id") val closedByDoctorId: String? = null,
     @SerialName("closure_summary") val closureSummary: String? = null,
-    @SerialName("closure_signature_url") val closureSignatureUrl: String? = null
+    @SerialName("closure_signature_url") val closureSignatureUrl: String? = null,
+    @SerialName("created_at") val createdAt: String? = null
 )

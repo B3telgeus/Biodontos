@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,6 +63,8 @@ import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosLightGrey
 import com.example.biodontos.core.designsystem.BiodontosScreenGradient
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.domain.model.CopAmount
 import com.example.biodontos.core.designsystem.StatusCancelled
 import com.example.biodontos.core.designsystem.StatusConfirmed
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
@@ -1035,4 +1038,77 @@ private fun RecordPaymentDialog(
             }
         }
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorHomeLoadingPreview() {
+    DentalTheme {
+        DoctorHomeScreen(
+            state = DoctorHomeUiState(isLoading = true),
+            onEvent = {},
+            onNavigateToPatients = {},
+            onNavigateToNewPatient = {},
+            onNavigateToAppointments = {},
+            onNavigateToDocuments = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorHomeSuccessPreview() {
+    DentalTheme {
+        DoctorHomeScreen(
+            state = DoctorHomeUiState(
+                isLoading = false,
+                doctorName = "Dr. Carlos Restrepo",
+                patientsCount = 24,
+                todayAppointmentsCount = 5,
+                upcomingAppointments = listOf(
+                    DoctorAppointmentItem(
+                        appointmentId = "apt-1",
+                        patientName = "María Gómez",
+                        treatmentReason = "Limpieza dental",
+                        startTime = LocalDateTime.of(2026, 10, 23, 10, 0),
+                        isConfirmed = true
+                    )
+                ),
+                recentPayments = listOf(
+                    DoctorPaymentItem(
+                        id = "pay-1",
+                        patientName = "María Gómez",
+                        treatmentDescription = "Profilaxis",
+                        dateStr = "23/10/2026",
+                        amountCop = CopAmount(120000L),
+                        paymentMethod = "EFECTIVO"
+                    )
+                )
+            ),
+            onEvent = {},
+            onNavigateToPatients = {},
+            onNavigateToNewPatient = {},
+            onNavigateToAppointments = {},
+            onNavigateToDocuments = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorHomeErrorPreview() {
+    DentalTheme {
+        DoctorHomeScreen(
+            state = DoctorHomeUiState(
+                isLoading = false,
+                doctorName = "Dr. Carlos Restrepo",
+                errorMessage = "Error de conexión al sincronizar el panel del doctor."
+            ),
+            onEvent = {},
+            onNavigateToPatients = {},
+            onNavigateToNewPatient = {},
+            onNavigateToAppointments = {},
+            onNavigateToDocuments = {}
+        )
+    }
 }

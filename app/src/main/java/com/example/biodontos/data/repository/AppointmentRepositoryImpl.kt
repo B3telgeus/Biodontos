@@ -10,6 +10,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.rpc
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
@@ -44,6 +45,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -56,6 +58,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
             }.decodeSingle<AppointmentDto>()
             Result.success(savedDto.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -70,6 +73,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
                 .decodeList<AppointmentDto>()
             Result.success(list.map { it.toDomain() })
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -84,6 +88,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
                 .decodeList<AppointmentDto>()
             Result.success(list.map { it.toDomain() })
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -95,6 +100,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
                 .decodeSingleOrNull<AppointmentDto>()
             Result.success(dto?.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -114,6 +120,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
                 .filter { it.startTime.toString().startsWith(date) }
             Result.success(filtered)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -143,6 +150,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
             }
             Result.success(intervals)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -155,6 +163,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
             ).decodeList<BusySlotDto>()
             Result.success(list.map { it.startTime })
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             // Fallback defensivo si la migración de RPC aún no ha sido ejecutada en el backend
             try {
                 val list = SupabaseClient.client.from("appointments")
@@ -169,7 +178,8 @@ class AppointmentRepositoryImpl : AppointmentRepository {
                     .filter { it.startTime.startsWith(date) }
                     .map { it.startTime }
                 Result.success(filtered)
-            } catch (_: Exception) {
+            } catch (fallbackEx: Exception) {
+                if (fallbackEx is CancellationException) throw fallbackEx
                 Result.failure(e)
             }
         }
@@ -195,6 +205,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -219,6 +230,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -238,6 +250,7 @@ class AppointmentRepositoryImpl : AppointmentRepository {
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

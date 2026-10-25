@@ -8,6 +8,7 @@ val Zafiro = Color(0xFF006494)
 val ZafiroLight = Color(0xFFE1F5FE)
 val Esmeralda = Color(0xFF10B981)
 val Carmesi = Color(0xFFDC2626)
+val Ambar = Color(0xFFD97706)
 val Slate = Color(0xFF64748B)
 val SlateLight = Color(0xFFF1F5F9)
 

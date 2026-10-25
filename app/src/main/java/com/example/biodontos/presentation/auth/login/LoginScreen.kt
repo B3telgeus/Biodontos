@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.auth.login
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,11 +27,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.example.biodontos.core.designsystem.*
 
+@VisibleForTesting
 @Composable
 fun LoginScreen(
     state: LoginState,
@@ -370,5 +373,65 @@ private fun LoginFormCard(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginLoadingPreview() {
+    DentalTheme {
+        LoginScreen(
+            state = LoginState(
+                email = "doctor@biodontos.com",
+                password = "password123",
+                isLoading = true
+            ),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onTogglePasswordVisibility = {},
+            onLoginClick = {},
+            onForgotPasswordClick = {},
+            onSignUpClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginSuccessPreview() {
+    DentalTheme {
+        LoginScreen(
+            state = LoginState(
+                email = "doctor@biodontos.com",
+                password = "password123",
+                isLoading = false
+            ),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onTogglePasswordVisibility = {},
+            onLoginClick = {},
+            onForgotPasswordClick = {},
+            onSignUpClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginErrorPreview() {
+    DentalTheme {
+        LoginScreen(
+            state = LoginState(
+                email = "correo-invalido",
+                emailError = "Ingrese un correo electrónico válido",
+                error = "Credenciales inválidas. Verifique su correo y contraseña."
+            ),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onTogglePasswordVisibility = {},
+            onLoginClick = {},
+            onForgotPasswordClick = {},
+            onSignUpClick = {}
+        )
     }
 }

@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,8 +56,11 @@ import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
+import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.DoctorId
 import com.example.biodontos.domain.scheduling.TimeSlot
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -478,6 +482,62 @@ private fun SlotChip(
             fontSize = 13.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             color = if (isSelected) BiodontosWhite else BiodontosDark
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BookAppointmentLoadingPreview() {
+    DentalTheme {
+        BookAppointmentScreen(
+            state = BookAppointmentUiState(isLoading = true),
+            onEvent = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BookAppointmentSuccessPreview() {
+    val sampleDate = LocalDate.of(2026, 10, 24)
+    val sampleSlot = TimeSlot(
+        start = sampleDate.atTime(10, 0),
+        end = sampleDate.atTime(10, 30)
+    )
+    DentalTheme {
+        BookAppointmentScreen(
+            state = BookAppointmentUiState(
+                isLoading = false,
+                doctor = Doctor(
+                    id = DoctorId("doc-1"),
+                    firstName = "Valeria",
+                    lastName = "Mendoza",
+                    specialty = "Ortodoncia"
+                ),
+                selectedDate = sampleDate,
+                availableDates = listOf(sampleDate, sampleDate.plusDays(1), sampleDate.plusDays(2)),
+                slots = listOf(sampleSlot),
+                selectedSlot = sampleSlot
+            ),
+            onEvent = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BookAppointmentErrorPreview() {
+    DentalTheme {
+        BookAppointmentScreen(
+            state = BookAppointmentUiState(
+                isLoading = false,
+                errorMessage = "No hay horarios disponibles para la fecha seleccionada."
+            ),
+            onEvent = {},
+            onBackClick = {}
         )
     }
 }

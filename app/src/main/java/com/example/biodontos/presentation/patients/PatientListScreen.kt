@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.patients
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,10 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.biodontos.core.designsystem.BiodontosGreyText
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 
 @OptIn(ExperimentalMaterial3Api::class)
+@VisibleForTesting
 @Composable
 fun PatientListScreen(
     state: PatientListState,
@@ -35,6 +39,7 @@ fun PatientListScreen(
     onRetry: () -> Unit
 ) {
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Pacientes - Biodontos", fontWeight = FontWeight.Bold, color = BiodontosDark) },
@@ -202,5 +207,60 @@ fun PatientItem(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientListLoadingPreview() {
+    DentalTheme {
+        PatientListScreen(
+            state = PatientListState(isLoading = true),
+            onAddPatientClick = {},
+            onPatientClick = {},
+            onRetry = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientListSuccessPreview() {
+    DentalTheme {
+        PatientListScreen(
+            state = PatientListState(
+                isLoading = false,
+                patients = listOf(
+                    Patient(
+                        id = "pat-1",
+                        dniCedula = "10203040",
+                        firstName = "María",
+                        firstLastName = "Gómez",
+                        phone = "3001234567",
+                        hasCriticalAllergies = true,
+                        allergiesDescription = "Penicilina"
+                    )
+                )
+            ),
+            onAddPatientClick = {},
+            onPatientClick = {},
+            onRetry = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientListErrorPreview() {
+    DentalTheme {
+        PatientListScreen(
+            state = PatientListState(
+                isLoading = false,
+                error = "Error al cargar el listado de pacientes."
+            ),
+            onAddPatientClick = {},
+            onPatientClick = {},
+            onRetry = {}
+        )
     }
 }

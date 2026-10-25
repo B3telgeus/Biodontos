@@ -7,14 +7,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -43,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,7 +69,7 @@ fun DoctorPortalShell(
     selectedItem: DoctorNavItem,
     onItemSelected: (DoctorNavItem) -> Unit,
     onLogoutClick: () -> Unit,
-    isExpandedScreen: Boolean = true,
+    isExpandedScreen: Boolean = LocalConfiguration.current.screenWidthDp >= 600,
     content: @Composable () -> Unit
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -183,12 +186,13 @@ fun DoctorPortalShell(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f)
+                        .consumeWindowInsets(WindowInsets.safeDrawing)
                 ) {
                     content()
                 }
             }
         } else {
-            // Layout Móvil con BottomBar
+            // Layout Móvil con BottomBar y acción de Cerrar sesión
             Scaffold(
                 containerColor = Color.Transparent,
                 bottomBar = {
@@ -221,6 +225,28 @@ fun DoctorPortalShell(
                                 )
                             )
                         }
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = { showLogoutDialog = true },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                    contentDescription = "Cerrar sesión"
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = "Salir",
+                                    fontSize = 11.sp,
+                                    color = BiodontosWhite.copy(alpha = 0.6f)
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = BiodontosWhite,
+                                unselectedIconColor = BiodontosWhite.copy(alpha = 0.5f),
+                                indicatorColor = Color(0xFF2C3240)
+                            )
+                        )
                     }
                 }
             ) { padding ->

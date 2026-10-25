@@ -21,6 +21,8 @@ import com.example.biodontos.domain.model.InformedConsentProcedure
 import com.example.biodontos.domain.model.PeriodontalExamination
 import com.example.biodontos.domain.model.PeriodontalSiteLocation
 import com.example.biodontos.domain.model.PeriodontalSiteMeasurement
+import com.example.biodontos.domain.model.history.ClinicalDateParser
+import com.example.biodontos.domain.model.history.VoidInfo
 
 // --- Anamnesis ---
 fun AnamnesisDto.toDomain(): Anamnesis = Anamnesis(
@@ -56,38 +58,40 @@ fun Anamnesis.toDto(): AnamnesisDto {
     val resolvedId = if (id.isNotBlank()) {
         id
     } else if (patientId.isNotBlank()) {
-        java.util.UUID.nameUUIDFromBytes("anamnesis_$patientId".toByteArray(java.nio.charset.StandardCharsets.UTF_8)).toString()
+        java.util.UUID.nameUUIDFromBytes(
+            "anamnesis_$patientId".toByteArray(java.nio.charset.StandardCharsets.UTF_8)
+        ).toString()
     } else {
         null
     }
     return AnamnesisDto(
         id = resolvedId,
         patientId = patientId,
-    tratamientoMedicoActual = tratamientoMedicoActual,
-    tomaMedicamentos = tomaMedicamentos,
-    alergias = alergias,
-    cardiopatias = cardiopatias,
-    alteracionPresionArterial = alteracionPresionArterial,
-    embarazo = embarazo,
-    diabetes = diabetes,
-    hepatitis = hepatitis,
-    irradiaciones = irradiaciones,
-    discrasiasSanguineas = discrasiasSanguineas,
-    fiebreReumatica = fiebreReumatica,
-    enfermedadesRenales = enfermedadesRenales,
-    inmunosupresion = inmunosupresion,
-    trastornosEmocionales = trastornosEmocionales,
-    patologiaRespiratoria = patologiaRespiratoria,
-    trastornosGastricos = trastornosGastricos,
-    epilepsia = epilepsia,
-    cirugias = cirugias,
-    enfermedadesOrales = enfermedadesOrales,
-    otrasAlteraciones = otrasAlteraciones,
-    observaciones = observaciones,
-    antecedentesFamiliares = antecedentesFamiliares,
-    medicamentosActuales = medicamentosActuales,
-    alergiasDescripcion = alergiasDescripcion
-)
+        tratamientoMedicoActual = tratamientoMedicoActual,
+        tomaMedicamentos = tomaMedicamentos,
+        alergias = alergias,
+        cardiopatias = cardiopatias,
+        alteracionPresionArterial = alteracionPresionArterial,
+        embarazo = embarazo,
+        diabetes = diabetes,
+        hepatitis = hepatitis,
+        irradiaciones = irradiaciones,
+        discrasiasSanguineas = discrasiasSanguineas,
+        fiebreReumatica = fiebreReumatica,
+        enfermedadesRenales = enfermedadesRenales,
+        inmunosupresion = inmunosupresion,
+        trastornosEmocionales = trastornosEmocionales,
+        patologiaRespiratoria = patologiaRespiratoria,
+        trastornosGastricos = trastornosGastricos,
+        epilepsia = epilepsia,
+        cirugias = cirugias,
+        enfermedadesOrales = enfermedadesOrales,
+        otrasAlteraciones = otrasAlteraciones,
+        observaciones = observaciones,
+        antecedentesFamiliares = antecedentesFamiliares,
+        medicamentosActuales = medicamentosActuales,
+        alergiasDescripcion = alergiasDescripcion
+    )
 }
 
 // --- Clinical Record ---
@@ -102,7 +106,8 @@ fun ClinicalRecordDto.toDomain(): ClinicalRecord = ClinicalRecord(
     closedAt = closedAt,
     closedByDoctorId = closedByDoctorId,
     closureSummary = closureSummary,
-    closureSignatureUrl = closureSignatureUrl
+    closureSignatureUrl = closureSignatureUrl,
+    openedAt = createdAt
 )
 
 fun ClinicalRecord.toDto(): ClinicalRecordDto = ClinicalRecordDto(
@@ -116,7 +121,8 @@ fun ClinicalRecord.toDto(): ClinicalRecordDto = ClinicalRecordDto(
     closedAt = closedAt,
     closedByDoctorId = closedByDoctorId,
     closureSummary = closureSummary,
-    closureSignatureUrl = closureSignatureUrl
+    closureSignatureUrl = closureSignatureUrl,
+    createdAt = openedAt
 )
 
 // --- Periodontograma ---
@@ -140,7 +146,8 @@ fun PeriodontalExamination.toDto(): PeriodontalExaminationDto = PeriodontalExami
 
 fun PeriodontalSiteDto.toDomain(): PeriodontalSiteMeasurement = PeriodontalSiteMeasurement(
     toothNumber = toothNumber,
-    siteLocation = runCatching { PeriodontalSiteLocation.valueOf(siteLocation) }.getOrDefault(PeriodontalSiteLocation.MID_VESTIBULAR),
+    siteLocation = runCatching { PeriodontalSiteLocation.valueOf(siteLocation) }
+        .getOrDefault(PeriodontalSiteLocation.MID_VESTIBULAR),
     pocketDepthMm = pocketDepthMm,
     gingivalRecessionMm = gingivalRecessionMm,
     bleedingOnProbing = bleedingOnProbing,
@@ -164,22 +171,35 @@ fun PeriodontalSiteMeasurement.toDto(examinationId: String): PeriodontalSiteDto 
 )
 
 // --- Evolution & Materials ---
-fun EvolutionDto.toDomain(materials: List<EvolutionMaterialUsed> = emptyList()): Evolution = Evolution(
-    id = id ?: "",
-    recordId = recordId,
-    doctorId = doctorId ?: "",
-    date = date ?: "",
-    procedureTime = procedureTime ?: "00:00:00",
-    description = description,
-    doctorName = doctorName,
-    toothTreated = toothTreated,
-    cost = cost,
-    paymentAmount = paymentAmount,
-    balance = (cost - paymentAmount).coerceAtLeast(0.0),
-    patientSignatureUrl = patientSignatureUrl,
-    doctorSignatureUrl = doctorSignatureUrl,
-    materialsUsed = materials
-)
+fun EvolutionDto.toDomain(materials: List<EvolutionMaterialUsed> = emptyList()): Evolution {
+    val resolvedVoidInfo = if (!voidedAt.isNullOrBlank()) {
+        VoidInfo(
+            voidedAt = ClinicalDateParser.parseIsoDateTime(voidedAt).dateTime,
+            reason = voidReason ?: "Anulado",
+            voidedBy = voidedBy
+        )
+    } else {
+        null
+    }
+    return Evolution(
+        id = id ?: "",
+        recordId = recordId,
+        doctorId = doctorId ?: "",
+        date = date ?: "",
+        procedureTime = procedureTime ?: "00:00:00",
+        description = description,
+        doctorName = doctorName,
+        toothTreated = toothTreated,
+        cost = cost,
+        paymentAmount = paymentAmount,
+        balance = (cost - paymentAmount).coerceAtLeast(0.0),
+        patientSignatureUrl = patientSignatureUrl,
+        doctorSignatureUrl = doctorSignatureUrl,
+        materialsUsed = materials,
+        voidInfo = resolvedVoidInfo,
+        amendsEvolutionId = amendsEvolutionId
+    )
+}
 
 fun Evolution.toDto(): EvolutionDto = EvolutionDto(
     id = id.trim().ifEmpty { null },
@@ -194,7 +214,11 @@ fun Evolution.toDto(): EvolutionDto = EvolutionDto(
     paymentAmount = paymentAmount,
     balance = balance,
     patientSignatureUrl = patientSignatureUrl,
-    doctorSignatureUrl = doctorSignatureUrl
+    doctorSignatureUrl = doctorSignatureUrl,
+    voidedAt = voidInfo?.voidedAt?.let { java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(it) },
+    voidedBy = voidInfo?.voidedBy,
+    voidReason = voidInfo?.reason,
+    amendsEvolutionId = amendsEvolutionId?.ifBlank { null }
 )
 
 fun EvolutionMaterialUsedDto.toDomain(): EvolutionMaterialUsed = EvolutionMaterialUsed(
@@ -285,10 +309,11 @@ fun InformedConsentProcedureDto.toDomain(): InformedConsentProcedure = InformedC
     patientSignatureUrl = patientSignatureUrl
 )
 
-fun InformedConsentProcedure.toDto(consentId: String = this.consentId): InformedConsentProcedureDto = InformedConsentProcedureDto(
-    id = id.ifEmpty { null },
-    consentId = consentId,
-    toothNumber = toothNumber,
-    procedureDate = procedureDate,
-    patientSignatureUrl = patientSignatureUrl
-)
+fun InformedConsentProcedure.toDto(consentId: String = this.consentId): InformedConsentProcedureDto =
+    InformedConsentProcedureDto(
+        id = id.ifEmpty { null },
+        consentId = consentId,
+        toothNumber = toothNumber,
+        procedureDate = procedureDate,
+        patientSignatureUrl = patientSignatureUrl
+    )

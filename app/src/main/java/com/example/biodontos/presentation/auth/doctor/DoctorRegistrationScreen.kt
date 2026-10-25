@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.auth.doctor
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -24,11 +25,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.biodontos.core.designsystem.*
 
 @OptIn(ExperimentalMaterial3Api::class)
+@VisibleForTesting
 @Composable
 fun DoctorRegistrationScreen(
     state: DoctorRegistrationState,
@@ -403,5 +406,84 @@ fun DoctorRegistrationScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorRegistrationLoadingPreview() {
+    DentalTheme {
+        DoctorRegistrationScreen(
+            state = DoctorRegistrationState(
+                currentStep = 1,
+                isLoading = true
+            ),
+            onFirstNameChange = {},
+            onLastNameChange = {},
+            onLicenseNumberChange = {},
+            onSpecialtyChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onPasswordChange = {},
+            onConfirmPasswordChange = {},
+            onTogglePasswordVisibility = {},
+            onNextClick = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorRegistrationSuccessPreview() {
+    DentalTheme {
+        DoctorRegistrationScreen(
+            state = DoctorRegistrationState(
+                currentStep = 1,
+                firstName = "Carlos",
+                lastName = "Restrepo",
+                email = "dr.restrepo@biodontos.com",
+                phone = "3109876543",
+                password = "password123",
+                confirmPassword = "password123"
+            ),
+            onFirstNameChange = {},
+            onLastNameChange = {},
+            onLicenseNumberChange = {},
+            onSpecialtyChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onPasswordChange = {},
+            onConfirmPasswordChange = {},
+            onTogglePasswordVisibility = {},
+            onNextClick = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorRegistrationErrorPreview() {
+    DentalTheme {
+        DoctorRegistrationScreen(
+            state = DoctorRegistrationState(
+                currentStep = 1,
+                firstNameError = "El nombre es obligatorio",
+                emailError = "Formato de correo inválido",
+                error = "Por favor corrija los errores marcados antes de continuar."
+            ),
+            onFirstNameChange = {},
+            onLastNameChange = {},
+            onLicenseNumberChange = {},
+            onSpecialtyChange = {},
+            onEmailChange = {},
+            onPhoneChange = {},
+            onPasswordChange = {},
+            onConfirmPasswordChange = {},
+            onTogglePasswordVisibility = {},
+            onNextClick = {},
+            onBackClick = {}
+        )
     }
 }

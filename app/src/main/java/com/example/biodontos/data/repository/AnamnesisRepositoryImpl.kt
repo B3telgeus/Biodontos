@@ -7,6 +7,7 @@ import com.example.biodontos.data.mapper.toDto
 import com.example.biodontos.domain.model.Anamnesis
 import com.example.biodontos.domain.repository.AnamnesisRepository
 import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.CancellationException
 
 class AnamnesisRepositoryImpl : AnamnesisRepository {
 
@@ -17,6 +18,7 @@ class AnamnesisRepositoryImpl : AnamnesisRepository {
                 .decodeSingleOrNull<AnamnesisDto>()
             Result.success(result?.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -29,6 +31,7 @@ class AnamnesisRepositoryImpl : AnamnesisRepository {
             }.decodeSingle<AnamnesisDto>()
             Result.success(saved.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

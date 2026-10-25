@@ -1,10 +1,11 @@
 package com.example.biodontos.presentation.odontogram
 
+import androidx.compose.runtime.Immutable
 import com.example.biodontos.domain.model.DentitionType
 import com.example.biodontos.domain.model.Tooth
-import com.example.biodontos.domain.model.ToothCondition
 import com.example.biodontos.domain.model.ToothSurface
 
+@Immutable
 data class OdontogramState(
     val teeth: Map<Int, Tooth> = emptyMap(),
     val dentitionType: DentitionType = DentitionType.ADULT,

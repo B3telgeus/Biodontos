@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.auth.patient
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,12 +23,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 
+@VisibleForTesting
 @Composable
 fun SignUpSuccessScreen(
     onLoginClick: () -> Unit,
@@ -91,5 +95,29 @@ fun SignUpSuccessScreen(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SignUpSuccessLoadingPreview() {
+    DentalTheme {
+        SignUpSuccessScreen(onLoginClick = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SignUpSuccessSuccessPreview() {
+    DentalTheme {
+        SignUpSuccessScreen(onLoginClick = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SignUpSuccessErrorPreview() {
+    DentalTheme(darkTheme = true) {
+        SignUpSuccessScreen(onLoginClick = {})
     }
 }

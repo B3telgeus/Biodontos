@@ -294,7 +294,7 @@ class ClinicalAdmissionViewModelTest {
         var capturedConsent: InformedConsent? = null
         coEvery { informedConsentRepository.saveConsent(any()) } answers {
             capturedConsent = firstArg()
-            Result.success(capturedConsent!!)
+            Result.success(requireNotNull(capturedConsent) { "El consentimiento capturado no debe ser nulo" })
         }
 
         viewModel.onEvent(ClinicalAdmissionEvent.UpdateDni("10102020"))
@@ -348,7 +348,7 @@ class ClinicalAdmissionViewModelTest {
         var capturedConsent: InformedConsent? = null
         coEvery { informedConsentRepository.saveConsent(any()) } answers {
             capturedConsent = firstArg()
-            Result.success(capturedConsent!!)
+            Result.success(requireNotNull(capturedConsent) { "El consentimiento capturado no debe ser nulo" })
         }
 
         val vmWithDoctor = ClinicalAdmissionViewModel(
@@ -412,7 +412,7 @@ class ClinicalAdmissionViewModelTest {
         var capturedExam: PeriodontalExamination? = null
         coEvery { periodontalRepository.saveExamination(any()) } answers {
             capturedExam = firstArg()
-            Result.success(capturedExam!!)
+            Result.success(requireNotNull(capturedExam) { "El examen periodontal capturado no debe ser nulo" })
         }
 
         val vmWithClinicDoc = ClinicalAdmissionViewModel(

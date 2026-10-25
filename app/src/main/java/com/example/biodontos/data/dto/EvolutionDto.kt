@@ -17,7 +17,11 @@ data class EvolutionDto(
     @SerialName("payment_amount") val paymentAmount: Double = 0.0,
     val balance: Double = 0.0,
     @SerialName("patient_signature_url") val patientSignatureUrl: String? = null,
-    @SerialName("doctor_signature_url") val doctorSignatureUrl: String? = null
+    @SerialName("doctor_signature_url") val doctorSignatureUrl: String? = null,
+    @SerialName("voided_at") val voidedAt: String? = null,
+    @SerialName("voided_by") val voidedBy: String? = null,
+    @SerialName("void_reason") val voidReason: String? = null,
+    @SerialName("amends_evolution_id") val amendsEvolutionId: String? = null
 )
 
 @Serializable

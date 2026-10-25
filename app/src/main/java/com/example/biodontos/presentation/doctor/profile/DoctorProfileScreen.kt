@@ -1,6 +1,7 @@
 package com.example.biodontos.presentation.doctor.profile
 
 import android.widget.Toast
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,9 +32,10 @@ import com.example.biodontos.core.util.DateTimeUtils
 import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.DoctorId
 import com.example.biodontos.domain.model.Patient
+import java.time.LocalDateTime
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorProfileScreen(
     viewModel: DoctorProfileViewModel,
@@ -41,8 +44,6 @@ fun DoctorProfileScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var appointmentToCancel by remember { mutableStateOf<Appointment?>(null) }
-    var cancelReason by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
@@ -57,8 +58,25 @@ fun DoctorProfileScreen(
         }
     }
 
+    DoctorProfileContent(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onNavigateBack = onNavigateBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@VisibleForTesting
+@Composable
+fun DoctorProfileContent(
+    state: DoctorProfileState,
+    onEvent: (DoctorProfileEvent) -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    var appointmentToCancel by remember { mutableStateOf<Appointment?>(null) }
+    var cancelReason by remember { mutableStateOf("") }
+
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {
@@ -80,14 +98,14 @@ fun DoctorProfileScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.onEvent(DoctorProfileEvent.LoadData) }) {
+                    IconButton(onClick = { onEvent(DoctorProfileEvent.LoadData) }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Actualizar",
                             tint = BiodontosDark
                         )
                     }
-                    IconButton(onClick = { viewModel.onEvent(DoctorProfileEvent.Logout) }) {
+                    IconButton(onClick = { onEvent(DoctorProfileEvent.Logout) }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "Cerrar sesión",
@@ -106,6 +124,26 @@ fun DoctorProfileScreen(
                 .padding(padding)
                 .consumeWindowInsets(padding)
         ) {
+            // --- BANNER DE ERROR ---
+            state.errorMessage?.let { errorMsg ->
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = BiodontosErrorBg,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .align(Alignment.TopCenter)
+                ) {
+                    Text(
+                        text = errorMsg,
+                        color = BiodontosErrorRed,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
+
             if (state.isLoading && state.doctor == null) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
@@ -176,19 +214,19 @@ fun DoctorProfileScreen(
                             TabButton(
                                 text = "Pendientes (${state.pendingAppointments.size})",
                                 isSelected = state.selectedTab == DoctorAppointmentTab.PENDING,
-                                onClick = { viewModel.onEvent(DoctorProfileEvent.SelectTab(DoctorAppointmentTab.PENDING)) },
+                                onClick = { onEvent(DoctorProfileEvent.SelectTab(DoctorAppointmentTab.PENDING)) },
                                 modifier = Modifier.weight(1f)
                             )
                             TabButton(
                                 text = "Confirmadas (${state.confirmedAppointments.size})",
                                 isSelected = state.selectedTab == DoctorAppointmentTab.CONFIRMED,
-                                onClick = { viewModel.onEvent(DoctorProfileEvent.SelectTab(DoctorAppointmentTab.CONFIRMED)) },
+                                onClick = { onEvent(DoctorProfileEvent.SelectTab(DoctorAppointmentTab.CONFIRMED)) },
                                 modifier = Modifier.weight(1f)
                             )
                             TabButton(
                                 text = "Historial (${state.historyAppointments.size})",
                                 isSelected = state.selectedTab == DoctorAppointmentTab.HISTORY,
-                                onClick = { viewModel.onEvent(DoctorProfileEvent.SelectTab(DoctorAppointmentTab.HISTORY)) },
+                                onClick = { onEvent(DoctorProfileEvent.SelectTab(DoctorAppointmentTab.HISTORY)) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -224,7 +262,7 @@ fun DoctorProfileScreen(
                                 patient = patient,
                                 isPending = !appointment.isConfirmed && appointment.status == AppointmentStatus.SCHEDULED,
                                 onConfirmClick = {
-                                    viewModel.onEvent(DoctorProfileEvent.ConfirmAppointment(appointment.id))
+                                    onEvent(DoctorProfileEvent.ConfirmAppointment(appointment.id))
                                 },
                                 onCancelClick = {
                                     appointmentToCancel = appointment
@@ -271,7 +309,7 @@ fun DoctorProfileScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.onEvent(DoctorProfileEvent.CancelAppointment(apt.id, cancelReason.ifBlank { null }))
+                        onEvent(DoctorProfileEvent.CancelAppointment(apt.id, cancelReason.ifBlank { null }))
                         appointmentToCancel = null
                         cancelReason = ""
                     },
@@ -563,5 +601,65 @@ private fun EmptyStateNotice(title: String, subtitle: String) {
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorProfileLoadingPreview() {
+    DentalTheme {
+        DoctorProfileContent(
+            state = DoctorProfileState(isLoading = true),
+            onEvent = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorProfileSuccessPreview() {
+    DentalTheme {
+        DoctorProfileContent(
+            state = DoctorProfileState(
+                isLoading = false,
+                doctor = Doctor(
+                    id = DoctorId("doc-1"),
+                    firstName = "Carlos",
+                    lastName = "Restrepo",
+                    specialty = "Endodoncia",
+                    licenseNumber = "RM-45678",
+                    email = "dr.restrepo@biodontos.com"
+                ),
+                appointments = listOf(
+                    Appointment(
+                        id = "apt-1",
+                        patientId = "pat-1",
+                        doctorId = "doc-1",
+                        startTime = LocalDateTime.now().plusDays(1),
+                        status = AppointmentStatus.SCHEDULED,
+                        isConfirmed = false,
+                        reason = "Valoración de conducto"
+                    )
+                )
+            ),
+            onEvent = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorProfileErrorPreview() {
+    DentalTheme {
+        DoctorProfileContent(
+            state = DoctorProfileState(
+                isLoading = false,
+                errorMessage = "No se pudo cargar la información del perfil profesional."
+            ),
+            onEvent = {},
+            onNavigateBack = {}
+        )
     }
 }

@@ -10,7 +10,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.biodontos.domain.model.ToothCondition
 import com.example.biodontos.domain.model.ToothSurface
@@ -22,13 +26,22 @@ fun InteractiveTooth(
     onSurfaceClicked: (ToothSurface) -> Unit,
     modifier: Modifier = Modifier.size(70.dp)
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Canvas(
-        modifier = modifier.pointerInput(Unit) {
-            detectTapGestures { offset ->
-                val surface = detectSurface(offset, size.width.toFloat(), size.height.toFloat())
-                surface?.let { onSurfaceClicked(it) }
+        modifier = modifier
+            .semantics {
+                contentDescription = "Diente FDI $toothNumber"
             }
-        }
+            .pointerInput(toothNumber) {
+                detectTapGestures { offset ->
+                    val surface = detectSurface(offset, size.width.toFloat(), size.height.toFloat())
+                    surface?.let {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onSurfaceClicked(it)
+                    }
+                }
+            }
     ) {
         val w = size.width
         val h = size.height
@@ -83,7 +96,7 @@ fun InteractiveTooth(
             style = Stroke(width = 1.dp.toPx())
         )
 
-        // Mesial (Left - assuming right-side view or standard layout)
+        // Mesial (Left)
         val mesialPath = Path().apply {
             moveTo(0f, 0f)
             lineTo(inset, inset)
@@ -126,19 +139,13 @@ private fun detectSurface(offset: Offset, width: Float, height: Float): ToothSur
     val y = offset.y
     val inset = width * 0.28f
 
-    // Check Oclusal
     if (x in inset..(width - inset) && y in inset..(height - inset)) {
         return ToothSurface.OCLUSAL
     }
 
-    // Check by triangles/trapezoids using slopes
-    // Top (Vestibular)
     if (y < inset && x > y && x < (width - y)) return ToothSurface.VESTIBULAR
-    // Bottom (Palatino)
     if (y > (height - inset) && x > (height - y) && x < (width - (height - y))) return ToothSurface.PALATINO
-    // Left (Mesial)
     if (x < inset && y > x && y < (height - x)) return ToothSurface.MESIAL
-    // Right (Distal)
     if (x > (width - inset) && y > (width - x) && y < (height - (width - x))) return ToothSurface.DISTAL
 
     return null

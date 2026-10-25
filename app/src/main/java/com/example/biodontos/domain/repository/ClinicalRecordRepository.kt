@@ -4,6 +4,7 @@ import com.example.biodontos.domain.model.ClinicalRecord
 
 interface ClinicalRecordRepository {
     suspend fun getRecordByPatientId(patientId: String): Result<ClinicalRecord?>
+    suspend fun getRecordsByPatientId(patientId: String): Result<List<ClinicalRecord>>
     suspend fun saveRecord(record: ClinicalRecord): Result<ClinicalRecord>
     suspend fun closeRecord(
         recordId: String,

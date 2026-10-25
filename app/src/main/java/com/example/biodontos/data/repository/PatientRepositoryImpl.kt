@@ -7,6 +7,7 @@ import com.example.biodontos.data.mapper.toDto
 import com.example.biodontos.domain.model.Patient
 import com.example.biodontos.domain.repository.PatientRepository
 import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.CancellationException
 
 class PatientRepositoryImpl : PatientRepository {
     override suspend fun getPatients(): Result<List<Patient>> {
@@ -14,6 +15,7 @@ class PatientRepositoryImpl : PatientRepository {
             val result = SupabaseClient.client.from("patients").select().decodeList<PatientDto>()
             Result.success(result.map { it.toDomain() })
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -25,6 +27,7 @@ class PatientRepositoryImpl : PatientRepository {
                 .decodeSingleOrNull<PatientDto>()
             Result.success(result?.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -43,6 +46,7 @@ class PatientRepositoryImpl : PatientRepository {
                 .decodeSingleOrNull<PatientDto>()
             Result.success(result?.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -52,6 +56,7 @@ class PatientRepositoryImpl : PatientRepository {
             SupabaseClient.client.from("patients").upsert(patient.toDto())
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -64,6 +69,7 @@ class PatientRepositoryImpl : PatientRepository {
             }.decodeSingle<PatientDto>()
             Result.success(savedDto.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

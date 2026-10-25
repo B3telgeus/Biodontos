@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,10 +54,14 @@ import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosLightGrey
 import com.example.biodontos.core.designsystem.BiodontosScreenGradient
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.StatusConfirmed
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
+import com.example.biodontos.domain.model.CopAmount
+import com.example.biodontos.domain.model.PatientId
 import com.example.biodontos.domain.model.Payment
+import com.example.biodontos.domain.model.Treatment
 import com.example.biodontos.domain.model.TreatmentBalance
 import java.time.LocalDateTime
 
@@ -666,5 +671,71 @@ private fun ErrorCard(
                 onClick = onRetry
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientPaymentsLoadingPreview() {
+    DentalTheme {
+        PatientPaymentsScreen(
+            state = PatientPaymentsUiState(isLoading = true),
+            onEvent = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientPaymentsSuccessPreview() {
+    val sampleTreatment = Treatment(
+        id = "trt-1",
+        patientId = PatientId("pat-1"),
+        description = "Ortodoncia Correctiva",
+        totalCost = CopAmount(2400000L)
+    )
+    val samplePayment = Payment(
+        id = "pay-1",
+        treatmentId = "trt-1",
+        amount = CopAmount(400000L),
+        paymentMethod = "TRANSFERENCIA",
+        createdAt = LocalDateTime.of(2026, 10, 20, 11, 0)
+    )
+    DentalTheme {
+        PatientPaymentsScreen(
+            state = PatientPaymentsUiState(
+                isLoading = false,
+                patientName = "Laura Martínez",
+                patientId = "pat-1",
+                totalPending = CopAmount(2000000L),
+                totalPaid = CopAmount(400000L),
+                balances = listOf(
+                    TreatmentBalance(
+                        treatment = sampleTreatment,
+                        paidAmount = CopAmount(400000L),
+                        payments = listOf(samplePayment)
+                    )
+                ),
+                recentPayments = listOf(samplePayment)
+            ),
+            onEvent = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientPaymentsErrorPreview() {
+    DentalTheme {
+        PatientPaymentsScreen(
+            state = PatientPaymentsUiState(
+                isLoading = false,
+                errorMessage = "No fue posible consultar tu estado de cuenta."
+            ),
+            onEvent = {},
+            onNavigateBack = {}
+        )
     }
 }

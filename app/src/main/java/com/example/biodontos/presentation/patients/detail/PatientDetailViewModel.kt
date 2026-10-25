@@ -5,23 +5,44 @@ import androidx.lifecycle.viewModelScope
 import com.example.biodontos.core.util.toUserFriendlyMessage
 import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.AppointmentStatus
+import com.example.biodontos.domain.model.ClinicalHistoryError
 import com.example.biodontos.domain.model.ClinicalMaterial
+import com.example.biodontos.domain.model.CopAmount
+import com.example.biodontos.domain.model.DomainError
 import com.example.biodontos.domain.model.Evolution
 import com.example.biodontos.domain.model.EvolutionMaterialUsed
+import com.example.biodontos.domain.model.PatientId
+import com.example.biodontos.domain.model.Payment
+import com.example.biodontos.domain.model.Treatment
+import com.example.biodontos.domain.model.billing.TreatmentStatus
+import com.example.biodontos.domain.model.history.ActivityFilter
+import com.example.biodontos.domain.model.history.ActivityType
+import com.example.biodontos.domain.model.history.AuditEntry
+import com.example.biodontos.domain.model.history.PatientActivity
 import com.example.biodontos.domain.repository.AnamnesisRepository
 import com.example.biodontos.domain.repository.AppointmentRepository
 import com.example.biodontos.domain.repository.BillingRepository
+import com.example.biodontos.domain.repository.ClinicalAuditRepository
 import com.example.biodontos.domain.repository.ClinicalRecordRepository
 import com.example.biodontos.domain.repository.EvolutionRepository
 import com.example.biodontos.domain.repository.InformedConsentRepository
 import com.example.biodontos.domain.repository.MaterialRepository
 import com.example.biodontos.domain.repository.PatientRepository
+import com.example.biodontos.domain.usecase.history.AddEvolutionClarificationUseCase
+import com.example.biodontos.domain.usecase.history.GetPatientActivityTimelineUseCase
+import com.example.biodontos.domain.usecase.history.UpdateTreatmentStatusUseCase
+import com.example.biodontos.domain.usecase.history.VoidEvolutionUseCase
+import com.example.biodontos.domain.usecase.history.VoidPaymentUseCase
+import java.time.LocalDate
+import java.time.YearMonth
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 class PatientDetailViewModel(
     private val patientId: String,
@@ -32,11 +53,30 @@ class PatientDetailViewModel(
     private val evolutionRepository: EvolutionRepository,
     private val billingRepository: BillingRepository,
     private val appointmentRepository: AppointmentRepository,
-    private val materialRepository: MaterialRepository
+    private val materialRepository: MaterialRepository,
+    private val clinicalAuditRepository: ClinicalAuditRepository = NoOpClinicalAuditRepository,
+    private val getPatientActivityTimelineUseCase: GetPatientActivityTimelineUseCase =
+        GetPatientActivityTimelineUseCase(
+            appointmentRepository = appointmentRepository,
+            billingRepository = billingRepository,
+            evolutionRepository = evolutionRepository,
+            clinicalRecordRepository = clinicalRecordRepository,
+            informedConsentRepository = informedConsentRepository,
+            clinicalAuditRepository = clinicalAuditRepository
+        ),
+    private val voidEvolutionUseCase: VoidEvolutionUseCase = VoidEvolutionUseCase(evolutionRepository),
+    private val voidPaymentUseCase: VoidPaymentUseCase = VoidPaymentUseCase(billingRepository),
+    private val addEvolutionClarificationUseCase: AddEvolutionClarificationUseCase =
+        AddEvolutionClarificationUseCase(evolutionRepository),
+    private val updateTreatmentStatusUseCase: UpdateTreatmentStatusUseCase =
+        UpdateTreatmentStatusUseCase(billingRepository)
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PatientDetailState(patientId = patientId))
     val state: StateFlow<PatientDetailState> = _state.asStateFlow()
+
+    private val _effectChannel = Channel<PatientDetailEffect>(Channel.BUFFERED)
+    val effects: Flow<PatientDetailEffect> = _effectChannel.receiveAsFlow()
 
     init {
         loadPatientDetail()
@@ -45,7 +85,13 @@ class PatientDetailViewModel(
 
     fun loadPatientDetail() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null,
+                    historyState = it.historyState.copy(isTimelineLoading = true, timelineError = null)
+                )
+            }
 
             // 1. Paciente
             patientRepository.getPatientById(patientId).onSuccess { p ->
@@ -76,9 +122,21 @@ class PatientDetailViewModel(
                 }
             }
 
-            // 6. Tratamientos
+            // 6. Tratamientos y Pagos
             billingRepository.getTreatmentsByPatientId(patientId).onSuccess { treats ->
-                _state.update { it.copy(treatments = treats) }
+                _state.update {
+                    it.copy(
+                        treatments = treats,
+                        selectedPaymentTreatmentId = it.selectedPaymentTreatmentId.ifBlank {
+                            treats.firstOrNull { t ->
+                                TreatmentStatus.fromString(t.status) != TreatmentStatus.CANCELADO
+                            }?.id ?: ""
+                        }
+                    )
+                }
+            }
+            billingRepository.getPaymentsByPatientId(patientId).onSuccess { pays ->
+                _state.update { it.copy(payments = pays) }
             }
 
             // 7. Citas
@@ -86,8 +144,51 @@ class PatientDetailViewModel(
                 _state.update { it.copy(appointments = appts) }
             }
 
+            // 8. Línea de Tiempo Unificada con Trazabilidad Clínica
+            loadActivityTimelineInternal()
+
             _state.update { it.copy(isLoading = false) }
         }
+    }
+
+    fun refreshTimeline() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(historyState = it.historyState.copy(isTimelineLoading = true, timelineError = null))
+            }
+            loadActivityTimelineInternal()
+        }
+    }
+
+    private suspend fun loadActivityTimelineInternal() {
+        getPatientActivityTimelineUseCase(patientId)
+            .onSuccess { timelineResult ->
+                _state.update { current ->
+                    val currentFilter = current.historyState.filter
+                    val filtered = currentFilter.apply(timelineResult.activities)
+                    current.copy(
+                        historyState = current.historyState.copy(
+                            allActivities = timelineResult.activities,
+                            filteredActivities = filtered,
+                            availableMonths = timelineResult.availableMonths,
+                            summary = timelineResult.summary,
+                            failedSources = timelineResult.failedSources,
+                            isTimelineLoading = false,
+                            timelineError = null
+                        )
+                    )
+                }
+            }
+            .onFailure { err ->
+                _state.update { current ->
+                    current.copy(
+                        historyState = current.historyState.copy(
+                            isTimelineLoading = false,
+                            timelineError = "No se pudo cargar el historial clínico: ${err.toUserFriendlyMessage()}"
+                        )
+                    )
+                }
+            }
     }
 
     private fun loadMaterialsCatalog() {
@@ -111,10 +212,466 @@ class PatientDetailViewModel(
         _state.update { it.copy(errorMessage = null, successMessage = null) }
     }
 
+    // --- Filtros del Historial Clínico ---
+    fun selectMonthFilter(month: YearMonth?) {
+        _state.update { current ->
+            val newFilter = current.historyState.filter.copy(month = month)
+            current.copy(
+                historyState = current.historyState.copy(
+                    filter = newFilter,
+                    filteredActivities = newFilter.apply(current.historyState.allActivities)
+                )
+            )
+        }
+    }
+
+    fun toggleActivityTypeFilter(type: ActivityType) {
+        _state.update { current ->
+            val currentTypes = current.historyState.filter.types
+            val updatedTypes = if (type in currentTypes) {
+                if (currentTypes.size > 1) currentTypes - type else currentTypes
+            } else {
+                currentTypes + type
+            }
+            val newFilter = current.historyState.filter.copy(types = updatedTypes)
+            current.copy(
+                historyState = current.historyState.copy(
+                    filter = newFilter,
+                    filteredActivities = newFilter.apply(current.historyState.allActivities)
+                )
+            )
+        }
+    }
+
+    fun clearHistoryFilters() {
+        _state.update { current ->
+            val resetFilter = ActivityFilter()
+            current.copy(
+                historyState = current.historyState.copy(
+                    filter = resetFilter,
+                    filteredActivities = resetFilter.apply(current.historyState.allActivities)
+                )
+            )
+        }
+    }
+
+    fun toggleExpandActivity(activityId: String) {
+        _state.update { current ->
+            val newExpanded = if (current.historyState.expandedActivityId == activityId) null else activityId
+            current.copy(historyState = current.historyState.copy(expandedActivityId = newExpanded))
+        }
+    }
+
+    fun openQuickActionSheet() {
+        _state.update { it.copy(historyState = it.historyState.copy(showQuickActionSheet = true)) }
+    }
+
+    fun dismissQuickActionSheet() {
+        _state.update { it.copy(historyState = it.historyState.copy(showQuickActionSheet = false)) }
+    }
+
+    // --- Anulación Lógica en 2 Pasos (Evolución o Pago) ---
+    fun requestVoidActivity(activity: PatientActivity) {
+        _state.update {
+            it.copy(
+                historyState = it.historyState.copy(
+                    voidDialogTarget = activity,
+                    voidReason = "",
+                    voidConfirmationStep = 1,
+                    isProcessingVoid = false
+                )
+            )
+        }
+    }
+
+    fun onVoidReasonChange(reason: String) {
+        _state.update {
+            it.copy(historyState = it.historyState.copy(voidReason = reason))
+        }
+    }
+
+    fun advanceVoidConfirmationStep() {
+        val currentReason = _state.value.historyState.voidReason.trim()
+        if (currentReason.length < VoidEvolutionUseCase.MIN_REASON_LENGTH) {
+            emitError("El motivo de anulación debe tener al menos ${VoidEvolutionUseCase.MIN_REASON_LENGTH} caracteres.")
+            return
+        }
+        _state.update {
+            it.copy(historyState = it.historyState.copy(voidConfirmationStep = 2))
+        }
+    }
+
+    fun dismissVoidDialog() {
+        _state.update {
+            it.copy(
+                historyState = it.historyState.copy(
+                    voidDialogTarget = null,
+                    voidReason = "",
+                    voidConfirmationStep = 1,
+                    isProcessingVoid = false
+                )
+            )
+        }
+    }
+
+    fun confirmVoidActivity() {
+        val hist = _state.value.historyState
+        val target = hist.voidDialogTarget ?: return
+        val reason = hist.voidReason
+
+        viewModelScope.launch {
+            _state.update {
+                it.copy(historyState = it.historyState.copy(isProcessingVoid = true), errorMessage = null)
+            }
+
+            val result = when (target) {
+                is PatientActivity.EvolutionActivity -> voidEvolutionUseCase(target.evolution, reason)
+                is PatientActivity.PaymentActivity -> voidPaymentUseCase(target.payment, reason)
+                else -> {
+                    _state.update { it.copy(historyState = it.historyState.copy(isProcessingVoid = false)) }
+                    return@launch
+                }
+            }
+
+            result.fold(
+                ifLeft = { domainError ->
+                    _state.update {
+                        it.copy(historyState = it.historyState.copy(isProcessingVoid = false))
+                    }
+                    emitError(domainError.toDisplayMessage())
+                },
+                ifRight = {
+                    _state.update {
+                        it.copy(
+                            historyState = it.historyState.copy(
+                                voidDialogTarget = null,
+                                voidReason = "",
+                                voidConfirmationStep = 1,
+                                isProcessingVoid = false
+                            ),
+                            successMessage = "Registro anulado con trazabilidad normativa."
+                        )
+                    }
+                    _effectChannel.send(
+                        PatientDetailEffect.ShowSnackbar("Registro anulado con trazabilidad normativa.")
+                    )
+                    loadPatientDetail()
+                }
+            )
+        }
+    }
+
+    // --- Nota Aclaratoria de Evolución ---
+    fun openClarificationDialog(evolution: Evolution) {
+        _state.update {
+            it.copy(
+                historyState = it.historyState.copy(
+                    clarificationTarget = evolution,
+                    clarificationText = "",
+                    isSavingClarification = false
+                )
+            )
+        }
+    }
+
+    fun onClarificationTextChange(text: String) {
+        _state.update {
+            it.copy(historyState = it.historyState.copy(clarificationText = text))
+        }
+    }
+
+    fun dismissClarificationDialog() {
+        _state.update {
+            it.copy(
+                historyState = it.historyState.copy(
+                    clarificationTarget = null,
+                    clarificationText = "",
+                    isSavingClarification = false
+                )
+            )
+        }
+    }
+
+    fun saveClarification() {
+        val hist = _state.value.historyState
+        val original = hist.clarificationTarget ?: return
+        val text = hist.clarificationText
+
+        viewModelScope.launch {
+            _state.update {
+                it.copy(historyState = it.historyState.copy(isSavingClarification = true), errorMessage = null)
+            }
+
+            addEvolutionClarificationUseCase(
+                originalEvolution = original,
+                clarificationText = text,
+                doctorId = original.doctorId,
+                doctorName = original.doctorName ?: "Doctor Tratante"
+            ).fold(
+                ifLeft = { err ->
+                    _state.update {
+                        it.copy(historyState = it.historyState.copy(isSavingClarification = false))
+                    }
+                    emitError(err.toDisplayMessage())
+                },
+                ifRight = {
+                    _state.update {
+                        it.copy(
+                            historyState = it.historyState.copy(
+                                clarificationTarget = null,
+                                clarificationText = "",
+                                isSavingClarification = false
+                            ),
+                            successMessage = "Nota aclaratoria vinculada con éxito."
+                        )
+                    }
+                    _effectChannel.send(
+                        PatientDetailEffect.ShowSnackbar("Nota aclaratoria vinculada con éxito.")
+                    )
+                    loadPatientDetail()
+                }
+            )
+        }
+    }
+
+    // --- Cambio de Estado de Presupuesto de Tratamiento ---
+    fun openTreatmentStatusDialog(treatment: Treatment) {
+        val currentStatus = TreatmentStatus.fromString(treatment.status)
+        val firstAllowed = currentStatus.availableTransitions().firstOrNull()
+        _state.update {
+            it.copy(
+                historyState = it.historyState.copy(
+                    statusDialogTarget = treatment,
+                    selectedTargetStatus = firstAllowed,
+                    statusChangeReason = "",
+                    isUpdatingTreatmentStatus = false
+                )
+            )
+        }
+    }
+
+    fun onSelectTargetTreatmentStatus(status: TreatmentStatus) {
+        _state.update {
+            it.copy(historyState = it.historyState.copy(selectedTargetStatus = status))
+        }
+    }
+
+    fun onTreatmentStatusReasonChange(reason: String) {
+        _state.update {
+            it.copy(historyState = it.historyState.copy(statusChangeReason = reason))
+        }
+    }
+
+    fun dismissTreatmentStatusDialog() {
+        _state.update {
+            it.copy(
+                historyState = it.historyState.copy(
+                    statusDialogTarget = null,
+                    selectedTargetStatus = null,
+                    statusChangeReason = "",
+                    isUpdatingTreatmentStatus = false
+                )
+            )
+        }
+    }
+
+    fun confirmTreatmentStatusUpdate() {
+        val hist = _state.value.historyState
+        val treatment = hist.statusDialogTarget ?: return
+        val targetStatus = hist.selectedTargetStatus ?: return
+        val reason = hist.statusChangeReason
+
+        viewModelScope.launch {
+            _state.update {
+                it.copy(historyState = it.historyState.copy(isUpdatingTreatmentStatus = true), errorMessage = null)
+            }
+
+            updateTreatmentStatusUseCase(
+                treatment = treatment,
+                targetStatus = targetStatus,
+                reason = reason
+            ).fold(
+                ifLeft = { err ->
+                    _state.update {
+                        it.copy(historyState = it.historyState.copy(isUpdatingTreatmentStatus = false))
+                    }
+                    emitError(err.toDisplayMessage())
+                },
+                ifRight = {
+                    _state.update {
+                        it.copy(
+                            historyState = it.historyState.copy(
+                                statusDialogTarget = null,
+                                selectedTargetStatus = null,
+                                statusChangeReason = "",
+                                isUpdatingTreatmentStatus = false
+                            ),
+                            successMessage = "Estado del presupuesto actualizado a ${targetStatus.displayName}."
+                        )
+                    }
+                    _effectChannel.send(
+                        PatientDetailEffect.ShowSnackbar(
+                            "Estado del presupuesto actualizado a ${targetStatus.displayName}."
+                        )
+                    )
+                    loadPatientDetail()
+                }
+            )
+        }
+    }
+
+    // --- Control de Diálogo de Nuevo Presupuesto de Tratamiento ---
+    fun openNewTreatmentDialog() {
+        _state.update {
+            it.copy(
+                historyState = it.historyState.copy(showQuickActionSheet = false),
+                showNewTreatmentDialog = true,
+                newTreatmentDescription = "",
+                newTreatmentTotalCost = "",
+                isSavingTreatment = false
+            )
+        }
+    }
+
+    fun dismissNewTreatmentDialog() {
+        _state.update { it.copy(showNewTreatmentDialog = false) }
+    }
+
+    fun onNewTreatmentDescriptionChange(value: String) {
+        _state.update { it.copy(newTreatmentDescription = value) }
+    }
+
+    fun onNewTreatmentTotalCostChange(value: String) {
+        _state.update { it.copy(newTreatmentTotalCost = value) }
+    }
+
+    fun saveTreatment() {
+        val s = _state.value
+        val desc = s.newTreatmentDescription.trim()
+        val costPesos = s.newTreatmentTotalCost.trim().toLongOrNull() ?: 0L
+
+        if (desc.isBlank()) {
+            emitError("La descripción del presupuesto de tratamiento es obligatoria.")
+            return
+        }
+        if (costPesos <= 0L) {
+            emitError("El costo del presupuesto debe ser mayor a $0.")
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isSavingTreatment = true, errorMessage = null) }
+            val treatment = Treatment(
+                patientId = PatientId(patientId),
+                description = desc,
+                totalCost = CopAmount(costPesos),
+                status = TreatmentStatus.PENDIENTE.name
+            )
+            billingRepository.createTreatment(treatment)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            isSavingTreatment = false,
+                            showNewTreatmentDialog = false,
+                            successMessage = "¡Presupuesto de tratamiento creado con éxito!"
+                        )
+                    }
+                    loadPatientDetail()
+                }
+                .onFailure { err ->
+                    _state.update {
+                        it.copy(
+                            isSavingTreatment = false,
+                            errorMessage = "Error al crear presupuesto: ${err.toUserFriendlyMessage()}"
+                        )
+                    }
+                }
+        }
+    }
+
+    // --- Control de Diálogo de Registrar Pago / Abono ---
+    fun openNewPaymentDialog(preselectedTreatmentId: String? = null) {
+        val activeTreatments = _state.value.treatments.filter {
+            TreatmentStatus.fromString(it.status) != TreatmentStatus.CANCELADO
+        }
+        val targetTreatmentId = preselectedTreatmentId
+            ?: activeTreatments.firstOrNull()?.id
+            ?: ""
+
+        _state.update {
+            it.copy(
+                historyState = it.historyState.copy(showQuickActionSheet = false),
+                showNewPaymentDialog = true,
+                selectedPaymentTreatmentId = targetTreatmentId,
+                newPaymentAmount = "",
+                newPaymentMethod = "EFECTIVO",
+                isSavingPayment = false
+            )
+        }
+    }
+
+    fun dismissNewPaymentDialog() {
+        _state.update { it.copy(showNewPaymentDialog = false) }
+    }
+
+    fun onSelectPaymentTreatment(treatmentId: String) {
+        _state.update { it.copy(selectedPaymentTreatmentId = treatmentId) }
+    }
+
+    fun onNewPaymentAmountChange(amount: String) {
+        _state.update { it.copy(newPaymentAmount = amount) }
+    }
+
+    fun onNewPaymentMethodChange(method: String) {
+        _state.update { it.copy(newPaymentMethod = method) }
+    }
+
+    fun savePayment() {
+        val s = _state.value
+        if (s.selectedPaymentTreatmentId.isBlank()) {
+            emitError("Debe seleccionar un presupuesto activo para imputar el pago.")
+            return
+        }
+        val amountPesos = s.newPaymentAmount.trim().toLongOrNull() ?: 0L
+        if (amountPesos <= 0L) {
+            emitError("El monto del abono debe ser mayor a $0.")
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isSavingPayment = true, errorMessage = null) }
+            val payment = Payment(
+                treatmentId = s.selectedPaymentTreatmentId,
+                amount = CopAmount(amountPesos),
+                paymentMethod = s.newPaymentMethod
+            )
+            billingRepository.recordPayment(payment)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            isSavingPayment = false,
+                            showNewPaymentDialog = false,
+                            successMessage = "¡Abono registrado con éxito!"
+                        )
+                    }
+                    loadPatientDetail()
+                }
+                .onFailure { err ->
+                    _state.update {
+                        it.copy(
+                            isSavingPayment = false,
+                            errorMessage = "Error al registrar abono: ${err.toUserFriendlyMessage()}"
+                        )
+                    }
+                }
+        }
+    }
+
     // --- Control de Diálogo de Nueva Evolución ---
     fun openNewEvolutionDialog() {
         _state.update {
             it.copy(
+                historyState = it.historyState.copy(showQuickActionSheet = false),
                 showNewEvolutionDialog = true,
                 newEvolutionDescription = "",
                 newEvolutionToothTreated = null,
@@ -225,6 +782,7 @@ class PatientDetailViewModel(
     fun openNewAppointmentDialog() {
         _state.update {
             it.copy(
+                historyState = it.historyState.copy(showQuickActionSheet = false),
                 showNewAppointmentDialog = true,
                 newAppointmentDate = LocalDate.now().plusDays(1).toString(),
                 newAppointmentTime = "10:00",
@@ -287,5 +845,23 @@ class PatientDetailViewModel(
                     }
                 }
         }
+    }
+
+    private fun emitError(message: String) {
+        _state.update { it.copy(errorMessage = message) }
+        viewModelScope.launch {
+            _effectChannel.send(PatientDetailEffect.ShowSnackbar(message))
+        }
+    }
+
+    private fun DomainError.toDisplayMessage(): String = when (this) {
+        is ClinicalHistoryError -> userMessage
+        is DomainError.NetworkOrPersistenceFailure -> reason
+        else -> "No se pudo completar la operación clínica solicitada."
+    }
+
+    private object NoOpClinicalAuditRepository : ClinicalAuditRepository {
+        override suspend fun getAuditTrail(patientId: String, limit: Int): Result<List<AuditEntry>> =
+            Result.success(emptyList())
     }
 }

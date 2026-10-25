@@ -25,7 +25,7 @@ class ClinicalAdmissionViewModel(
     private val materialRepository: MaterialRepository,
     private val informedConsentRepository: InformedConsentRepository,
     private val appointmentRepository: AppointmentRepository,
-    private val guardianRepository: GuardianRepository = com.example.biodontos.data.repository.GuardianRepositoryImpl(),
+    private val guardianRepository: GuardianRepository,
     private val initialPatientId: String? = null,
     private val getCurrentDoctorUseCase: GetCurrentDoctorUseCase? = null,
     private val doctorRepository: DoctorRepository? = null

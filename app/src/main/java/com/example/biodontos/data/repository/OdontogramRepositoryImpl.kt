@@ -10,6 +10,7 @@ import com.example.biodontos.domain.model.ToothSurface
 import com.example.biodontos.domain.repository.OdontogramRepository
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -56,6 +57,7 @@ class OdontogramRepositoryImpl : OdontogramRepository {
             
             Result.success(teeth)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -104,6 +106,7 @@ class OdontogramRepositoryImpl : OdontogramRepository {
 
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

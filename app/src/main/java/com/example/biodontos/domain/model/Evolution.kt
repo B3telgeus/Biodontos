@@ -1,5 +1,7 @@
 package com.example.biodontos.domain.model
 
+import com.example.biodontos.domain.model.history.VoidInfo
+
 data class EvolutionMaterialUsed(
     val id: String = "",
     val materialId: String,
@@ -24,5 +26,10 @@ data class Evolution(
     val balance: Double = (cost - paymentAmount).coerceAtLeast(0.0),
     val patientSignatureUrl: String? = null,
     val doctorSignatureUrl: String? = null,
-    val materialsUsed: List<EvolutionMaterialUsed> = emptyList()
-)
+    val materialsUsed: List<EvolutionMaterialUsed> = emptyList(),
+    val voidInfo: VoidInfo? = null,
+    val amendsEvolutionId: String? = null
+) {
+    val isVoided: Boolean get() = voidInfo != null
+    val isClarification: Boolean get() = !amendsEvolutionId.isNullOrBlank()
+}

@@ -5,6 +5,7 @@ import com.example.biodontos.data.repository.AnamnesisRepositoryImpl
 import com.example.biodontos.data.repository.AppointmentRepositoryImpl
 import com.example.biodontos.data.repository.AuthRepositoryImpl
 import com.example.biodontos.data.repository.BillingRepositoryImpl
+import com.example.biodontos.data.repository.ClinicalAuditRepositoryImpl
 import com.example.biodontos.data.repository.ClinicalRecordRepositoryImpl
 import com.example.biodontos.data.repository.DoctorRepositoryImpl
 import com.example.biodontos.data.repository.EvolutionRepositoryImpl
@@ -18,6 +19,7 @@ import com.example.biodontos.domain.repository.AnamnesisRepository
 import com.example.biodontos.domain.repository.AppointmentRepository
 import com.example.biodontos.domain.repository.AuthRepository
 import com.example.biodontos.domain.repository.BillingRepository
+import com.example.biodontos.domain.repository.ClinicalAuditRepository
 import com.example.biodontos.domain.repository.ClinicalRecordRepository
 import com.example.biodontos.domain.repository.DoctorRepository
 import com.example.biodontos.domain.repository.EvolutionRepository
@@ -55,6 +57,11 @@ import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
 import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
 import com.example.biodontos.domain.usecase.doctor.SaveDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
+import com.example.biodontos.domain.usecase.history.AddEvolutionClarificationUseCase
+import com.example.biodontos.domain.usecase.history.GetPatientActivityTimelineUseCase
+import com.example.biodontos.domain.usecase.history.UpdateTreatmentStatusUseCase
+import com.example.biodontos.domain.usecase.history.VoidEvolutionUseCase
+import com.example.biodontos.domain.usecase.history.VoidPaymentUseCase
 import com.example.biodontos.domain.usecase.odontogram.GetOdontogramUseCase
 import com.example.biodontos.domain.usecase.odontogram.UpdateToothUseCase
 import com.example.biodontos.domain.usecase.patient.GetCurrentPatientUseCase
@@ -75,6 +82,7 @@ interface AppContainer {
     val appointmentRepository: AppointmentRepository
     val doctorRepository: DoctorRepository
     val billingRepository: BillingRepository
+    val clinicalAuditRepository: ClinicalAuditRepository
     val clinicClock: ClinicClock
 
     val loginUseCase: LoginUseCase
@@ -113,6 +121,12 @@ interface AppContainer {
     val getPatientAppointmentsUseCase: GetPatientAppointmentsUseCase
     val getDoctorBusySlotsUseCase: GetDoctorBusySlotsUseCase
     val confirmAppointmentUseCase: ConfirmAppointmentUseCase
+
+    val getPatientActivityTimelineUseCase: GetPatientActivityTimelineUseCase
+    val voidEvolutionUseCase: VoidEvolutionUseCase
+    val voidPaymentUseCase: VoidPaymentUseCase
+    val addEvolutionClarificationUseCase: AddEvolutionClarificationUseCase
+    val updateTreatmentStatusUseCase: UpdateTreatmentStatusUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -166,6 +180,10 @@ class DefaultAppContainer : AppContainer {
 
     override val billingRepository: BillingRepository by lazy {
         BillingRepositoryImpl()
+    }
+
+    override val clinicalAuditRepository: ClinicalAuditRepository by lazy {
+        ClinicalAuditRepositoryImpl()
     }
 
     override val clinicClock: ClinicClock by lazy {
@@ -298,5 +316,32 @@ class DefaultAppContainer : AppContainer {
 
     override val confirmAppointmentUseCase: ConfirmAppointmentUseCase by lazy {
         ConfirmAppointmentUseCase(appointmentRepository)
+    }
+
+    override val getPatientActivityTimelineUseCase: GetPatientActivityTimelineUseCase by lazy {
+        GetPatientActivityTimelineUseCase(
+            appointmentRepository = appointmentRepository,
+            billingRepository = billingRepository,
+            evolutionRepository = evolutionRepository,
+            clinicalRecordRepository = clinicalRecordRepository,
+            informedConsentRepository = informedConsentRepository,
+            clinicalAuditRepository = clinicalAuditRepository
+        )
+    }
+
+    override val voidEvolutionUseCase: VoidEvolutionUseCase by lazy {
+        VoidEvolutionUseCase(evolutionRepository)
+    }
+
+    override val voidPaymentUseCase: VoidPaymentUseCase by lazy {
+        VoidPaymentUseCase(billingRepository)
+    }
+
+    override val addEvolutionClarificationUseCase: AddEvolutionClarificationUseCase by lazy {
+        AddEvolutionClarificationUseCase(evolutionRepository)
+    }
+
+    override val updateTreatmentStatusUseCase: UpdateTreatmentStatusUseCase by lazy {
+        UpdateTreatmentStatusUseCase(billingRepository)
     }
 }

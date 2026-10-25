@@ -9,6 +9,7 @@ import com.example.biodontos.domain.model.InformedConsent
 import com.example.biodontos.domain.repository.InformedConsentRepository
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.CancellationException
 
 class InformedConsentRepositoryImpl : InformedConsentRepository {
 
@@ -35,6 +36,38 @@ class InformedConsentRepositoryImpl : InformedConsentRepository {
 
             Result.success(consentDto.toDomain(procedures))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getConsentsByPatientId(patientId: String): Result<List<InformedConsent>> {
+        return try {
+            val consentDtos = SupabaseClient.client.from("informed_consents")
+                .select {
+                    filter { eq("patient_id", patientId) }
+                    order("created_at", order = Order.DESCENDING)
+                }
+                .decodeList<InformedConsentDto>()
+
+            val consentIds = consentDtos.mapNotNull { it.id }.filter { it.isNotBlank() }
+            val proceduresByConsentId = if (consentIds.isNotEmpty()) {
+                SupabaseClient.client.from("informed_consent_procedures")
+                    .select { filter { isIn("consent_id", consentIds) } }
+                    .decodeList<InformedConsentProcedureDto>()
+                    .groupBy { it.consentId }
+                    .mapValues { (_, list) -> list.map { it.toDomain() } }
+            } else {
+                emptyMap()
+            }
+
+            val consents = consentDtos.map { dto ->
+                val procs = dto.id?.let { proceduresByConsentId[it] } ?: emptyList()
+                dto.toDomain(procs)
+            }
+            Result.success(consents)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -55,6 +88,7 @@ class InformedConsentRepositoryImpl : InformedConsentRepository {
 
             Result.success(savedConsent.toDomain(consent.procedures))
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

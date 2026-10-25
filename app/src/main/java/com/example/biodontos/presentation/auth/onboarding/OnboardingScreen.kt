@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.auth.onboarding
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,12 +15,15 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
+import com.example.biodontos.core.designsystem.DentalTheme
 
+@VisibleForTesting
 @Composable
 fun OnboardingScreen(
     onLoginClick: () -> Unit,
@@ -231,5 +235,38 @@ fun OnboardingScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingLoadingPreview() {
+    DentalTheme {
+        OnboardingScreen(
+            onLoginClick = {},
+            onCreateAccountClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingSuccessPreview() {
+    DentalTheme {
+        OnboardingScreen(
+            onLoginClick = {},
+            onCreateAccountClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingErrorPreview() {
+    DentalTheme(darkTheme = true) {
+        OnboardingScreen(
+            onLoginClick = {},
+            onCreateAccountClick = {}
+        )
     }
 }

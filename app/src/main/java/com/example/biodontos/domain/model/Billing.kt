@@ -1,6 +1,6 @@
 package com.example.biodontos.domain.model
 
-import java.time.LocalDate
+import com.example.biodontos.domain.model.history.VoidInfo
 import java.time.LocalDateTime
 
 data class Treatment(
@@ -9,7 +9,8 @@ data class Treatment(
     val description: String,
     val totalCost: CopAmount,
     val status: String = "PENDIENTE",
-    val createdAt: LocalDateTime? = null
+    val createdAt: LocalDateTime? = null,
+    val statusReason: String? = null
 )
 
 data class Payment(
@@ -17,8 +18,11 @@ data class Payment(
     val treatmentId: String,
     val amount: CopAmount,
     val paymentMethod: String? = null,
-    val createdAt: LocalDateTime? = null
-)
+    val createdAt: LocalDateTime? = null,
+    val voidInfo: VoidInfo? = null
+) {
+    val isVoided: Boolean get() = voidInfo != null
+}
 
 data class DoctorPaymentRecord(
     val id: String,
@@ -43,8 +47,8 @@ data class TreatmentBalance(
         get() = pendingAmount.pesos <= 0L
 
     val progressFraction: Float
-        get() = if (treatment.totalCost.pesos == 0L) 1.0f 
-                else (paidAmount.pesos.toFloat() / treatment.totalCost.pesos.toFloat()).coerceIn(0.0f, 1.0f)
+        get() = if (treatment.totalCost.pesos == 0L) 1.0f
+        else (paidAmount.pesos.toFloat() / treatment.totalCost.pesos.toFloat()).coerceIn(0.0f, 1.0f)
 }
 
 data class PatientPaymentSummary(

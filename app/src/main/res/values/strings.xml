@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Biodontos</string>
+    <string name="action_back">Volver</string>
+    <string name="action_logout">Cerrar sesión</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_retry">Reintentar</string>
+    <string name="action_confirm">Confirmar</string>
+    <string name="logout_doctor_message">¿Estás seguro de que deseas salir del portal médico?</string>
+    <string name="logout_patient_message">¿Estás seguro de que deseas salir del portal del paciente?</string>
+    <string name="cd_tooth_fdi">Diente FDI %1$d</string>
+    <string name="cd_signature_pad">Panel de firma digital</string>
+    <string name="cd_increase_value">Aumentar valor</string>
+    <string name="cd_decrease_value">Disminuir valor</string>
 </resources>

@@ -1,10 +1,21 @@
 package com.example.biodontos.presentation.patients.detail
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -14,34 +25,81 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.biodontos.core.designsystem.*
+import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.core.designsystem.BiodontosErrorBg
+import com.example.biodontos.core.designsystem.BiodontosGreyText
+import com.example.biodontos.core.designsystem.BiodontosInputBg
+import com.example.biodontos.core.designsystem.BiodontosLightGrey
+import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.Carmesi
+import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.Esmeralda
+import com.example.biodontos.core.designsystem.Zafiro
+import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.core.designsystem.components.DateBadge
 import com.example.biodontos.domain.model.Anamnesis
 import com.example.biodontos.domain.model.Appointment
+import com.example.biodontos.domain.model.ClinicalMaterial
 import com.example.biodontos.domain.model.Evolution
+import com.example.biodontos.domain.model.EvolutionMaterialUsed
 import com.example.biodontos.domain.model.InformedConsent
 import com.example.biodontos.domain.model.Patient
 import com.example.biodontos.domain.model.Treatment
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import com.example.biodontos.domain.model.billing.TreatmentStatus
+import com.example.biodontos.domain.model.history.ActivityType
+import com.example.biodontos.domain.model.history.PatientActivity
+import com.example.biodontos.presentation.patients.detail.history.ClarificationNoteDialog
+import com.example.biodontos.presentation.patients.detail.history.NewPaymentDialog
+import com.example.biodontos.presentation.patients.detail.history.NewTreatmentBudgetDialog
+import com.example.biodontos.presentation.patients.detail.history.PatientHistoryTab
+import com.example.biodontos.presentation.patients.detail.history.QuickCreateActivityBottomSheet
+import com.example.biodontos.presentation.patients.detail.history.TreatmentStatusUpdateDialog
+import com.example.biodontos.presentation.patients.detail.history.VoidActivityDialog
+import java.time.YearMonth
 
 @OptIn(ExperimentalMaterial3Api::class)
+@VisibleForTesting
 @Composable
 fun PatientDetailScreen(
     state: PatientDetailState,
@@ -55,7 +113,7 @@ fun PatientDetailScreen(
     onEvolutionToothChange: (Int?) -> Unit,
     onEvolutionCostChange: (String) -> Unit,
     onEvolutionPaymentChange: (String) -> Unit,
-    onSelectCatalogMaterial: (com.example.biodontos.domain.model.ClinicalMaterial) -> Unit,
+    onSelectCatalogMaterial: (ClinicalMaterial) -> Unit,
     onAddMaterial: (Double) -> Unit,
     onRemoveMaterial: (String) -> Unit,
     onSaveEvolution: () -> Unit,
@@ -65,7 +123,40 @@ fun PatientDetailScreen(
     onAppointmentTimeChange: (String) -> Unit,
     onAppointmentReasonChange: (String) -> Unit,
     onSaveAppointment: () -> Unit,
-    onClearMessages: () -> Unit
+    onClearMessages: () -> Unit,
+    // Callbacks del Módulo de Historial Clínico y Trazabilidad (con valores por defecto compatibles)
+    onSelectMonthFilter: (YearMonth?) -> Unit = {},
+    onToggleActivityTypeFilter: (ActivityType) -> Unit = {},
+    onClearHistoryFilters: () -> Unit = {},
+    onToggleExpandActivity: (String) -> Unit = {},
+    onOpenQuickActionSheet: () -> Unit = {},
+    onDismissQuickActionSheet: () -> Unit = {},
+    onRequestVoidActivity: (PatientActivity) -> Unit = {},
+    onVoidReasonChange: (String) -> Unit = {},
+    onAdvanceVoidStep: () -> Unit = {},
+    onConfirmVoidActivity: () -> Unit = {},
+    onDismissVoidDialog: () -> Unit = {},
+    onOpenClarificationDialog: (Evolution) -> Unit = {},
+    onClarificationTextChange: (String) -> Unit = {},
+    onSaveClarification: () -> Unit = {},
+    onDismissClarificationDialog: () -> Unit = {},
+    onOpenTreatmentStatusDialog: (Treatment) -> Unit = {},
+    onSelectTargetTreatmentStatus: (TreatmentStatus) -> Unit = {},
+    onTreatmentStatusReasonChange: (String) -> Unit = {},
+    onConfirmTreatmentStatusUpdate: () -> Unit = {},
+    onDismissTreatmentStatusDialog: () -> Unit = {},
+    onOpenNewTreatmentDialog: () -> Unit = {},
+    onDismissNewTreatmentDialog: () -> Unit = {},
+    onNewTreatmentDescriptionChange: (String) -> Unit = {},
+    onNewTreatmentTotalCostChange: (String) -> Unit = {},
+    onSaveTreatment: () -> Unit = {},
+    onOpenNewPaymentDialog: (String?) -> Unit = {},
+    onDismissNewPaymentDialog: () -> Unit = {},
+    onSelectPaymentTreatment: (String) -> Unit = {},
+    onNewPaymentAmountChange: (String) -> Unit = {},
+    onNewPaymentMethodChange: (String) -> Unit = {},
+    onSavePayment: () -> Unit = {},
+    onRefreshTimeline: () -> Unit = {}
 ) {
     val patient = state.patient
     val snackbarHostState = remember { SnackbarHostState() }
@@ -121,6 +212,17 @@ fun PatientDetailScreen(
         },
         floatingActionButton = {
             when (state.selectedTab) {
+                PatientDetailTab.HISTORY -> {
+                    ExtendedFloatingActionButton(
+                        onClick = onOpenQuickActionSheet,
+                        containerColor = BiodontosDark,
+                        contentColor = BiodontosWhite
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Registrar Actividad")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Registrar Actividad", fontWeight = FontWeight.Bold)
+                    }
+                }
                 PatientDetailTab.EVOLUTIONS -> {
                     ExtendedFloatingActionButton(
                         onClick = onOpenNewEvolutionDialog,
@@ -155,11 +257,12 @@ fun PatientDetailScreen(
                 .imePadding()
                 .background(BiodontosLightGrey)
         ) {
-            // Tabs de Navegación del Hub
-            TabRow(
+            // Tabs de Navegación del Hub Clínico
+            ScrollableTabRow(
                 selectedTabIndex = state.selectedTab.ordinal,
                 containerColor = BiodontosWhite,
-                contentColor = BiodontosDark
+                contentColor = BiodontosDark,
+                edgePadding = 12.dp
             ) {
                 PatientDetailTab.entries.forEach { tab ->
                     Tab(
@@ -180,6 +283,19 @@ fun PatientDetailScreen(
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = BiodontosDark)
                 }
+            } else if (state.selectedTab == PatientDetailTab.HISTORY) {
+                PatientHistoryTab(
+                    historyState = state.historyState,
+                    onSelectMonth = onSelectMonthFilter,
+                    onToggleType = onToggleActivityTypeFilter,
+                    onClearFilters = onClearHistoryFilters,
+                    onToggleExpandActivity = onToggleExpandActivity,
+                    onRequestVoidActivity = onRequestVoidActivity,
+                    onOpenClarificationDialog = onOpenClarificationDialog,
+                    onOpenTreatmentStatusDialog = onOpenTreatmentStatusDialog,
+                    onOpenNewPaymentForTreatment = { treatId -> onOpenNewPaymentDialog(treatId) },
+                    onRetry = onRefreshTimeline
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -187,6 +303,7 @@ fun PatientDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     when (state.selectedTab) {
+                        PatientDetailTab.HISTORY -> {}
                         PatientDetailTab.SUMMARY -> {
                             item { PatientDemographicsCard(patient = patient) }
                             item { AnamnesisSummaryCard(anamnesis = state.anamnesis) }
@@ -291,6 +408,89 @@ fun PatientDetailScreen(
                 }
             }
         }
+    }
+
+    // BottomSheet: Creación Rápida desde el Historial Clínico
+    if (state.historyState.showQuickActionSheet) {
+        QuickCreateActivityBottomSheet(
+            onCreateEvolution = onOpenNewEvolutionDialog,
+            onCreateAppointment = onOpenNewAppointmentDialog,
+            onCreateTreatmentBudget = onOpenNewTreatmentDialog,
+            onCreatePayment = { onOpenNewPaymentDialog(null) },
+            onDismiss = onDismissQuickActionSheet
+        )
+    }
+
+    // Diálogo: Anulación Lógica en 2 Pasos (Resolución 1995/1999)
+    val voidTarget = state.historyState.voidDialogTarget
+    if (voidTarget != null) {
+        VoidActivityDialog(
+            target = voidTarget,
+            reason = state.historyState.voidReason,
+            step = state.historyState.voidConfirmationStep,
+            isProcessing = state.historyState.isProcessingVoid,
+            onReasonChange = onVoidReasonChange,
+            onAdvanceStep = onAdvanceVoidStep,
+            onConfirmVoid = onConfirmVoidActivity,
+            onDismiss = onDismissVoidDialog
+        )
+    }
+
+    // Diálogo: Nota Aclaratoria Vinculada
+    val clarificationTarget = state.historyState.clarificationTarget
+    if (clarificationTarget != null) {
+        ClarificationNoteDialog(
+            originalEvolution = clarificationTarget,
+            clarificationText = state.historyState.clarificationText,
+            isSaving = state.historyState.isSavingClarification,
+            onTextChange = onClarificationTextChange,
+            onSave = onSaveClarification,
+            onDismiss = onDismissClarificationDialog
+        )
+    }
+
+    // Diálogo: Actualizar Estado de Presupuesto de Tratamiento
+    val statusTarget = state.historyState.statusDialogTarget
+    if (statusTarget != null) {
+        TreatmentStatusUpdateDialog(
+            treatment = statusTarget,
+            selectedTargetStatus = state.historyState.selectedTargetStatus,
+            reason = state.historyState.statusChangeReason,
+            isUpdating = state.historyState.isUpdatingTreatmentStatus,
+            onSelectStatus = onSelectTargetTreatmentStatus,
+            onReasonChange = onTreatmentStatusReasonChange,
+            onConfirm = onConfirmTreatmentStatusUpdate,
+            onDismiss = onDismissTreatmentStatusDialog
+        )
+    }
+
+    // Diálogo: Nuevo Presupuesto de Tratamiento
+    if (state.showNewTreatmentDialog) {
+        NewTreatmentBudgetDialog(
+            description = state.newTreatmentDescription,
+            totalCost = state.newTreatmentTotalCost,
+            isSaving = state.isSavingTreatment,
+            onDescriptionChange = onNewTreatmentDescriptionChange,
+            onTotalCostChange = onNewTreatmentTotalCostChange,
+            onSave = onSaveTreatment,
+            onDismiss = onDismissNewTreatmentDialog
+        )
+    }
+
+    // Diálogo: Registrar Pago / Abono
+    if (state.showNewPaymentDialog) {
+        NewPaymentDialog(
+            treatments = state.treatments,
+            selectedTreatmentId = state.selectedPaymentTreatmentId,
+            amount = state.newPaymentAmount,
+            method = state.newPaymentMethod,
+            isSaving = state.isSavingPayment,
+            onSelectTreatment = onSelectPaymentTreatment,
+            onAmountChange = onNewPaymentAmountChange,
+            onMethodChange = onNewPaymentMethodChange,
+            onSave = onSavePayment,
+            onDismiss = onDismissNewPaymentDialog
+        )
     }
 
     // Diálogo: Nueva Evolución Clínica con Trazabilidad INVIMA
@@ -453,7 +653,9 @@ private fun ConsentSummaryCard(consent: InformedConsent?) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -604,7 +806,7 @@ private fun EvolutionItemCard(evolution: Evolution) {
                 )
                 evolution.materialsUsed.forEach { mat ->
                     Text(
-                        text = "• ${mat.materialName.ifBlank { "Material" }} (Lote: ${mat.lotNumberSnapshot ?: "N/A"} - Reg: ${mat.invimaSnapshot ?: "N/A"})",
+                        text = "• ${mat.materialName.ifBlank { "Material" }} (Lote: ${mat.lotNumberSnapshot} - Reg: ${mat.invimaSnapshot})",
                         fontSize = 11.sp,
                         color = BiodontosGreyText
                     )
@@ -653,7 +855,9 @@ private fun TreatmentItemCard(treatment: Treatment) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -677,14 +881,20 @@ private fun PatientAppointmentItemCard(appointment: Appointment) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             DateBadge(dateTime = appointment.startTime)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(appointment.reason ?: "Cita Odontológica", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = BiodontosDark)
-                Text("Estado: ${appointment.status.name} · ${if (appointment.isConfirmed) "Confirmada" else "Sin confirmar"}", fontSize = 12.sp, color = BiodontosGreyText)
+                Text(
+                    "Estado: ${appointment.status.name} · ${if (appointment.isConfirmed) "Confirmada" else "Sin confirmar"}",
+                    fontSize = 12.sp,
+                    color = BiodontosGreyText
+                )
             }
         }
     }
@@ -697,15 +907,15 @@ private fun NewEvolutionDialog(
     tooth: Int?,
     cost: String,
     payment: String,
-    materials: List<com.example.biodontos.domain.model.EvolutionMaterialUsed>,
-    catalog: List<com.example.biodontos.domain.model.ClinicalMaterial>,
-    selectedMaterial: com.example.biodontos.domain.model.ClinicalMaterial?,
+    materials: List<EvolutionMaterialUsed>,
+    catalog: List<ClinicalMaterial>,
+    selectedMaterial: ClinicalMaterial?,
     isSaving: Boolean,
     onDescriptionChange: (String) -> Unit,
     onToothChange: (Int?) -> Unit,
     onCostChange: (String) -> Unit,
     onPaymentChange: (String) -> Unit,
-    onSelectCatalogMaterial: (com.example.biodontos.domain.model.ClinicalMaterial) -> Unit,
+    onSelectCatalogMaterial: (ClinicalMaterial) -> Unit,
     onAddMaterial: (Double) -> Unit,
     onRemoveMaterial: (String) -> Unit,
     onSave: () -> Unit,
@@ -718,7 +928,9 @@ private fun NewEvolutionDialog(
         title = { Text("Nueva Nota de Evolución Clínica", fontWeight = FontWeight.Bold) },
         text = {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 item {
@@ -780,7 +992,9 @@ private fun NewEvolutionDialog(
                 }
                 items(materials) { mat ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -829,7 +1043,10 @@ private fun NewAppointmentDialog(
         onDismissRequest = onDismiss,
         title = { Text("Agendar Próxima Cita", fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier.imePadding(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 OutlinedTextField(
                     value = date,
                     onValueChange = onDateChange,
@@ -872,4 +1089,114 @@ private fun NewAppointmentDialog(
             }
         }
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientDetailLoadingPreview() {
+    DentalTheme {
+        PatientDetailScreen(
+            state = PatientDetailState(isLoading = true),
+            onTabSelected = {},
+            onNavigateBack = {},
+            onNavigateToOdontogram = {},
+            onNavigateToAdmission = {},
+            onOpenNewEvolutionDialog = {},
+            onDismissNewEvolutionDialog = {},
+            onEvolutionDescriptionChange = {},
+            onEvolutionToothChange = {},
+            onEvolutionCostChange = {},
+            onEvolutionPaymentChange = {},
+            onSelectCatalogMaterial = {},
+            onAddMaterial = {},
+            onRemoveMaterial = {},
+            onSaveEvolution = {},
+            onOpenNewAppointmentDialog = {},
+            onDismissNewAppointmentDialog = {},
+            onAppointmentDateChange = {},
+            onAppointmentTimeChange = {},
+            onAppointmentReasonChange = {},
+            onSaveAppointment = {},
+            onClearMessages = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientDetailSuccessPreview() {
+    DentalTheme {
+        PatientDetailScreen(
+            state = PatientDetailState(
+                isLoading = false,
+                patientId = "pat-1",
+                patient = Patient(
+                    id = "pat-1",
+                    dniCedula = "10203040",
+                    firstName = "María",
+                    firstLastName = "Gómez",
+                    birthDate = "1992-08-15",
+                    eps = "Sura",
+                    phone = "3001234567",
+                    consentSigned = true
+                )
+            ),
+            onTabSelected = {},
+            onNavigateBack = {},
+            onNavigateToOdontogram = {},
+            onNavigateToAdmission = {},
+            onOpenNewEvolutionDialog = {},
+            onDismissNewEvolutionDialog = {},
+            onEvolutionDescriptionChange = {},
+            onEvolutionToothChange = {},
+            onEvolutionCostChange = {},
+            onEvolutionPaymentChange = {},
+            onSelectCatalogMaterial = {},
+            onAddMaterial = {},
+            onRemoveMaterial = {},
+            onSaveEvolution = {},
+            onOpenNewAppointmentDialog = {},
+            onDismissNewAppointmentDialog = {},
+            onAppointmentDateChange = {},
+            onAppointmentTimeChange = {},
+            onAppointmentReasonChange = {},
+            onSaveAppointment = {},
+            onClearMessages = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientDetailErrorPreview() {
+    DentalTheme {
+        PatientDetailScreen(
+            state = PatientDetailState(
+                isLoading = false,
+                patientId = "pat-1",
+                errorMessage = "No se pudo cargar la historia clínica del paciente."
+            ),
+            onTabSelected = {},
+            onNavigateBack = {},
+            onNavigateToOdontogram = {},
+            onNavigateToAdmission = {},
+            onOpenNewEvolutionDialog = {},
+            onDismissNewEvolutionDialog = {},
+            onEvolutionDescriptionChange = {},
+            onEvolutionToothChange = {},
+            onEvolutionCostChange = {},
+            onEvolutionPaymentChange = {},
+            onSelectCatalogMaterial = {},
+            onAddMaterial = {},
+            onRemoveMaterial = {},
+            onSaveEvolution = {},
+            onOpenNewAppointmentDialog = {},
+            onDismissNewAppointmentDialog = {},
+            onAppointmentDateChange = {},
+            onAppointmentTimeChange = {},
+            onAppointmentReasonChange = {},
+            onSaveAppointment = {},
+            onClearMessages = {}
+        )
+    }
 }

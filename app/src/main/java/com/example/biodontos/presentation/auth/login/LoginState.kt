@@ -1,7 +1,9 @@
 package com.example.biodontos.presentation.auth.login
 
+import androidx.compose.runtime.Immutable
 import com.example.biodontos.domain.model.UserSession
 
+@Immutable
 data class LoginState(
     val email: String = "",
     val password: String = "",

@@ -1,5 +1,8 @@
 package com.example.biodontos.presentation.auth.reset
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class ForgotPasswordState(
     val email: String = "",
     val isLoading: Boolean = false,

@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.doctor.documents
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,12 +33,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.core.designsystem.BiodontosErrorRed
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosScreenGradient
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.DentalTheme
 
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.CircularProgressIndicator
@@ -68,16 +72,41 @@ fun DoctorDocumentsScreen(
     val app = context.applicationContext as BiodontosApp
     var patients by remember { mutableStateOf<List<Patient>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         isLoading = true
-        app.container.patientRepository.getPatients()
+        errorMessage = null
+        app.container.getPatientsUseCase()
             .onSuccess { list ->
                 patients = list
+            }
+            .onFailure { error ->
+                errorMessage = error.localizedMessage ?: "No se pudieron cargar los expedientes clínicos."
             }
         isLoading = false
     }
 
+    DoctorDocumentsContent(
+        patients = patients,
+        isLoading = isLoading,
+        errorMessage = errorMessage,
+        onNavigateBack = onNavigateBack,
+        onPatientClick = onPatientClick,
+        modifier = modifier
+    )
+}
+
+@VisibleForTesting
+@Composable
+fun DoctorDocumentsContent(
+    patients: List<Patient>,
+    isLoading: Boolean,
+    errorMessage: String? = null,
+    onNavigateBack: () -> Unit,
+    onPatientClick: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
@@ -125,34 +154,48 @@ fun DoctorDocumentsScreen(
                     }
                 }
 
-                if (isLoading) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = BiodontosDark)
+                when {
+                    isLoading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = BiodontosDark)
+                        }
                     }
-                } else if (patients.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "No hay historias clínicas registradas aún.",
-                            color = BiodontosGreyText,
-                            fontSize = 14.sp
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(patients, key = { it.id }) { p ->
-                            DocumentItemCard(
-                                doc = DoctorDocumentItem(
-                                    patientId = p.id,
-                                    title = "Historia Clínica y Odontograma",
-                                    patientName = p.fullName,
-                                    date = p.birthDate,
-                                    status = if (p.consentSigned) "Consentimiento Firmado" else "Pendiente de Firma"
-                                ),
-                                onClick = { onPatientClick(p.id) }
+                    errorMessage != null -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = errorMessage,
+                                color = BiodontosErrorRed,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
                             )
+                        }
+                    }
+                    patients.isEmpty() -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "No hay historias clínicas registradas aún.",
+                                color = BiodontosGreyText,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(patients, key = { it.id }) { p ->
+                                DocumentItemCard(
+                                    doc = DoctorDocumentItem(
+                                        patientId = p.id,
+                                        title = "Historia Clínica y Odontograma",
+                                        patientName = p.fullName,
+                                        date = p.birthDate,
+                                        status = if (p.consentSigned) "Consentimiento Firmado" else "Pendiente de Firma"
+                                    ),
+                                    onClick = { onPatientClick(p.id) }
+                                )
+                            }
                         }
                     }
                 }
@@ -216,5 +259,51 @@ private fun DocumentItemCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorDocumentsLoadingPreview() {
+    DentalTheme {
+        DoctorDocumentsContent(
+            patients = emptyList(),
+            isLoading = true,
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorDocumentsSuccessPreview() {
+    DentalTheme {
+        DoctorDocumentsContent(
+            patients = listOf(
+                Patient(
+                    id = "pat-1",
+                    dniCedula = "10203040",
+                    firstName = "Ana",
+                    firstLastName = "Gómez",
+                    birthDate = "1990-05-14",
+                    consentSigned = true
+                )
+            ),
+            isLoading = false,
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorDocumentsErrorPreview() {
+    DentalTheme {
+        DoctorDocumentsContent(
+            patients = emptyList(),
+            isLoading = false,
+            errorMessage = "No se pudieron cargar los expedientes clínicos.",
+            onNavigateBack = {}
+        )
     }
 }

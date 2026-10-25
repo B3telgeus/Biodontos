@@ -476,7 +476,8 @@ private fun SmallStepperButton(
         color = if (enabled) BiodontosWhite else BiodontosInputBg,
         shadowElevation = if (enabled) 1.dp else 0.dp,
         modifier = Modifier
-            .size(24.dp)
+            .minimumInteractiveComponentSize()
+            .size(28.dp)
             .clickable(enabled = enabled, onClick = onClick)
     ) {
         Box(contentAlignment = Alignment.Center) {

@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.admission
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,25 +54,40 @@ fun ClinicalAdmissionScreen(
         }
     }
 
+    ClinicalAdmissionContent(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onNavigateBack = onNavigateBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@VisibleForTesting
+@Composable
+fun ClinicalAdmissionContent(
+    state: ClinicalAdmissionState,
+    onEvent: (ClinicalAdmissionEvent) -> Unit,
+    onNavigateBack: () -> Unit
+) {
     if (state.showOperativeConsentDialog) {
         OperativeConsentDialog(
             state = state,
-            onDismiss = { viewModel.onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(false)) },
-            onUpdateTreatment = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentTreatment(it)) },
+            onDismiss = { onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(false)) },
+            onUpdateTreatment = { onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentTreatment(it)) },
             onUpdateSigner = { signerType, repName, repId ->
-                viewModel.onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentSigner(signerType, repName, repId))
+                onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentSigner(signerType, repName, repId))
             },
             onAddProcedure = { tooth, date ->
-                viewModel.onEvent(ClinicalAdmissionEvent.AddOperativeConsentProcedure(tooth, date))
+                onEvent(ClinicalAdmissionEvent.AddOperativeConsentProcedure(tooth, date))
             },
             onRemoveProcedure = { index ->
-                viewModel.onEvent(ClinicalAdmissionEvent.RemoveOperativeConsentProcedure(index))
+                onEvent(ClinicalAdmissionEvent.RemoveOperativeConsentProcedure(index))
             },
             onConfirmSignatures = { pSig, dSig ->
-                viewModel.onEvent(ClinicalAdmissionEvent.ConfirmOperativeConsentSignatures(pSig, dSig))
+                onEvent(ClinicalAdmissionEvent.ConfirmOperativeConsentSignatures(pSig, dSig))
             },
             onSaveConsent = {
-                viewModel.onEvent(ClinicalAdmissionEvent.SaveOperativeConsent)
+                onEvent(ClinicalAdmissionEvent.SaveOperativeConsent)
             }
         )
     }
@@ -104,7 +121,7 @@ fun ClinicalAdmissionScreen(
                 },
                 actions = {
                     FilledTonalButton(
-                        onClick = { viewModel.onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true)) },
+                        onClick = { onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true)) },
                         colors = ButtonDefaults.filledTonalButtonColors(
                             containerColor = Zafiro.copy(alpha = 0.12f),
                             contentColor = Zafiro
@@ -134,7 +151,7 @@ fun ClinicalAdmissionScreen(
                 ) {
                     if (state.currentStep > 1) {
                         OutlinedButton(
-                            onClick = { viewModel.onEvent(ClinicalAdmissionEvent.PreviousStep) },
+                            onClick = { onEvent(ClinicalAdmissionEvent.PreviousStep) },
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text("Anterior", color = BiodontosDark)
@@ -144,7 +161,7 @@ fun ClinicalAdmissionScreen(
                     }
 
                     Button(
-                        onClick = { viewModel.onEvent(ClinicalAdmissionEvent.NextStep) },
+                        onClick = { onEvent(ClinicalAdmissionEvent.NextStep) },
                         enabled = !state.isLoading,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -180,7 +197,7 @@ fun ClinicalAdmissionScreen(
             // Indicador Horizontal de Pasos
             StepProgressHeader(
                 currentStep = state.currentStep,
-                onStepClicked = { step -> viewModel.onEvent(ClinicalAdmissionEvent.JumpToStep(step)) }
+                onStepClicked = { step -> onEvent(ClinicalAdmissionEvent.JumpToStep(step)) }
             )
 
             // Mensaje de Error
@@ -211,13 +228,13 @@ fun ClinicalAdmissionScreen(
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
                 when (state.currentStep) {
-                    1 -> item { Step1IdentificationContent(state, viewModel) }
-                    2 -> item { Step2AnamnesisContent(state, viewModel) }
-                    3 -> item { Step3OdontogramContent(state, viewModel) }
-                    4 -> item { Step4PeriodontogramContent(state, viewModel) }
-                    5 -> item { Step5TreatmentConsentContent(state, viewModel) }
-                    6 -> item { Step6EvolutionMaterialsContent(state, viewModel) }
-                    7 -> item { Step7NextAppointmentContent(state, viewModel) }
+                    1 -> item { Step1IdentificationContent(state, onEvent) }
+                    2 -> item { Step2AnamnesisContent(state, onEvent) }
+                    3 -> item { Step3OdontogramContent(state, onEvent) }
+                    4 -> item { Step4PeriodontogramContent(state, onEvent) }
+                    5 -> item { Step5TreatmentConsentContent(state, onEvent) }
+                    6 -> item { Step6EvolutionMaterialsContent(state, onEvent) }
+                    7 -> item { Step7NextAppointmentContent(state, onEvent) }
                 }
             }
         }
@@ -328,7 +345,7 @@ private fun StepProgressHeader(
 @Composable
 private fun Step1IdentificationContent(
     state: ClinicalAdmissionState,
-    viewModel: ClinicalAdmissionViewModel
+    onEvent: (ClinicalAdmissionEvent) -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -349,7 +366,7 @@ private fun Step1IdentificationContent(
             // DNI
             OutlinedTextField(
                 value = state.dniCedula,
-                onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateDni(it)) },
+                onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateDni(it)) },
                 label = { Text("Número de Documento (DNI/Cédula) *") },
                 isError = state.dniError != null,
                 supportingText = state.dniError?.let { { Text(it, color = BiodontosErrorRed) } },
@@ -363,7 +380,7 @@ private fun Step1IdentificationContent(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.firstName,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateFirstName(it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateFirstName(it)) },
                     label = { Text("Nombres *") },
                     isError = state.nameError != null,
                     modifier = Modifier.weight(1f),
@@ -372,7 +389,7 @@ private fun Step1IdentificationContent(
                 )
                 OutlinedTextField(
                     value = state.firstLastName,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName(it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateFirstLastName(it)) },
                     label = { Text("1° Apellido *") },
                     isError = state.nameError != null,
                     modifier = Modifier.weight(1f),
@@ -384,7 +401,7 @@ private fun Step1IdentificationContent(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.secondLastName,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateSecondLastName(it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateSecondLastName(it)) },
                     label = { Text("2° Apellido") },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
@@ -392,7 +409,7 @@ private fun Step1IdentificationContent(
                 )
                 OutlinedTextField(
                     value = state.birthDate,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateBirthDate(it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateBirthDate(it)) },
                     label = { Text("Fecha Nac. (AAAA-MM-DD)") },
                     placeholder = { Text("2000-01-01") },
                     modifier = Modifier.weight(1f),
@@ -419,7 +436,7 @@ private fun Step1IdentificationContent(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.birthPlace,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateBirthPlace(it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateBirthPlace(it)) },
                     label = { Text("Lugar de Nacimiento") },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
@@ -427,7 +444,7 @@ private fun Step1IdentificationContent(
                 )
                 OutlinedTextField(
                     value = state.eps,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateEps(it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateEps(it)) },
                     label = { Text("EPS / Aseguradora") },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
@@ -439,7 +456,7 @@ private fun Step1IdentificationContent(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.bloodGroup,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateBloodGroup(it, state.rhFactor)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateBloodGroup(it, state.rhFactor)) },
                     label = { Text("Grupo Sang.") },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
@@ -447,7 +464,7 @@ private fun Step1IdentificationContent(
                 )
                 OutlinedTextField(
                     value = state.rhFactor,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateBloodGroup(state.bloodGroup, it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateBloodGroup(state.bloodGroup, it)) },
                     label = { Text("Factor RH") },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
@@ -455,7 +472,7 @@ private fun Step1IdentificationContent(
                 )
                 OutlinedTextField(
                     value = state.phone,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdatePhone(it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdatePhone(it)) },
                     label = { Text("Teléfono *") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     modifier = Modifier.weight(2f),
@@ -466,7 +483,7 @@ private fun Step1IdentificationContent(
 
             OutlinedTextField(
                 value = state.email,
-                onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateEmail(it)) },
+                onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateEmail(it)) },
                 label = { Text("Correo Electrónico") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
@@ -477,7 +494,7 @@ private fun Step1IdentificationContent(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.address,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateAddress(it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateAddress(it)) },
                     label = { Text("Dirección de Residencia") },
                     modifier = Modifier.weight(1.3f),
                     colors = biodontosTextFieldColors(),
@@ -485,7 +502,7 @@ private fun Step1IdentificationContent(
                 )
                 OutlinedTextField(
                     value = state.locality,
-                    onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateLocality(it)) },
+                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateLocality(it)) },
                     label = { Text("Localidad / Barrio") },
                     placeholder = { Text("Ej: Suba, Kennedy...") },
                     modifier = Modifier.weight(1f),
@@ -555,7 +572,7 @@ private fun Step1IdentificationContent(
                         }
                         Switch(
                             checked = state.hasGuardian,
-                            onCheckedChange = { viewModel.onEvent(ClinicalAdmissionEvent.ToggleHasGuardian(it)) }
+                            onCheckedChange = { onEvent(ClinicalAdmissionEvent.ToggleHasGuardian(it)) }
                         )
                     }
 
@@ -563,7 +580,7 @@ private fun Step1IdentificationContent(
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             OutlinedTextField(
                                 value = state.guardianRelationship,
-                                onValueChange = { viewModel.onEvent(ClinicalAdmissionEvent.UpdateGuardianRelationship(it)) },
+                                onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateGuardianRelationship(it)) },
                                 label = { Text("Parentesco o Relación *") },
                                 placeholder = { Text("Ej: Madre, Padre, Tutor Legal...") },
                                 modifier = Modifier.fillMaxWidth(),
@@ -575,7 +592,7 @@ private fun Step1IdentificationContent(
                                 OutlinedTextField(
                                     value = state.guardianFirstName,
                                     onValueChange = { firstName ->
-                                        viewModel.onEvent(
+                                        onEvent(
                                             ClinicalAdmissionEvent.UpdateGuardian(
                                                 relationship = state.guardianRelationship,
                                                 firstName = firstName,
@@ -594,7 +611,7 @@ private fun Step1IdentificationContent(
                                 OutlinedTextField(
                                     value = state.guardianLastName,
                                     onValueChange = { lastName ->
-                                        viewModel.onEvent(
+                                        onEvent(
                                             ClinicalAdmissionEvent.UpdateGuardian(
                                                 relationship = state.guardianRelationship,
                                                 firstName = state.guardianFirstName,
@@ -615,7 +632,7 @@ private fun Step1IdentificationContent(
                             OutlinedTextField(
                                 value = state.guardianPhone,
                                 onValueChange = { phone ->
-                                    viewModel.onEvent(
+                                    onEvent(
                                         ClinicalAdmissionEvent.UpdateGuardian(
                                             relationship = state.guardianRelationship,
                                             firstName = state.guardianFirstName,
@@ -644,7 +661,7 @@ private fun Step1IdentificationContent(
                                     fontWeight = FontWeight.SemiBold,
                                     color = BiodontosGreyText
                                 )
-                                TextButton(onClick = { viewModel.onEvent(ClinicalAdmissionEvent.CopyAddressToGuardian) }) {
+                                TextButton(onClick = { onEvent(ClinicalAdmissionEvent.CopyAddressToGuardian) }) {
                                     Text("📋 Misma del paciente", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                             }
@@ -653,7 +670,7 @@ private fun Step1IdentificationContent(
                                 OutlinedTextField(
                                     value = state.guardianAddress,
                                     onValueChange = { addr ->
-                                        viewModel.onEvent(
+                                        onEvent(
                                             ClinicalAdmissionEvent.UpdateGuardian(
                                                 relationship = state.guardianRelationship,
                                                 firstName = state.guardianFirstName,
@@ -672,7 +689,7 @@ private fun Step1IdentificationContent(
                                 OutlinedTextField(
                                     value = state.guardianLocality,
                                     onValueChange = { loc ->
-                                        viewModel.onEvent(ClinicalAdmissionEvent.UpdateGuardianLocality(loc))
+                                        onEvent(ClinicalAdmissionEvent.UpdateGuardianLocality(loc))
                                     },
                                     label = { Text("Localidad Acudiente") },
                                     modifier = Modifier.weight(1f),
@@ -696,7 +713,7 @@ private fun Step1IdentificationContent(
             OutlinedTextField(
                 value = state.consultationReason,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateAntecedents(
                             lastVisit = state.lastDentalVisit,
                             reason = it,
@@ -715,7 +732,7 @@ private fun Step1IdentificationContent(
             OutlinedTextField(
                 value = state.illnessHistory,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateAntecedents(
                             lastVisit = state.lastDentalVisit,
                             reason = state.consultationReason,
@@ -745,7 +762,7 @@ private fun Step1IdentificationContent(
                 Switch(
                     checked = state.hasCriticalAllergies,
                     onCheckedChange = {
-                        viewModel.onEvent(
+                        onEvent(
                             ClinicalAdmissionEvent.UpdateAllergies(it, state.allergiesDescription)
                         )
                     }
@@ -756,7 +773,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.allergiesDescription,
                     onValueChange = {
-                        viewModel.onEvent(ClinicalAdmissionEvent.UpdateAllergies(true, it))
+                        onEvent(ClinicalAdmissionEvent.UpdateAllergies(true, it))
                     },
                     label = { Text("Detalle de Alergias (Penicilina, Látex, AINEs...)") },
                     isError = true,
@@ -775,7 +792,7 @@ private fun Step1IdentificationContent(
 @Composable
 private fun Step2AnamnesisContent(
     state: ClinicalAdmissionState,
-    viewModel: ClinicalAdmissionViewModel
+    onEvent: (ClinicalAdmissionEvent) -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -844,7 +861,7 @@ private fun Step2AnamnesisContent(
                     Switch(
                         checked = isChecked,
                         onCheckedChange = {
-                            viewModel.onEvent(ClinicalAdmissionEvent.ToggleAnamnesisQuestion(key, it))
+                            onEvent(ClinicalAdmissionEvent.ToggleAnamnesisQuestion(key, it))
                         }
                     )
                 }
@@ -855,7 +872,7 @@ private fun Step2AnamnesisContent(
             OutlinedTextField(
                 value = state.medicamentosActuales,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateAnamnesisObservations(
                             state.anamnesisObservaciones,
                             state.antecedentesFamiliares,
@@ -872,7 +889,7 @@ private fun Step2AnamnesisContent(
             OutlinedTextField(
                 value = state.antecedentesFamiliares,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateAnamnesisObservations(
                             state.anamnesisObservaciones,
                             it,
@@ -889,7 +906,7 @@ private fun Step2AnamnesisContent(
             OutlinedTextField(
                 value = state.anamnesisObservaciones,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateAnamnesisObservations(
                             it,
                             state.antecedentesFamiliares,
@@ -912,7 +929,7 @@ private fun Step2AnamnesisContent(
 @Composable
 private fun Step3OdontogramContent(
     state: ClinicalAdmissionState,
-    viewModel: ClinicalAdmissionViewModel
+    onEvent: (ClinicalAdmissionEvent) -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -943,7 +960,7 @@ private fun Step3OdontogramContent(
                             shape = RoundedCornerShape(8.dp),
                             color = if (selected) BiodontosDark else BiodontosInputBg,
                             modifier = Modifier.clickable {
-                                viewModel.onEvent(ClinicalAdmissionEvent.ChangeDentitionType(type))
+                                onEvent(ClinicalAdmissionEvent.ChangeDentitionType(type))
                             }
                         ) {
                             Text(
@@ -977,7 +994,7 @@ private fun Step3OdontogramContent(
                         color = if (isSelected) condition.color.copy(alpha = 0.2f) else BiodontosInputBg,
                         border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, condition.color) else null,
                         modifier = Modifier.clickable {
-                            viewModel.onEvent(ClinicalAdmissionEvent.SelectConditionToApply(condition))
+                            onEvent(ClinicalAdmissionEvent.SelectConditionToApply(condition))
                         }
                     ) {
                         Row(
@@ -1027,7 +1044,7 @@ private fun Step3OdontogramContent(
                             .background(if (isSelected) SlateLight else Color.Transparent)
                             .padding(4.dp)
                             .clickable {
-                                viewModel.onEvent(ClinicalAdmissionEvent.SelectOdontogramTooth(toothNum))
+                                onEvent(ClinicalAdmissionEvent.SelectOdontogramTooth(toothNum))
                             }
                     ) {
                         Text(
@@ -1040,7 +1057,7 @@ private fun Step3OdontogramContent(
                             toothNumber = toothNum,
                             surfaceStates = surfaces,
                             onSurfaceClicked = { surf ->
-                                viewModel.onEvent(ClinicalAdmissionEvent.ApplySurfaceCondition(toothNum, surf))
+                                onEvent(ClinicalAdmissionEvent.ApplySurfaceCondition(toothNum, surf))
                             },
                             modifier = Modifier.size(56.dp)
                         )
@@ -1057,17 +1074,17 @@ private fun Step3OdontogramContent(
 @Composable
 private fun Step4PeriodontogramContent(
     state: ClinicalAdmissionState,
-    viewModel: ClinicalAdmissionViewModel
+    onEvent: (ClinicalAdmissionEvent) -> Unit
 ) {
     InteractivePeriodontogram(
         selectedToothNumber = state.selectedPeriodontalTooth,
         availableTeeth = state.availableFdiTeeth,
         siteMeasurements = state.siteMeasurements,
         onToothSelected = { tooth ->
-            viewModel.onEvent(ClinicalAdmissionEvent.SelectPeriodontalTooth(tooth))
+            onEvent(ClinicalAdmissionEvent.SelectPeriodontalTooth(tooth))
         },
         onMeasurementChanged = { meas ->
-            viewModel.onEvent(ClinicalAdmissionEvent.UpdatePeriodontalMeasurement(meas))
+            onEvent(ClinicalAdmissionEvent.UpdatePeriodontalMeasurement(meas))
         }
     )
 }
@@ -1078,7 +1095,7 @@ private fun Step4PeriodontogramContent(
 @Composable
 private fun Step5TreatmentConsentContent(
     state: ClinicalAdmissionState,
-    viewModel: ClinicalAdmissionViewModel
+    onEvent: (ClinicalAdmissionEvent) -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -1099,7 +1116,7 @@ private fun Step5TreatmentConsentContent(
             OutlinedTextField(
                 value = state.mainDiagnosis,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateDiagnoses(
                             main = it,
                             related = state.relatedDiagnoses,
@@ -1118,7 +1135,7 @@ private fun Step5TreatmentConsentContent(
             OutlinedTextField(
                 value = state.relatedDiagnoses,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateDiagnoses(
                             main = state.mainDiagnosis,
                             related = it,
@@ -1136,7 +1153,7 @@ private fun Step5TreatmentConsentContent(
             OutlinedTextField(
                 value = state.treatmentPlanDescription,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateDiagnoses(
                             main = state.mainDiagnosis,
                             related = state.relatedDiagnoses,
@@ -1179,7 +1196,7 @@ private fun Step5TreatmentConsentContent(
             }
 
             OutlinedButton(
-                onClick = { viewModel.onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true)) },
+                onClick = { onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true)) },
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Zafiro),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -1195,7 +1212,7 @@ private fun Step5TreatmentConsentContent(
                 subtitle = "Firme en el recuadro para validar el consentimiento legal.",
                 currentSignature = state.consentPatientSignature,
                 onSignatureConfirmed = { sig ->
-                    viewModel.onEvent(ClinicalAdmissionEvent.ConfirmConsentSignature(sig))
+                    onEvent(ClinicalAdmissionEvent.ConfirmConsentSignature(sig))
                 }
             )
         }
@@ -1208,7 +1225,7 @@ private fun Step5TreatmentConsentContent(
 @Composable
 private fun Step6EvolutionMaterialsContent(
     state: ClinicalAdmissionState,
-    viewModel: ClinicalAdmissionViewModel
+    onEvent: (ClinicalAdmissionEvent) -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -1229,7 +1246,7 @@ private fun Step6EvolutionMaterialsContent(
             OutlinedTextField(
                 value = state.evolutionDescription,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateEvolution(
                             description = it,
                             cost = state.evolutionCost,
@@ -1250,7 +1267,7 @@ private fun Step6EvolutionMaterialsContent(
                 OutlinedTextField(
                     value = state.evolutionCost,
                     onValueChange = {
-                        viewModel.onEvent(
+                        onEvent(
                             ClinicalAdmissionEvent.UpdateEvolution(
                                 description = state.evolutionDescription,
                                 cost = it,
@@ -1268,7 +1285,7 @@ private fun Step6EvolutionMaterialsContent(
                 OutlinedTextField(
                     value = state.evolutionPayment,
                     onValueChange = {
-                        viewModel.onEvent(
+                        onEvent(
                             ClinicalAdmissionEvent.UpdateEvolution(
                                 description = state.evolutionDescription,
                                 cost = state.evolutionCost,
@@ -1333,7 +1350,7 @@ private fun Step6EvolutionMaterialsContent(
                             shape = RoundedCornerShape(8.dp),
                             color = if (isSelected) BiodontosDark else BiodontosInputBg,
                             modifier = Modifier.clickable {
-                                viewModel.onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(mat))
+                                onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(mat))
                             }
                         ) {
                             Text(
@@ -1359,7 +1376,7 @@ private fun Step6EvolutionMaterialsContent(
                             Text(text = "Lote: ${selectedMat.batchLotNumber} | Vence: ${selectedMat.expirationDate}", fontSize = 11.sp)
                             Spacer(modifier = Modifier.height(6.dp))
                             Button(
-                                onClick = { viewModel.onEvent(ClinicalAdmissionEvent.AddMaterialUsed(1.0)) },
+                                onClick = { onEvent(ClinicalAdmissionEvent.AddMaterialUsed(1.0)) },
                                 shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Zafiro),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
@@ -1395,7 +1412,7 @@ private fun Step6EvolutionMaterialsContent(
                             Text(text = used.materialName, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             Text(text = "INVIMA: ${used.invimaSnapshot} | Lote: ${used.lotNumberSnapshot}", fontSize = 10.sp, color = BiodontosGreyText)
                         }
-                        IconButton(onClick = { viewModel.onEvent(ClinicalAdmissionEvent.RemoveMaterialUsed(used.materialId)) }) {
+                        IconButton(onClick = { onEvent(ClinicalAdmissionEvent.RemoveMaterialUsed(used.materialId)) }) {
                             Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Carmesi, modifier = Modifier.size(16.dp))
                         }
                     }
@@ -1408,7 +1425,7 @@ private fun Step6EvolutionMaterialsContent(
                 subtitle = "Conformidad con el procedimiento realizado.",
                 currentSignature = state.evolutionPatientSignature,
                 onSignatureConfirmed = { sig ->
-                    viewModel.onEvent(ClinicalAdmissionEvent.ConfirmEvolutionSignature(sig))
+                    onEvent(ClinicalAdmissionEvent.ConfirmEvolutionSignature(sig))
                 }
             )
 
@@ -1426,7 +1443,7 @@ private fun Step6EvolutionMaterialsContent(
                 Switch(
                     checked = state.closeRecordOnFinish,
                     onCheckedChange = {
-                        viewModel.onEvent(ClinicalAdmissionEvent.ToggleCloseRecord(it, state.closureSummary))
+                        onEvent(ClinicalAdmissionEvent.ToggleCloseRecord(it, state.closureSummary))
                     }
                 )
             }
@@ -1440,7 +1457,7 @@ private fun Step6EvolutionMaterialsContent(
 @Composable
 private fun Step7NextAppointmentContent(
     state: ClinicalAdmissionState,
-    viewModel: ClinicalAdmissionViewModel
+    onEvent: (ClinicalAdmissionEvent) -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -1466,7 +1483,7 @@ private fun Step7NextAppointmentContent(
             OutlinedTextField(
                 value = state.nextAppointmentDate,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateNextAppointment(
                             date = it,
                             time = state.nextAppointmentTime,
@@ -1484,7 +1501,7 @@ private fun Step7NextAppointmentContent(
             OutlinedTextField(
                 value = state.nextAppointmentTime,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateNextAppointment(
                             date = state.nextAppointmentDate,
                             time = it,
@@ -1501,7 +1518,7 @@ private fun Step7NextAppointmentContent(
             OutlinedTextField(
                 value = state.nextAppointmentReason,
                 onValueChange = {
-                    viewModel.onEvent(
+                    onEvent(
                         ClinicalAdmissionEvent.UpdateNextAppointment(
                             date = state.nextAppointmentDate,
                             time = state.nextAppointmentTime,
@@ -1540,5 +1557,58 @@ private fun Step7NextAppointmentContent(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ClinicalAdmissionLoadingPreview() {
+    DentalTheme {
+        ClinicalAdmissionContent(
+            state = ClinicalAdmissionState(
+                currentStep = 1,
+                isLoading = true
+            ),
+            onEvent = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ClinicalAdmissionSuccessPreview() {
+    DentalTheme {
+        ClinicalAdmissionContent(
+            state = ClinicalAdmissionState(
+                currentStep = 1,
+                dniCedula = "1020304050",
+                firstName = "María",
+                firstLastName = "Gómez",
+                secondLastName = "Pérez",
+                birthDate = "1995-04-12",
+                phone = "3001234567",
+                email = "maria.gomez@email.com",
+                consultationReason = "Valoración general y profilaxis"
+            ),
+            onEvent = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ClinicalAdmissionErrorPreview() {
+    DentalTheme {
+        ClinicalAdmissionContent(
+            state = ClinicalAdmissionState(
+                currentStep = 1,
+                dniError = "El documento es obligatorio",
+                errorMessage = "Complete los campos obligatorios antes de continuar."
+            ),
+            onEvent = {},
+            onNavigateBack = {}
+        )
     }
 }

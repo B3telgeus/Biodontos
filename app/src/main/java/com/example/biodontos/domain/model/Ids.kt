@@ -33,4 +33,10 @@ value class CopAmount(val pesos: Long) {
     fun formatCop(): String {
         return "$ " + "%,d".format(pesos).replace(',', '.')
     }
+
+    fun formatDisplay(): String = formatCop()
+
+    companion object {
+        val ZERO = CopAmount(0L)
+    }
 }

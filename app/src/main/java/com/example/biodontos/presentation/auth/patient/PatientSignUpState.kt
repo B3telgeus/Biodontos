@@ -1,7 +1,9 @@
 package com.example.biodontos.presentation.auth.patient
 
+import androidx.compose.runtime.Immutable
 import com.example.biodontos.domain.model.UserSession
 
+@Immutable
 data class PatientSignUpState(
     val currentStep: Int = 1,
     val firstName: String = "",

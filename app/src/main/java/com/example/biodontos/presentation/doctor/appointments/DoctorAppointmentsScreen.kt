@@ -72,6 +72,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -81,6 +82,7 @@ import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosScreenGradient
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.StatusCancelled
 import com.example.biodontos.core.designsystem.StatusConfirmed
 import com.example.biodontos.core.designsystem.components.DateBadge
@@ -1696,4 +1698,68 @@ private fun formatTimeOnly(dateTime: LocalDateTime): String {
     val formatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.forLanguageTag("es-CO"))
     return runCatching { dateTime.format(formatter) }
         .getOrDefault("${dateTime.hour}:${dateTime.minute}")
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorAppointmentsLoadingPreview() {
+    DentalTheme {
+        DoctorAppointmentsScreen(
+            state = DoctorAppointmentsUiState(isLoading = true),
+            onEvent = {},
+            today = LocalDate.of(2026, 10, 23), onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorAppointmentsSuccessPreview() {
+    val sampleDate = LocalDate.of(2026, 10, 23)
+    val sampleItem = DoctorAppointmentItem(
+        appointmentId = "apt-1",
+        patientName = "Juan Pérez",
+        treatmentReason = "Control de Ortodoncia",
+        startTime = sampleDate.atTime(9, 0),
+        isConfirmed = true
+    )
+    DentalTheme {
+        DoctorAppointmentsScreen(
+            state = DoctorAppointmentsUiState(
+                isLoading = false,
+                doctorName = "Dr. Carlos Restrepo",
+                selectedDate = sampleDate,
+                appointments = listOf(sampleItem),
+                timelineSlots = listOf(
+                    DoctorTimelineSlot(
+                        startTime = sampleDate.atTime(9, 0),
+                        endTime = sampleDate.atTime(9, 30),
+                        status = DoctorSlotStatus.Occupied(sampleItem)
+                    ),
+                    DoctorTimelineSlot(
+                        startTime = sampleDate.atTime(9, 30),
+                        endTime = sampleDate.atTime(10, 0),
+                        status = DoctorSlotStatus.Available
+                    )
+                )
+            ),
+            onEvent = {},
+            today = LocalDate.of(2026, 10, 23), onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DoctorAppointmentsErrorPreview() {
+    DentalTheme {
+        DoctorAppointmentsScreen(
+            state = DoctorAppointmentsUiState(
+                isLoading = false,
+                errorMessage = "No fue posible sincronizar las citas del día."
+            ),
+            onEvent = {},
+            today = LocalDate.of(2026, 10, 23), onNavigateBack = {}
+        )
+    }
 }

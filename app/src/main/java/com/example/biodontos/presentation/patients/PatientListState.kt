@@ -1,7 +1,9 @@
 package com.example.biodontos.presentation.patients
 
+import androidx.compose.runtime.Immutable
 import com.example.biodontos.domain.model.Patient
 
+@Immutable
 data class PatientListState(
     val patients: List<Patient> = emptyList(),
     val searchQuery: String = "",

@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.auth.splash
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,6 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.biodontos.R
@@ -52,6 +54,18 @@ fun SplashScreen(
             }
         }
     }
+
+    SplashContent(startAnimation = startAnimation)
+}
+
+@VisibleForTesting
+@Composable
+fun SplashContent(
+    startAnimation: Boolean = true,
+    isLoading: Boolean = true,
+    statusMessage: String = "Iniciando entorno clínico seguro...",
+    errorMessage: String? = null
+) {
 
     val scale by animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0.8f,
@@ -189,26 +203,65 @@ fun SplashScreen(
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 44.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 24.dp)
                 .alpha(alpha),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CircularProgressIndicator(
-                color = Zafiro,
-                strokeWidth = 2.5.dp,
-                modifier = Modifier.size(24.dp)
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    color = Zafiro,
+                    strokeWidth = 2.5.dp,
+                    modifier = Modifier.size(24.dp)
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             Text(
-                text = "Iniciando entorno clínico seguro...",
+                text = errorMessage ?: statusMessage,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = Color(0xFF64748B),
+                    color = if (errorMessage != null) Carmesi else Color(0xFF64748B),
                     fontWeight = FontWeight.Medium,
                     fontSize = 12.sp
                 )
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SplashLoadingPreview() {
+    DentalTheme {
+        SplashContent(
+            startAnimation = true,
+            isLoading = true,
+            statusMessage = "Iniciando entorno clínico seguro..."
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SplashSuccessPreview() {
+    DentalTheme {
+        SplashContent(
+            startAnimation = true,
+            isLoading = false,
+            statusMessage = "Sesión verificada. Redirigiendo..."
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SplashErrorPreview() {
+    DentalTheme {
+        SplashContent(
+            startAnimation = true,
+            isLoading = false,
+            errorMessage = "Sin conexión. Modo local activado."
+        )
     }
 }

@@ -8,6 +8,7 @@ import com.example.biodontos.domain.model.ClinicalMaterial
 import com.example.biodontos.domain.repository.MaterialRepository
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.CancellationException
 
 class MaterialRepositoryImpl : MaterialRepository {
 
@@ -20,6 +21,7 @@ class MaterialRepositoryImpl : MaterialRepository {
                 .decodeList<ClinicalMaterialDto>()
             Result.success(list.map { it.toDomain() })
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
@@ -32,6 +34,7 @@ class MaterialRepositoryImpl : MaterialRepository {
             }.decodeSingle<ClinicalMaterialDto>()
             Result.success(saved.toDomain())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.failure(e)
         }
     }

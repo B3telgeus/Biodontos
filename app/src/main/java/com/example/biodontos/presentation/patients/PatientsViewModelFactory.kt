@@ -36,7 +36,13 @@ object PatientsViewModelFactory {
                 evolutionRepository = c.evolutionRepository,
                 billingRepository = c.billingRepository,
                 appointmentRepository = c.appointmentRepository,
-                materialRepository = c.materialRepository
+                materialRepository = c.materialRepository,
+                clinicalAuditRepository = c.clinicalAuditRepository,
+                getPatientActivityTimelineUseCase = c.getPatientActivityTimelineUseCase,
+                voidEvolutionUseCase = c.voidEvolutionUseCase,
+                voidPaymentUseCase = c.voidPaymentUseCase,
+                addEvolutionClarificationUseCase = c.addEvolutionClarificationUseCase,
+                updateTreatmentStatusUseCase = c.updateTreatmentStatusUseCase
             ) as T
         }
     }

@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,13 +43,16 @@ import com.example.biodontos.core.designsystem.BiodontosErrorRed
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.components.AppointmentStatusChip
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.DateBadge
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.core.designsystem.components.TwoStepConfirmationDialog
 import com.example.biodontos.domain.model.Appointment
+import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.Doctor
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -361,5 +365,55 @@ private fun AppointmentItemCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MyAppointmentsLoadingPreview() {
+    DentalTheme {
+        MyAppointmentsScreen(
+            state = MyAppointmentsUiState(isLoading = true),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MyAppointmentsSuccessPreview() {
+    DentalTheme {
+        MyAppointmentsScreen(
+            state = MyAppointmentsUiState(
+                isLoading = false,
+                upcomingAppointments = listOf(
+                    Appointment(
+                        id = "apt-1",
+                        patientId = "pat-1",
+                        doctorId = "doc-1",
+                        doctorName = "Dr. Carlos Restrepo",
+                        startTime = LocalDateTime.of(2026, 10, 25, 14, 30),
+                        status = AppointmentStatus.CONFIRMED,
+                        isConfirmed = true,
+                        reason = "Limpieza dental"
+                    )
+                )
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MyAppointmentsErrorPreview() {
+    DentalTheme {
+        MyAppointmentsScreen(
+            state = MyAppointmentsUiState(
+                isLoading = false,
+                errorMessage = "No se pudieron cargar tus citas programadas."
+            ),
+            onEvent = {}
+        )
     }
 }
