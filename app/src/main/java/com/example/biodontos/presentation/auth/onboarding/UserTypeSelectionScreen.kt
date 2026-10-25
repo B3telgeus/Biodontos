@@ -74,13 +74,13 @@ fun UserTypeSelectionScreen(
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(40.dp)
+                        .padding(32.dp)
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "¡Nos alegra mucho tenerte por acá!",
-                        fontSize = 32.sp,
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark,
                         textAlign = TextAlign.Center
@@ -88,16 +88,17 @@ fun UserTypeSelectionScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "Por favor, selecciona la opción que mejor te represente:",
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         color = BiodontosGreyText,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(48.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
-                    Row(
+                    // Organización vertical (uno arriba del otro)
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         // Soy Doctor
                         Button(
@@ -108,13 +109,13 @@ fun UserTypeSelectionScreen(
                                 contentColor = Color.White
                             ),
                             modifier = Modifier
-                                .weight(1f)
-                                .height(68.dp)
+                                .fillMaxWidth()
+                                .height(56.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AccountCircle,
                                 contentDescription = null,
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
@@ -133,13 +134,13 @@ fun UserTypeSelectionScreen(
                                 contentColor = Color.White
                             ),
                             modifier = Modifier
-                                .weight(1f)
-                                .height(68.dp)
+                                .fillMaxWidth()
+                                .height(56.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = null,
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
@@ -150,13 +151,15 @@ fun UserTypeSelectionScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     OutlinedButton(
                         onClick = onBackClick,
                         shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark),
-                        modifier = Modifier.height(50.dp)
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
