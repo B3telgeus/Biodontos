@@ -364,6 +364,7 @@ private fun Step1IdentificationContent(
             )
 
             // DNI
+            // TODO: Validacion de DNI completada con éxito
             OutlinedTextField(
                 value = state.dniCedula,
                 onValueChange = { input ->
