@@ -41,7 +41,9 @@ import com.example.biodontos.presentation.auth.splash.SplashViewModel
 import com.example.biodontos.presentation.doctor.DoctorViewModelFactory
 import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsRoute
 import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsViewModel
+import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsRoute
 import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsScreen
+import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsViewModel
 import com.example.biodontos.presentation.doctor.home.DoctorHomeRoute
 import com.example.biodontos.presentation.doctor.home.DoctorHomeUiEvent
 import com.example.biodontos.presentation.doctor.home.DoctorHomeViewModel
@@ -451,6 +453,11 @@ fun BiodontosNavGraph(navController: NavHostController) {
                     onNavigateToNewPatient = { navController.navigate(ClinicalAdmission()) },
                     onNavigateToAppointments = { navController.navigate(DoctorAppointments) },
                     onNavigateToDocuments = { navController.navigate(DoctorDocuments) },
+                    onNavigateToClinicalAdmission = { navController.navigate(ClinicalAdmission()) },
+                    onNavigateToProfile = { navController.navigate(DoctorProfile) },
+                    onNavigateToPatientDetail = { patientId ->
+                        navController.navigate(PatientDetail(patientId = patientId, initialTab = "HISTORY"))
+                    },
                     onNavigateToLogin = {
                         navController.navigate(Login) {
                             popUpTo(DoctorHome) { inclusive = true }
@@ -464,10 +471,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
         composable<PatientList> {
             val viewModel: PatientListViewModel = viewModel(factory = PatientsViewModelFactory.ListFactory)
             val state by viewModel.state.collectAsStateWithLifecycle()
-
-            LaunchedEffect(Unit) {
-                viewModel.loadPatients()
-            }
 
             DoctorPortalShell(
                 selectedItem = DoctorNavItem.PATIENTS,
@@ -488,10 +491,12 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 PatientListScreen(
                     state = state,
                     onSearchQueryChange = viewModel::onSearchQueryChange,
+onFilterSelected = viewModel::onFilterSelected,
+                    onRefresh = viewModel::refresh,
                     onAddPatientClick = { navController.navigate(ClinicalAdmission()) },
                     onClinicalAdmissionClick = { navController.navigate(ClinicalAdmission()) },
                     onPatientClick = { patient ->
-                        navController.navigate(PatientDetail(patientId = patient.id))
+                        navController.navigate(PatientDetail(patientId = patient.id, initialTab = "SUMMARY"))
                     },
                     onDoctorProfileClick = { navController.navigate(DoctorProfile) },
                     onRetry = { viewModel.loadPatients() }
@@ -503,8 +508,13 @@ fun BiodontosNavGraph(navController: NavHostController) {
         composable<PatientDetail> { backStackEntry ->
             val route = backStackEntry.toRoute<PatientDetail>()
             val viewModel: com.example.biodontos.presentation.patients.detail.PatientDetailViewModel = viewModel(
-                factory = PatientsViewModelFactory.createPatientDetailFactory(route.patientId)
+                factory = PatientsViewModelFactory.createPatientDetailFactory(route.patientId, route.initialTab)
             )
+            LaunchedEffect(route.initialTab) {
+                viewModel.selectTab(
+                    com.example.biodontos.presentation.patients.detail.PatientDetailViewModel.parseTab(route.initialTab)
+                )
+            }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
             com.example.biodontos.presentation.patients.detail.PatientDetailScreen(
@@ -586,13 +596,17 @@ fun BiodontosNavGraph(navController: NavHostController) {
             ) {
                 DoctorAppointmentsRoute(
                     viewModel = viewModel,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onPatientClick = { patientId ->
+                        navController.navigate(PatientDetail(patientId = patientId, initialTab = "HISTORY"))
+                    }
                 )
             }
         }
 
         // --- DOCUMENTOS E HISTORIAS CLÍNICAS (DOCTOR) ---
         composable<DoctorDocuments> {
+            val viewModel: DoctorDocumentsViewModel = viewModel(factory = DoctorViewModelFactory.DocumentsFactory)
             DoctorPortalShell(
                 selectedItem = DoctorNavItem.DOCUMENTS,
                 onItemSelected = { item ->
@@ -609,10 +623,14 @@ fun BiodontosNavGraph(navController: NavHostController) {
                     }
                 }
             ) {
-                DoctorDocumentsScreen(
+                DoctorDocumentsRoute(
+                    viewModel = viewModel,
                     onNavigateBack = { navController.popBackStack() },
-                    onPatientClick = { patientId ->
-                        navController.navigate(PatientDetail(patientId = patientId))
+                    onNavigateToPatientDetail = { patientId, initialTab ->
+                        navController.navigate(PatientDetail(patientId = patientId, initialTab = initialTab))
+                    },
+                    onNavigateToAdmission = { patientId ->
+                        navController.navigate(ClinicalAdmission(patientId = patientId))
                     }
                 )
             }
@@ -699,3 +717,4 @@ fun BiodontosNavGraph(navController: NavHostController) {
         }
     }
 }
+

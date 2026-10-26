@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 
 class PatientDetailViewModel(
     private val patientId: String,
+    initialTab: String = "HISTORY",
     private val patientRepository: PatientRepository,
     private val clinicalRecordRepository: ClinicalRecordRepository,
     private val anamnesisRepository: AnamnesisRepository,
@@ -72,7 +73,12 @@ class PatientDetailViewModel(
         UpdateTreatmentStatusUseCase(billingRepository)
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(PatientDetailState(patientId = patientId))
+    private val _state = MutableStateFlow(
+        PatientDetailState(
+            patientId = patientId,
+            selectedTab = parseTab(initialTab)
+        )
+    )
     val state: StateFlow<PatientDetailState> = _state.asStateFlow()
 
     private val _effectChannel = Channel<PatientDetailEffect>(Channel.BUFFERED)
@@ -863,5 +869,16 @@ class PatientDetailViewModel(
     private object NoOpClinicalAuditRepository : ClinicalAuditRepository {
         override suspend fun getAuditTrail(patientId: String, limit: Int): Result<List<AuditEntry>> =
             Result.success(emptyList())
+    }
+
+    companion object {
+        fun parseTab(tabName: String): PatientDetailTab = when (tabName.uppercase()) {
+            "HISTORY" -> PatientDetailTab.HISTORY
+            "SUMMARY" -> PatientDetailTab.SUMMARY
+            "ODONTOGRAM" -> PatientDetailTab.ODONTOGRAM
+            "EVOLUTIONS" -> PatientDetailTab.EVOLUTIONS
+            "TREATMENTS" -> PatientDetailTab.TREATMENTS
+            else -> PatientDetailTab.HISTORY
+        }
     }
 }

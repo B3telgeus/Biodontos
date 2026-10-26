@@ -154,4 +154,40 @@ class DoctorRepositoryImpl : DoctorRepository {
             Result.failure(e)
         }
     }
+
+    override suspend fun updateDoctorProfile(doctor: Doctor): Result<Doctor> {
+        return try {
+            val docId = doctor.id.value
+            val userId = doctor.userId
+            SupabaseClient.client.from("doctors").update(
+                {
+                    set("first_name", doctor.firstName.trim())
+                    set("last_name", doctor.lastName.trim())
+                    set("specialty", doctor.specialty.trim())
+                    set("license_number", doctor.licenseNumber.trim())
+                    set("phone", doctor.phone?.trim()?.ifEmpty { null })
+                    set("bio", doctor.bio?.trim()?.ifEmpty { null })
+                    set("photo_url", doctor.photoUrl?.trim()?.ifEmpty { null })
+                }
+            ) {
+                filter {
+                    if (!userId.isNullOrBlank()) {
+                        or {
+                            eq("id", docId)
+                            eq("user_id", userId)
+                        }
+                    } else {
+                        or {
+                            eq("id", docId)
+                            eq("user_id", docId)
+                        }
+                    }
+                }
+            }
+            Result.success(doctor)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Result.failure(e)
+        }
+    }
 }

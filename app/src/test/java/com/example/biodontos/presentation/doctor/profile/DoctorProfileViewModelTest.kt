@@ -1,15 +1,16 @@
 package com.example.biodontos.presentation.doctor.profile
 
 import com.example.biodontos.MainDispatcherRule
-import com.example.biodontos.domain.model.*
-import com.example.biodontos.domain.repository.AppointmentRepository
+import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.DoctorId
+import com.example.biodontos.domain.model.UserRole
+import com.example.biodontos.domain.model.UserSession
 import com.example.biodontos.domain.repository.DoctorRepository
-import com.example.biodontos.domain.repository.PatientRepository
-import com.example.biodontos.domain.usecase.appointment.CancelAppointmentUseCase
-import com.example.biodontos.domain.usecase.appointment.ConfirmAppointmentUseCase
-import com.example.biodontos.domain.usecase.appointment.GetDoctorAppointmentsUseCase
 import com.example.biodontos.domain.usecase.auth.GetCurrentSessionUseCase
 import com.example.biodontos.domain.usecase.auth.LogoutUseCase
+import com.example.biodontos.domain.usecase.auth.ResetPasswordUseCase
+import com.example.biodontos.domain.usecase.auth.UpdatePasswordUseCase
+import com.example.biodontos.domain.usecase.doctor.UpdateDoctorProfileUseCase
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -19,7 +20,6 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DoctorProfileViewModelTest {
@@ -29,8 +29,9 @@ class DoctorProfileViewModelTest {
 
     private val getCurrentSessionUseCase: GetCurrentSessionUseCase = mockk()
     private val doctorRepository: DoctorRepository = mockk()
-    private val appointmentRepository: AppointmentRepository = mockk()
-    private val patientRepository: PatientRepository = mockk()
+    private val updateDoctorProfileUseCase: UpdateDoctorProfileUseCase = mockk()
+    private val updatePasswordUseCase: UpdatePasswordUseCase = mockk()
+    private val resetPasswordUseCase: ResetPasswordUseCase = mockk()
     private val logoutUseCase: LogoutUseCase = mockk(relaxed = true)
 
     private val dummyDoctorSession = UserSession(
@@ -47,124 +48,181 @@ class DoctorProfileViewModelTest {
         lastName = "Mendoza",
         specialty = "Ortodoncia & Estética",
         email = "dr.carlos@biodontos.com",
-        licenseNumber = "OD-20381"
-    )
-
-    private val dummyPatient = Patient(
-        id = "patient-1",
-        userId = "patient-1",
-        dniCedula = "10987654",
-        firstName = "Andrés",
-        firstLastName = "López",
-        phone = "3109998877",
-        email = "andres@test.com",
-        consentSigned = true
-    )
-
-    private val pendingAppointment = Appointment(
-        id = "apt-pending",
-        patientId = "patient-1",
-        doctorId = "doc-uid-1",
-        startTime = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0),
-        status = AppointmentStatus.SCHEDULED,
-        isConfirmed = false,
-        reason = "Valoración General"
-    )
-
-    private val confirmedAppointment = Appointment(
-        id = "apt-confirmed",
-        patientId = "patient-1",
-        doctorId = "doc-uid-1",
-        startTime = LocalDateTime.now().plusDays(2).withHour(14).withMinute(0),
-        status = AppointmentStatus.SCHEDULED,
-        isConfirmed = true,
-        reason = "Control de brackets"
+        licenseNumber = "OD-20381",
+        phone = "3001234567",
+        bio = "Especialista en ortodoncia con 10 años de experiencia.",
+        photoUrl = "data:image/jpeg;base64,samplephoto"
     )
 
     @Before
     fun setup() {
         coEvery { getCurrentSessionUseCase() } returns dummyDoctorSession
         coEvery { doctorRepository.getDoctorByUserId("doc-uid-1") } returns Result.success(dummyDoctor)
-        coEvery { appointmentRepository.getAppointmentsByDoctorId("doc-uid-1") } returns Result.success(
-            listOf(pendingAppointment, confirmedAppointment)
-        )
-        coEvery { patientRepository.getPatientById("patient-1") } returns Result.success(dummyPatient)
     }
-
-    private val getDoctorAppointmentsUseCase by lazy { GetDoctorAppointmentsUseCase(appointmentRepository) }
-    private val confirmAppointmentUseCase by lazy { ConfirmAppointmentUseCase(appointmentRepository) }
-    private val cancelAppointmentUseCase by lazy { CancelAppointmentUseCase(appointmentRepository) }
 
     private fun createViewModel(): DoctorProfileViewModel {
         return DoctorProfileViewModel(
             getCurrentSessionUseCase = getCurrentSessionUseCase,
             doctorRepository = doctorRepository,
-            getDoctorAppointmentsUseCase = getDoctorAppointmentsUseCase,
-            confirmAppointmentUseCase = confirmAppointmentUseCase,
-            cancelAppointmentUseCase = cancelAppointmentUseCase,
-            patientRepository = patientRepository,
+            updateDoctorProfileUseCase = updateDoctorProfileUseCase,
+            updatePasswordUseCase = updatePasswordUseCase,
+            resetPasswordUseCase = resetPasswordUseCase,
             logoutUseCase = logoutUseCase
         )
     }
 
     @Test
-    fun `initialization loads doctor profile, appointments, and associates patient details`() = runTest {
+    fun `initialization loads doctor profile and populates form fields`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         val state = viewModel.state.value
-        assertEquals("Carlos", state.doctor?.firstName)
-        assertEquals("Ortodoncia & Estética", state.doctor?.specialty)
-        assertEquals(2, state.appointments.size)
-
-        // Verificación de citas pendientes de confirmación
-        assertEquals(1, state.pendingAppointments.size)
-        assertEquals("apt-pending", state.pendingAppointments.first().id)
-        assertFalse(state.pendingAppointments.first().isConfirmed)
-
-        // Verificación de citas confirmadas
-        assertEquals(1, state.confirmedAppointments.size)
-        assertEquals("apt-confirmed", state.confirmedAppointments.first().id)
-        assertTrue(state.confirmedAppointments.first().isConfirmed)
-
-        // Verificación de asociación de paciente
-        assertTrue(state.patientsMap.containsKey("patient-1"))
-        assertEquals("Andrés López", state.patientsMap["patient-1"]?.fullName)
+        assertNotNull(state.doctor)
+        assertEquals("Carlos", state.firstName)
+        assertEquals("Mendoza", state.lastName)
+        assertEquals("Ortodoncia & Estética", state.specialty)
+        assertEquals("OD-20381", state.licenseNumber)
+        assertEquals("3001234567", state.phone)
+        assertEquals("Especialista en ortodoncia con 10 años de experiencia.", state.bio)
+        assertEquals("data:image/jpeg;base64,samplephoto", state.photoUrl)
+        assertEquals("dr.carlos@biodontos.com", state.email)
+        assertFalse(state.isLoading)
+        assertNull(state.errorMessage)
     }
 
     @Test
-    fun `confirmAppointment updates confirmation status to true`() = runTest {
+    fun `saveProfile with valid fields updates doctor and emits success toast`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        coEvery { appointmentRepository.updateConfirmationStatus("apt-pending", true) } returns Result.success(Unit)
+        val updatedDoctor = dummyDoctor.copy(
+            firstName = "Carlos Alberto",
+            specialty = "Ortodoncia Avanzada"
+        )
+        coEvery { updateDoctorProfileUseCase(any()) } returns Result.success(updatedDoctor)
 
-        viewModel.onEvent(DoctorProfileEvent.ConfirmAppointment("apt-pending"))
+        viewModel.onEvent(DoctorProfileEvent.UpdateFirstName("Carlos Alberto"))
+        viewModel.onEvent(DoctorProfileEvent.UpdateSpecialty("Ortodoncia Avanzada"))
+        viewModel.onEvent(DoctorProfileEvent.SaveProfile)
         advanceUntilIdle()
 
-        coVerify { appointmentRepository.updateConfirmationStatus("apt-pending", isConfirmed = true) }
-        coVerify(atLeast = 2) { appointmentRepository.getAppointmentsByDoctorId("doc-uid-1") }
+        coVerify {
+            updateDoctorProfileUseCase(
+                match {
+                    it.firstName == "Carlos Alberto" && it.specialty == "Ortodoncia Avanzada"
+                }
+            )
+        }
+        val state = viewModel.state.value
+        assertEquals("Carlos Alberto", state.doctor?.firstName)
+        assertEquals("Ortodoncia Avanzada", state.doctor?.specialty)
+        assertFalse(state.isSavingProfile)
+
+        val effect = viewModel.effects.first()
+        assertTrue(effect is DoctorProfileEffect.ShowToast)
+        assertEquals("Perfil profesional actualizado con éxito", (effect as DoctorProfileEffect.ShowToast).message)
     }
 
     @Test
-    fun `cancelAppointment updates status to cancelled with reason`() = runTest {
+    fun `saveProfile with blank firstName sets error and does not call usecase`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        coEvery { appointmentRepository.cancelAppointment("apt-pending", "No hay disponibilidad de instrumental") } returns Result.success(Unit)
-
-        viewModel.onEvent(DoctorProfileEvent.CancelAppointment("apt-pending", "No hay disponibilidad de instrumental"))
+        viewModel.onEvent(DoctorProfileEvent.UpdateFirstName("   "))
+        viewModel.onEvent(DoctorProfileEvent.SaveProfile)
         advanceUntilIdle()
 
-        coVerify { appointmentRepository.cancelAppointment("apt-pending", "No hay disponibilidad de instrumental") }
+        coVerify(exactly = 0) { updateDoctorProfileUseCase(any()) }
+        val state = viewModel.state.value
+        assertEquals("El nombre es obligatorio", state.errorMessage)
     }
 
     @Test
-    fun `logout triggers LogoutUseCase and emits NavigateToLogin effect`() = runTest {
+    fun `updatePhotoUrl persists photo immediately via UpdateDoctorProfileUseCase`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onEvent(DoctorProfileEvent.Logout)
+        val newPhoto = "data:image/jpeg;base64,newphotodata"
+        val updatedDoctor = dummyDoctor.copy(photoUrl = newPhoto)
+        coEvery { updateDoctorProfileUseCase(any()) } returns Result.success(updatedDoctor)
+
+        viewModel.onEvent(DoctorProfileEvent.UpdatePhotoUrl(newPhoto))
+        advanceUntilIdle()
+
+        coVerify {
+            updateDoctorProfileUseCase(
+                match { it.photoUrl == newPhoto }
+            )
+        }
+        val state = viewModel.state.value
+        assertEquals(newPhoto, state.photoUrl)
+        assertEquals(newPhoto, state.doctor?.photoUrl)
+
+        val effect = viewModel.effects.first()
+        assertTrue(effect is DoctorProfileEffect.ShowToast)
+        assertEquals("Foto de perfil actualizada con éxito", (effect as DoctorProfileEffect.ShowToast).message)
+    }
+
+    @Test
+    fun `submitPasswordChange with matching passwords updates password and clears fields`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { updatePasswordUseCase("nuevaClave123") } returns Result.success(Unit)
+
+        viewModel.onEvent(DoctorProfileEvent.UpdateNewPassword("nuevaClave123"))
+        viewModel.onEvent(DoctorProfileEvent.UpdateConfirmPassword("nuevaClave123"))
+        viewModel.onEvent(DoctorProfileEvent.SubmitPasswordChange)
+        advanceUntilIdle()
+
+        coVerify { updatePasswordUseCase("nuevaClave123") }
+        val state = viewModel.state.value
+        assertEquals("", state.newPassword)
+        assertEquals("", state.confirmPassword)
+        assertFalse(state.isUpdatingPassword)
+
+        val effect = viewModel.effects.first()
+        assertTrue(effect is DoctorProfileEffect.ShowToast)
+        assertEquals("Contraseña actualizada exitosamente", (effect as DoctorProfileEffect.ShowToast).message)
+    }
+
+    @Test
+    fun `submitPasswordChange with mismatching passwords emits error and does not call usecase`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEvent(DoctorProfileEvent.UpdateNewPassword("clave123"))
+        viewModel.onEvent(DoctorProfileEvent.UpdateConfirmPassword("clave999"))
+        viewModel.onEvent(DoctorProfileEvent.SubmitPasswordChange)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { updatePasswordUseCase(any()) }
+        val state = viewModel.state.value
+        assertEquals("Las contraseñas no coinciden", state.errorMessage)
+    }
+
+    @Test
+    fun `sendPasswordResetEmail calls ResetPasswordUseCase with doctor email`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { resetPasswordUseCase("dr.carlos@biodontos.com") } returns Result.success(Unit)
+
+        viewModel.onEvent(DoctorProfileEvent.SendPasswordResetEmail)
+        advanceUntilIdle()
+
+        coVerify { resetPasswordUseCase("dr.carlos@biodontos.com") }
+        val effect = viewModel.effects.first()
+        assertTrue(effect is DoctorProfileEffect.ShowToast)
+        assertTrue((effect as DoctorProfileEffect.ShowToast).message.contains("dr.carlos@biodontos.com"))
+    }
+
+    @Test
+    fun `confirmLogout invokes LogoutUseCase and emits NavigateToLogin effect`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEvent(DoctorProfileEvent.ConfirmLogout)
         advanceUntilIdle()
 
         coVerify { logoutUseCase() }

@@ -10,6 +10,7 @@ import java.time.LocalDateTime
 @Immutable
 data class DoctorAppointmentItem(
     val appointmentId: String,
+    val patientId: String = "",
     val patientName: String,
     val treatmentReason: String,
     val startTime: LocalDateTime,
@@ -19,6 +20,7 @@ data class DoctorAppointmentItem(
 @Immutable
 data class DoctorPaymentItem(
     val id: String = "",
+    val patientId: String = "",
     val patientName: String,
     val treatmentDescription: String = "",
     val dateStr: String,
@@ -32,10 +34,14 @@ data class DoctorHomeUiState(
     val isRefreshing: Boolean = false,
     val doctor: Doctor? = null,
     val doctorName: String = "",
+    val doctorPhotoUrl: String? = null,
     val patientsCount: Int = 0,
+    val consentedPatientsCount: Int = 0,
+    val pendingConsentCount: Int = 0,
     val todayAppointmentsCount: Int = 0,
     val upcomingAppointments: List<DoctorAppointmentItem> = emptyList(),
     val recentPayments: List<DoctorPaymentItem> = emptyList(),
+    val recentTotalCollectedCop: CopAmount = CopAmount.ZERO,
     val errorMessage: String? = null,
     // Estado del diálogo de registro de abono/pago
     val isRecordPaymentDialogOpen: Boolean = false,
@@ -55,6 +61,7 @@ sealed interface DoctorHomeUiEvent {
     // Eventos para gestión de abonos y pagos
     data object OpenRecordPaymentDialog : DoctorHomeUiEvent
     data object DismissRecordPaymentDialog : DoctorHomeUiEvent
+    data object ClearSelectedPatient : DoctorHomeUiEvent
     data class SelectPatientForPayment(val patient: Patient) : DoctorHomeUiEvent
     data class SelectTreatmentForPayment(val treatment: Treatment?) : DoctorHomeUiEvent
     data class SubmitPayment(

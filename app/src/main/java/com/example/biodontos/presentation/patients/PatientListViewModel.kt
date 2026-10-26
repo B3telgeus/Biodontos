@@ -43,7 +43,34 @@ class PatientListViewModel(
         }
     }
 
+    fun refresh() {
+        viewModelScope.launch {
+            _state.update { it.copy(isRefreshing = true, error = null) }
+            getPatientsUseCase()
+                .onSuccess { patients ->
+                    _state.update { 
+                        it.copy(
+                            patients = patients,
+                            isRefreshing = false
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _state.update { 
+                        it.copy(
+                            isRefreshing = false,
+                            error = error.message ?: "Error al actualizar pacientes"
+                        )
+                    }
+                }
+        }
+    }
+
     fun onSearchQueryChange(query: String) {
         _state.update { it.copy(searchQuery = query) }
+    }
+
+    fun onFilterSelected(filter: PatientQuickFilter) {
+        _state.update { it.copy(selectedFilter = filter) }
     }
 }

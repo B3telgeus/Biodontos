@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -95,13 +96,17 @@ fun DoctorPortalShell(
                     onClick = {
                         showLogoutDialog = false
                         onLogoutClick()
-                    }
+                    },
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                 ) {
                     Text("Cerrar sesión", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
+                TextButton(
+                    onClick = { showLogoutDialog = false },
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                ) {
                     Text("Cancelar", color = BiodontosDark)
                 }
             },
@@ -166,6 +171,7 @@ fun DoctorPortalShell(
                         Box(
                             modifier = Modifier
                                 .padding(bottom = 16.dp)
+                                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .clickable { showLogoutDialog = true }
                                 .padding(12.dp),

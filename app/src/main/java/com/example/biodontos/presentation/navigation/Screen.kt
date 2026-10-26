@@ -52,7 +52,10 @@ object PatientRegistration
 data class Odontogram(val patientId: String)
 
 @Serializable
-data class PatientDetail(val patientId: String)
+data class PatientDetail(
+    val patientId: String,
+    val initialTab: String = "HISTORY"
+)
 
 @Serializable
 data class ClinicalAdmission(val patientId: String? = null)

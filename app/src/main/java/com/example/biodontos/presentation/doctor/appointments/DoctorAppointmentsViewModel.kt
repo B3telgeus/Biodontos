@@ -17,7 +17,9 @@ import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.SaveDoctorAvailabilityUseCase
 import com.example.biodontos.presentation.doctor.home.DoctorAppointmentItem
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -156,15 +158,32 @@ class DoctorAppointmentsViewModel(
                 return@launch
             }
 
-            // Pacientes registrados
-            val patientsResult = patientRepository.getPatients()
+            // Ejecutar en paralelo: pacientes, citas y disponibilidad
+            val (patientsResult, appointmentsResult, availabilitiesResult) = coroutineScope {
+                val pDef = async { patientRepository.getPatients() }
+                val aDef = async { getDoctorAppointmentsUseCase(doctor.id.value) }
+                val avDef = async { getDoctorAvailabilityUseCase(doctor.id.value) }
+                Triple(pDef.await(), aDef.await(), avDef.await())
+            }
+
+            if (appointmentsResult.isFailure) {
+                val errorMsg = appointmentsResult.exceptionOrNull()
+                    ?.toUserFriendlyMessage("Error al cargar la agenda de citas")
+                    ?: "Error al sincronizar citas odontológicas"
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        errorMessage = errorMsg
+                    )
+                }
+                return@launch
+            }
+
             val patientsList = patientsResult.getOrDefault(emptyList())
             val patientsMap = patientsList.associateBy { it.id }
 
-            // Citas del doctor
-            val appointmentsResult = getDoctorAppointmentsUseCase(doctor.id.value)
             val appointmentsList = appointmentsResult.getOrDefault(emptyList())
-
             val items = appointmentsList
                 .filter { it.status != AppointmentStatus.CANCELLED }
                 .sortedBy { it.startTime }
@@ -172,6 +191,7 @@ class DoctorAppointmentsViewModel(
                     val pat = patientsMap[appt.patientId]
                     DoctorAppointmentItem(
                         appointmentId = appt.id,
+                        patientId = appt.patientId,
                         patientName = pat?.fullName ?: "Paciente",
                         treatmentReason = appt.reason?.ifBlank { "Control dental" } ?: "Control dental",
                         startTime = appt.startTime,
@@ -179,8 +199,7 @@ class DoctorAppointmentsViewModel(
                     )
                 }
 
-            // Disponibilidad semanal
-            val rawAvailabilities = getDoctorAvailabilityUseCase(doctor.id.value).getOrDefault(emptyList())
+            val rawAvailabilities = availabilitiesResult.getOrDefault(emptyList())
             val weeklyConfig = normalizeWeeklyAvailability(rawAvailabilities)
 
             val currentDate = _uiState.value.selectedDate
@@ -316,15 +335,38 @@ class DoctorAppointmentsViewModel(
         val doctorId = _uiState.value.doctorId
         if (doctorId.isBlank()) return
 
+        // Validación defensiva en ViewModel
+        val invalidActiveDay = _uiState.value.weeklyAvailability.find { it.isActive && !it.endTime.isAfter(it.startTime) }
+        if (invalidActiveDay != null) {
+            val dayName = when (invalidActiveDay.dayOfWeek) {
+                DayOfWeek.MONDAY -> "Lunes"
+                DayOfWeek.TUESDAY -> "Martes"
+                DayOfWeek.WEDNESDAY -> "Miércoles"
+                DayOfWeek.THURSDAY -> "Jueves"
+                DayOfWeek.FRIDAY -> "Viernes"
+                DayOfWeek.SATURDAY -> "Sábado"
+                DayOfWeek.SUNDAY -> "Domingo"
+            }
+            viewModelScope.launch {
+                _effects.send(DoctorAppointmentsUiEffect.ShowMessage("La hora de fin debe ser posterior a la de inicio ($dayName)"))
+            }
+            return
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isSavingAvailability = true) }
 
             val domainList = _uiState.value.weeklyAvailability.map { config ->
+                val safeEndTime = if (!config.isActive && !config.endTime.isAfter(config.startTime)) {
+                    config.startTime.plusHours(1)
+                } else {
+                    config.endTime
+                }
                 WeeklyAvailability(
                     doctorId = DoctorId(doctorId),
                     dayOfWeek = config.dayOfWeek,
                     startTime = config.startTime,
-                    endTime = config.endTime,
+                    endTime = safeEndTime,
                     slotMinutes = config.slotMinutes,
                     isActive = config.isActive
                 )

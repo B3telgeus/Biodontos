@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.biodontos.BiodontosApp
 import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsViewModel
+import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsViewModel
 import com.example.biodontos.presentation.doctor.home.DoctorHomeViewModel
 
 object DoctorViewModelFactory {
@@ -44,6 +45,17 @@ object DoctorViewModelFactory {
                 cancelAppointmentUseCase = c.cancelAppointmentUseCase,
                 patientRepository = c.patientRepository,
                 clinicClock = c.clinicClock
+            ) as T
+        }
+    }
+
+    val DocumentsFactory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+            val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BiodontosApp
+            val c = app.container
+            return DoctorDocumentsViewModel(
+                getPatientsUseCase = c.getPatientsUseCase
             ) as T
         }
     }

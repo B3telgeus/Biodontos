@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,6 +50,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -69,6 +71,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -99,7 +103,8 @@ import java.util.Locale
 @Composable
 fun DoctorAppointmentsRoute(
     viewModel: DoctorAppointmentsViewModel,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onPatientClick: (String) -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -120,6 +125,7 @@ fun DoctorAppointmentsRoute(
         today = today,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        onPatientClick = onPatientClick,
         snackbarHostState = snackbarHostState
     )
 }
@@ -131,6 +137,7 @@ fun DoctorAppointmentsScreen(
     today: LocalDate,
     onEvent: (DoctorAppointmentsUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
+    onPatientClick: (String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val filteredList = state.filteredAppointments(today)
@@ -160,6 +167,53 @@ fun DoctorAppointmentsScreen(
                     onOpenAvailability = { onEvent(DoctorAppointmentsUiEvent.OpenAvailabilityEditor) },
                     onRefresh = { onEvent(DoctorAppointmentsUiEvent.Refresh) }
                 )
+
+                // Banner reactivo de error
+                state.errorMessage?.let { errorMsg ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = null,
+                                    tint = StatusCancelled,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = errorMsg,
+                                    fontSize = 12.sp,
+                                    color = StatusCancelled,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            TextButton(
+                                onClick = { onEvent(DoctorAppointmentsUiEvent.Refresh) },
+                                modifier = Modifier.heightIn(min = 48.dp)
+                            ) {
+                                Text(
+                                    text = "Reintentar",
+                                    color = BiodontosDark,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
 
                 // Selector de modo: Cronograma vs Lista
                 DoctorScheduleModeSelector(
@@ -223,7 +277,8 @@ fun DoctorAppointmentsScreen(
                                     },
                                     onCancel = { appt ->
                                         onEvent(DoctorAppointmentsUiEvent.RequestCancelAppointment(appt))
-                                    }
+                                    },
+                                    onPatientClick = onPatientClick
                                 )
                             }
                         }
@@ -290,7 +345,8 @@ fun DoctorAppointmentsScreen(
                                         onEvent(DoctorAppointmentsUiEvent.ToggleConfirm(item.appointmentId, item.isConfirmed))
                                     },
                                     onReschedule = { onEvent(DoctorAppointmentsUiEvent.OpenReschedule(item)) },
-                                    onCancel = { onEvent(DoctorAppointmentsUiEvent.RequestCancelAppointment(item)) }
+                                    onCancel = { onEvent(DoctorAppointmentsUiEvent.RequestCancelAppointment(item)) },
+                                    onPatientClick = onPatientClick
                                 )
                             }
                         }
@@ -333,6 +389,7 @@ fun DoctorAppointmentsScreen(
     state.reschedulingAppointment?.let { appt ->
         RescheduleAppointmentDialog(
             appointment = appt,
+            today = today,
             targetDate = state.rescheduleTargetDate,
             availableSlots = state.rescheduleAvailableSlots,
             isRescheduling = state.isRescheduling,
@@ -393,7 +450,10 @@ private fun DoctorAppointmentsHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onNavigateBack) {
+            IconButton(
+                onClick = onNavigateBack,
+                modifier = Modifier.size(48.dp)
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Regresar",
@@ -423,7 +483,8 @@ private fun DoctorAppointmentsHeader(
             OutlinedButton(
                 onClick = onOpenAvailability,
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark)
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark),
+                modifier = Modifier.heightIn(min = 48.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
@@ -438,7 +499,8 @@ private fun DoctorAppointmentsHeader(
 
             IconButton(
                 onClick = onRefresh,
-                enabled = !isRefreshing
+                enabled = !isRefreshing,
+                modifier = Modifier.size(48.dp)
             ) {
                 if (isRefreshing) {
                     CircularProgressIndicator(
@@ -476,6 +538,7 @@ private fun DoctorScheduleModeSelector(
             Box(
                 modifier = Modifier
                     .weight(1f)
+                    .heightIn(min = 48.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(if (isSelected) BiodontosDark else Color.Transparent)
                     .clickable { onModeSelected(mode) }
@@ -525,7 +588,7 @@ private fun DoctorDayStrip(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = { onDateSelected(selectedDate.minusWeeks(1)) },
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -538,7 +601,7 @@ private fun DoctorDayStrip(
                 if (selectedDate != today) {
                     TextButton(
                         onClick = { onDateSelected(today) },
-                        modifier = Modifier.padding(horizontal = 4.dp)
+                        modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 4.dp)
                     ) {
                         Text("Hoy", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
                     }
@@ -546,7 +609,7 @@ private fun DoctorDayStrip(
 
                 IconButton(
                     onClick = { onDateSelected(selectedDate.plusWeeks(1)) },
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -581,6 +644,7 @@ private fun DoctorDayStrip(
                 Card(
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 52.dp)
                         .clickable { onDateSelected(date) },
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
@@ -634,7 +698,8 @@ private fun DoctorTimelineSlotRow(
     onBookSlot: () -> Unit,
     onToggleConfirm: (DoctorAppointmentItem) -> Unit,
     onReschedule: (DoctorAppointmentItem) -> Unit,
-    onCancel: (DoctorAppointmentItem) -> Unit
+    onCancel: (DoctorAppointmentItem) -> Unit,
+    onPatientClick: (String) -> Unit = {}
 ) {
     val startTimeFormatted = formatTimeOnly(slot.startTime)
     val endTimeFormatted = formatTimeOnly(slot.endTime)
@@ -670,7 +735,8 @@ private fun DoctorTimelineSlotRow(
                     appointment = status.appointment,
                     onToggleConfirm = { onToggleConfirm(status.appointment) },
                     onReschedule = { onReschedule(status.appointment) },
-                    onCancel = { onCancel(status.appointment) }
+                    onCancel = { onCancel(status.appointment) },
+                    onPatientClick = onPatientClick
                 )
             }
             DoctorSlotStatus.Available -> {
@@ -691,8 +757,11 @@ private fun DoctorSlotOccupiedCard(
     appointment: DoctorAppointmentItem,
     onToggleConfirm: () -> Unit,
     onReschedule: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onPatientClick: (String) -> Unit = {}
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -712,11 +781,16 @@ private fun DoctorSlotOccupiedCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = appointment.patientId.isNotBlank()) {
+                            onPatientClick(appointment.patientId)
+                        }
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(BiodontosDark.copy(alpha = 0.08f)),
                         contentAlignment = Alignment.Center
@@ -725,7 +799,7 @@ private fun DoctorSlotOccupiedCard(
                             imageVector = Icons.Default.Person,
                             contentDescription = null,
                             tint = BiodontosDark,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
@@ -751,25 +825,30 @@ private fun DoctorSlotOccupiedCard(
                 // Badge de confirmación
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .heightIn(min = 48.dp)
+                        .clip(RoundedCornerShape(10.dp))
                         .background(
                             if (appointment.isConfirmed) StatusConfirmed.copy(alpha = 0.12f)
                             else StatusCancelled.copy(alpha = 0.12f)
                         )
-                        .clickable { onToggleConfirm() }
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .clickable {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onToggleConfirm()
+                        }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = if (appointment.isConfirmed) Icons.Default.Check else Icons.Default.Close,
                             contentDescription = null,
                             tint = if (appointment.isConfirmed) StatusConfirmed else StatusCancelled,
-                            modifier = Modifier.size(10.dp)
+                            modifier = Modifier.size(12.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = if (appointment.isConfirmed) "Confirmada" else "Sin Confirmar",
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (appointment.isConfirmed) StatusConfirmed else StatusCancelled
                         )
@@ -785,7 +864,7 @@ private fun DoctorSlotOccupiedCard(
             ) {
                 TextButton(
                     onClick = onReschedule,
-                    modifier = Modifier.height(30.dp)
+                    modifier = Modifier.heightIn(min = 48.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.DateRange,
@@ -801,7 +880,7 @@ private fun DoctorSlotOccupiedCard(
 
                 TextButton(
                     onClick = onCancel,
-                    modifier = Modifier.height(30.dp)
+                    modifier = Modifier.heightIn(min = 48.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -962,8 +1041,11 @@ private fun DoctorAppointmentCard(
     item: DoctorAppointmentItem,
     onToggleConfirm: () -> Unit,
     onReschedule: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onPatientClick: (String) -> Unit = {}
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -983,7 +1065,12 @@ private fun DoctorAppointmentCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = item.patientId.isNotBlank()) {
+                            onPatientClick(item.patientId)
+                        }
                 ) {
                     DateBadge(dateTime = item.startTime)
                     Spacer(modifier = Modifier.width(14.dp))
@@ -1010,13 +1097,18 @@ private fun DoctorAppointmentCard(
 
                 Box(
                     modifier = Modifier
+                        .heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(
                             if (item.isConfirmed) StatusConfirmed.copy(alpha = 0.12f)
                             else StatusCancelled.copy(alpha = 0.12f)
                         )
-                        .clickable { onToggleConfirm() }
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                        .clickable {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onToggleConfirm()
+                        }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -1045,7 +1137,7 @@ private fun DoctorAppointmentCard(
                     onClick = onReschedule,
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark),
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.heightIn(min = 48.dp)
                 ) {
                     Icon(imageVector = Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(13.dp))
                     Spacer(modifier = Modifier.width(4.dp))
@@ -1058,7 +1150,7 @@ private fun DoctorAppointmentCard(
                     onClick = onCancel,
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusCancelled),
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.heightIn(min = 48.dp)
                 ) {
                     Icon(imageVector = Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(13.dp), tint = StatusCancelled)
                     Spacer(modifier = Modifier.width(4.dp))
@@ -1080,12 +1172,15 @@ private fun DoctorAvailabilityDialog(
     onCopyWeekdays: () -> Unit,
     onSave: () -> Unit
 ) {
+    val hasInvalidDays = weeklyConfig.any { it.isActive && !it.endTime.isAfter(it.startTime) }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(20.dp),
             color = BiodontosWhite,
             modifier = Modifier
                 .fillMaxWidth()
+                .imePadding()
                 .padding(vertical = 16.dp)
         ) {
             Column(
@@ -1115,8 +1210,8 @@ private fun DoctorAvailabilityDialog(
                         )
                     }
 
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = BiodontosDark)
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = BiodontosDark, modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -1124,7 +1219,9 @@ private fun DoctorAvailabilityDialog(
                 OutlinedButton(
                     onClick = onCopyWeekdays,
                     shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
                 ) {
                     Text("⚡ Aplicar horario de Lun a todos los días hábiles", fontSize = 11.sp, color = BiodontosDark)
                 }
@@ -1153,7 +1250,10 @@ private fun DoctorAvailabilityDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    ) {
                         Text("Cancelar", color = BiodontosGreyText)
                     }
 
@@ -1161,9 +1261,10 @@ private fun DoctorAvailabilityDialog(
 
                     Button(
                         onClick = onSave,
-                        enabled = !isSaving,
+                        enabled = !isSaving && !hasInvalidDays,
                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.heightIn(min = 48.dp)
                     ) {
                         if (isSaving) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
@@ -1192,6 +1293,8 @@ private fun DayAvailabilityItemRow(
         DayOfWeek.SATURDAY -> "Sábado"
         DayOfWeek.SUNDAY -> "Domingo"
     }
+
+    val isInvalidRange = config.isActive && !config.endTime.isAfter(config.startTime)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -1238,6 +1341,7 @@ private fun DayAvailabilityItemRow(
                         Text("Inicio", fontSize = 10.sp, color = BiodontosGreyText)
                         TimeSelectorButton(
                             currentTime = config.startTime,
+                            isError = isInvalidRange,
                             onTimeSelected = { newStart ->
                                 onConfigChanged(config.isActive, newStart, config.endTime, config.slotMinutes)
                             }
@@ -1248,11 +1352,22 @@ private fun DayAvailabilityItemRow(
                         Text("Fin", fontSize = 10.sp, color = BiodontosGreyText)
                         TimeSelectorButton(
                             currentTime = config.endTime,
+                            isError = isInvalidRange,
                             onTimeSelected = { newEnd ->
                                 onConfigChanged(config.isActive, config.startTime, newEnd, config.slotMinutes)
                             }
                         )
                     }
+                }
+
+                if (isInvalidRange) {
+                    Text(
+                        text = "⚠️ La hora de fin debe ser posterior a la de inicio",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFD32F2F),
+                        modifier = Modifier.padding(start = 2.dp, top = 2.dp)
+                    )
                 }
 
                 // Selector de duración de slots (15, 30, 45, 60 min)
@@ -1267,6 +1382,7 @@ private fun DayAvailabilityItemRow(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
+                                    .heightIn(min = 48.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(if (isSelected) BiodontosDark else BiodontosWhite)
                                     .clickable {
@@ -1293,6 +1409,7 @@ private fun DayAvailabilityItemRow(
 @Composable
 private fun TimeSelectorButton(
     currentTime: LocalTime,
+    isError: Boolean = false,
     onTimeSelected: (LocalTime) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -1308,17 +1425,25 @@ private fun TimeSelectorButton(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(min = 48.dp)
                 .clickable { expanded = true },
             shape = RoundedCornerShape(8.dp),
+            border = if (isError) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD32F2F)) else null,
             color = BiodontosWhite
         ) {
-            Text(
-                text = formatted,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = BiodontosDark,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = formatted,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isError) Color(0xFFD32F2F) else BiodontosDark
+                )
+            }
         }
 
         if (expanded) {
@@ -1344,7 +1469,7 @@ private fun TimeSelectorButton(
                                         onTimeSelected(time)
                                         expanded = false
                                     }
-                                    .padding(vertical = 10.dp, horizontal = 12.dp)
+                                    .padding(vertical = 12.dp, horizontal = 12.dp)
                             )
                         }
                     }
@@ -1366,6 +1491,15 @@ private fun QuickBookingDialog(
     var selectedPatientId by remember { mutableStateOf(patients.firstOrNull()?.id ?: "") }
     var reason by remember { mutableStateOf("Control odontológico") }
     var dropdownExpanded by remember { mutableStateOf(false) }
+    var patientSearchQuery by remember { mutableStateOf("") }
+
+    val filteredPatients = remember(patients, patientSearchQuery) {
+        if (patientSearchQuery.isBlank()) patients
+        else patients.filter {
+            it.fullName.contains(patientSearchQuery, ignoreCase = true) ||
+            it.dniCedula.contains(patientSearchQuery, ignoreCase = true)
+        }
+    }
 
     val startFormatted = formatTimeOnly(slot.startTime)
     val endFormatted = formatTimeOnly(slot.endTime)
@@ -1406,8 +1540,8 @@ private fun QuickBookingDialog(
                         )
                     }
 
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = BiodontosDark)
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = BiodontosDark, modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -1423,47 +1557,92 @@ private fun QuickBookingDialog(
                     }
                 }
 
+                // Buscador de Paciente
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(text = "Buscar Paciente", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
+                    OutlinedTextField(
+                        value = patientSearchQuery,
+                        onValueChange = {
+                            patientSearchQuery = it
+                            dropdownExpanded = true
+                        },
+                        placeholder = { Text("Buscar por nombre o documento...", fontSize = 12.sp) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            if (patientSearchQuery.isNotBlank()) {
+                                IconButton(
+                                    onClick = { patientSearchQuery = "" },
+                                    modifier = Modifier.size(48.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Limpiar búsqueda",
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true
+                    )
+                }
+
                 // Selector de Paciente
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(text = "Seleccionar Paciente", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
+                    Text(text = "Paciente Seleccionado", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
 
                     if (patients.isEmpty()) {
                         Text("No hay pacientes registrados en el sistema.", fontSize = 12.sp, color = StatusCancelled)
                     } else {
-                        val currentPatient = patients.find { it.id == selectedPatientId } ?: patients.first()
+                        val currentPatient = patients.find { it.id == selectedPatientId } ?: filteredPatients.firstOrNull() ?: patients.first()
 
                         ExposedDropdownMenuBox(
                             expanded = dropdownExpanded,
                             onExpandedChange = { dropdownExpanded = !dropdownExpanded }
                         ) {
                             OutlinedTextField(
-                                value = currentPatient.fullName,
+                                value = "${currentPatient.fullName} (Doc: ${currentPatient.dniCedula})",
                                 onValueChange = {},
                                 readOnly = true,
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
                                 modifier = Modifier
-                                    .menuAnchor()
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                     .fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp)
                             )
 
                             ExposedDropdownMenu(
                                 expanded = dropdownExpanded,
-                                onDismissRequest = { dropdownExpanded = false }
+                                onDismissRequest = { dropdownExpanded = false },
+                                modifier = Modifier.heightIn(max = 240.dp)
                             ) {
-                                patients.forEach { pat ->
+                                if (filteredPatients.isEmpty()) {
                                     DropdownMenuItem(
-                                        text = {
-                                            Column {
-                                                Text(pat.fullName, fontWeight = FontWeight.Bold)
-                                                Text("Doc: ${pat.dniCedula}", fontSize = 11.sp, color = BiodontosGreyText)
-                                            }
-                                        },
-                                        onClick = {
-                                            selectedPatientId = pat.id
-                                            dropdownExpanded = false
-                                        }
+                                        text = { Text("No se encontraron pacientes coincidentes", fontSize = 12.sp, color = BiodontosGreyText) },
+                                        onClick = {}
                                     )
+                                } else {
+                                    filteredPatients.forEach { pat ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Column {
+                                                    Text(pat.fullName, fontWeight = FontWeight.Bold)
+                                                    Text("Doc: ${pat.dniCedula}", fontSize = 11.sp, color = BiodontosGreyText)
+                                                }
+                                            },
+                                            onClick = {
+                                                selectedPatientId = pat.id
+                                                dropdownExpanded = false
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1488,17 +1667,25 @@ private fun QuickBookingDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    ) {
                         Text("Cancelar", color = BiodontosGreyText)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
 
+                    val haptic = LocalHapticFeedback.current
                     Button(
-                        onClick = { onConfirm(selectedPatientId, reason) },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onConfirm(selectedPatientId, reason)
+                        },
                         enabled = !isBooking && selectedPatientId.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.heightIn(min = 48.dp)
                     ) {
                         if (isBooking) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
@@ -1516,6 +1703,7 @@ private fun QuickBookingDialog(
 @Composable
 private fun RescheduleAppointmentDialog(
     appointment: DoctorAppointmentItem,
+    today: LocalDate,
     targetDate: LocalDate,
     availableSlots: List<LocalDateTime>,
     isRescheduling: Boolean,
@@ -1524,8 +1712,16 @@ private fun RescheduleAppointmentDialog(
     onConfirm: (newStartTime: LocalDateTime) -> Unit
 ) {
     var selectedStartTime by remember { mutableStateOf<LocalDateTime?>(null) }
-    val candidateDates = remember {
-        (0..7).map { LocalDate.now().plusDays(it.toLong()) }
+    var weekOffset by remember { mutableStateOf(0) }
+    val currentMonday = remember(today, weekOffset) {
+        today.plusWeeks(weekOffset.toLong()).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    }
+    val weekDays = remember(currentMonday) {
+        (0..6).map { currentMonday.plusDays(it.toLong()) }
+    }
+    val monthTitle = remember(currentMonday) {
+        currentMonday.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.forLanguageTag("es-CO")))
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -1563,8 +1759,8 @@ private fun RescheduleAppointmentDialog(
                         )
                     }
 
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = BiodontosDark)
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = BiodontosDark, modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -1574,36 +1770,111 @@ private fun RescheduleAppointmentDialog(
                     color = BiodontosGreyText
                 )
 
-                // Selector de Fecha Destino
+                // Navegación de semana
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = monthTitle,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BiodontosDark
+                    )
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                if (weekOffset > 0) {
+                                    weekOffset--
+                                }
+                            },
+                            enabled = weekOffset > 0,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Semana anterior",
+                                modifier = Modifier.size(16.dp),
+                                tint = if (weekOffset > 0) BiodontosDark else BiodontosGreyText.copy(alpha = 0.4f)
+                            )
+                        }
+
+                        if (weekOffset != 0) {
+                            TextButton(
+                                onClick = {
+                                    weekOffset = 0
+                                    onTargetDateChanged(today)
+                                    selectedStartTime = null
+                                },
+                                modifier = Modifier.heightIn(min = 48.dp)
+                            ) {
+                                Text("Hoy", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
+                            }
+                        }
+
+                        IconButton(
+                            onClick = { weekOffset++ },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = "Semana siguiente",
+                                modifier = Modifier.size(16.dp),
+                                tint = BiodontosDark
+                            )
+                        }
+                    }
+                }
+
+                // Selector de Fecha Destino (7 días)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    candidateDates.take(5).forEach { date ->
+                    weekDays.forEach { date ->
                         val isSelected = date == targetDate
+                        val isPast = date.isBefore(today)
+
                         Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .heightIn(min = 48.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) BiodontosDark else BiodontosInputBg)
-                                .clickable {
+                                .background(
+                                    when {
+                                        isSelected -> BiodontosDark
+                                        isPast -> BiodontosInputBg.copy(alpha = 0.4f)
+                                        else -> BiodontosInputBg
+                                    }
+                                )
+                                .clickable(enabled = !isPast) {
                                     onTargetDateChanged(date)
                                     selectedStartTime = null
                                 }
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 6.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = date.dayOfMonth.toString(),
-                                    fontSize = 14.sp,
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) BiodontosWhite else BiodontosDark
+                                    color = when {
+                                        isSelected -> BiodontosWhite
+                                        isPast -> BiodontosGreyText.copy(alpha = 0.5f)
+                                        else -> BiodontosDark
+                                    }
                                 )
                                 Text(
                                     text = date.format(DateTimeFormatter.ofPattern("EEE", Locale.forLanguageTag("es-CO"))).uppercase(),
                                     fontSize = 9.sp,
-                                    color = if (isSelected) BiodontosWhite.copy(alpha = 0.8f) else BiodontosGreyText
+                                    color = when {
+                                        isSelected -> BiodontosWhite.copy(alpha = 0.8f)
+                                        isPast -> BiodontosGreyText.copy(alpha = 0.4f)
+                                        else -> BiodontosGreyText
+                                    }
                                 )
                             }
                         }
@@ -1649,7 +1920,7 @@ private fun RescheduleAppointmentDialog(
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(if (isSelected) BiodontosDark else BiodontosInputBg)
                                     .clickable { selectedStartTime = slotTime }
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -1669,17 +1940,27 @@ private fun RescheduleAppointmentDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    ) {
                         Text("Cancelar", color = BiodontosGreyText)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
 
+                    val haptic = LocalHapticFeedback.current
                     Button(
-                        onClick = { selectedStartTime?.let { onConfirm(it) } },
+                        onClick = {
+                            selectedStartTime?.let {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onConfirm(it)
+                            }
+                        },
                         enabled = !isRescheduling && selectedStartTime != null,
                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.heightIn(min = 48.dp)
                     ) {
                         if (isRescheduling) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
@@ -1707,7 +1988,9 @@ private fun DoctorAppointmentsLoadingPreview() {
         DoctorAppointmentsScreen(
             state = DoctorAppointmentsUiState(isLoading = true),
             onEvent = {},
-            today = LocalDate.of(2026, 10, 23), onNavigateBack = {}
+            today = LocalDate.of(2026, 10, 23),
+            onNavigateBack = {},
+            onPatientClick = {}
         )
     }
 }
@@ -1744,7 +2027,9 @@ private fun DoctorAppointmentsSuccessPreview() {
                 )
             ),
             onEvent = {},
-            today = LocalDate.of(2026, 10, 23), onNavigateBack = {}
+            today = LocalDate.of(2026, 10, 23),
+            onNavigateBack = {},
+            onPatientClick = {}
         )
     }
 }
@@ -1759,7 +2044,9 @@ private fun DoctorAppointmentsErrorPreview() {
                 errorMessage = "No fue posible sincronizar las citas del día."
             ),
             onEvent = {},
-            today = LocalDate.of(2026, 10, 23), onNavigateBack = {}
+            today = LocalDate.of(2026, 10, 23),
+            onNavigateBack = {},
+            onPatientClick = {}
         )
     }
 }

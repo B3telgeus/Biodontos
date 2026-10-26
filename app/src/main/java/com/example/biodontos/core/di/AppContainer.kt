@@ -46,6 +46,7 @@ import com.example.biodontos.domain.usecase.auth.LogoutUseCase
 import com.example.biodontos.domain.usecase.auth.RegisterDoctorUseCase
 import com.example.biodontos.domain.usecase.auth.RegisterPatientAuthUseCase
 import com.example.biodontos.domain.usecase.auth.ResetPasswordUseCase
+import com.example.biodontos.domain.usecase.auth.UpdatePasswordUseCase
 import com.example.biodontos.domain.usecase.billing.CreateTreatmentUseCase
 import com.example.biodontos.domain.usecase.billing.GetDoctorRecentPaymentsUseCase
 import com.example.biodontos.domain.usecase.billing.GetPatientTreatmentsUseCase
@@ -57,6 +58,7 @@ import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
 import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
 import com.example.biodontos.domain.usecase.doctor.SaveDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
+import com.example.biodontos.domain.usecase.doctor.UpdateDoctorProfileUseCase
 import com.example.biodontos.domain.usecase.history.AddEvolutionClarificationUseCase
 import com.example.biodontos.domain.usecase.history.GetPatientActivityTimelineUseCase
 import com.example.biodontos.domain.usecase.history.UpdateTreatmentStatusUseCase
@@ -127,6 +129,9 @@ interface AppContainer {
     val voidPaymentUseCase: VoidPaymentUseCase
     val addEvolutionClarificationUseCase: AddEvolutionClarificationUseCase
     val updateTreatmentStatusUseCase: UpdateTreatmentStatusUseCase
+
+    val updateDoctorProfileUseCase: UpdateDoctorProfileUseCase
+    val updatePasswordUseCase: UpdatePasswordUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -343,5 +348,13 @@ class DefaultAppContainer : AppContainer {
 
     override val updateTreatmentStatusUseCase: UpdateTreatmentStatusUseCase by lazy {
         UpdateTreatmentStatusUseCase(billingRepository)
+    }
+
+    override val updateDoctorProfileUseCase: UpdateDoctorProfileUseCase by lazy {
+        UpdateDoctorProfileUseCase(doctorRepository)
+    }
+
+    override val updatePasswordUseCase: UpdatePasswordUseCase by lazy {
+        UpdatePasswordUseCase(authRepository)
     }
 }

@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.biodontos.BiodontosApp
-import com.example.biodontos.domain.usecase.appointment.CancelAppointmentUseCase
-import com.example.biodontos.domain.usecase.appointment.GetDoctorAppointmentsUseCase
 
 object DoctorProfileViewModelFactory {
     val Factory = object : ViewModelProvider.Factory {
@@ -16,10 +14,9 @@ object DoctorProfileViewModelFactory {
             return DoctorProfileViewModel(
                 getCurrentSessionUseCase = container.getCurrentSessionUseCase,
                 doctorRepository = container.doctorRepository,
-                getDoctorAppointmentsUseCase = GetDoctorAppointmentsUseCase(container.appointmentRepository),
-                confirmAppointmentUseCase = container.confirmAppointmentUseCase,
-                cancelAppointmentUseCase = CancelAppointmentUseCase(container.appointmentRepository),
-                patientRepository = container.patientRepository,
+                updateDoctorProfileUseCase = container.updateDoctorProfileUseCase,
+                updatePasswordUseCase = container.updatePasswordUseCase,
+                resetPasswordUseCase = container.resetPasswordUseCase,
                 logoutUseCase = container.logoutUseCase
             ) as T
         }

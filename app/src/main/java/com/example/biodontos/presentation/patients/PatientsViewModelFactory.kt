@@ -22,13 +22,14 @@ object PatientsViewModelFactory {
         }
     }
 
-    fun createPatientDetailFactory(patientId: String): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+    fun createPatientDetailFactory(patientId: String, initialTab: String = "HISTORY"): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val application = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BiodontosApp
             val c = application.container
             return com.example.biodontos.presentation.patients.detail.PatientDetailViewModel(
                 patientId = patientId,
+                initialTab = initialTab,
                 patientRepository = c.patientRepository,
                 clinicalRecordRepository = c.clinicalRecordRepository,
                 anamnesisRepository = c.anamnesisRepository,

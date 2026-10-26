@@ -195,6 +195,18 @@ class AuthRepositoryImpl : AuthRepository {
         )
     }
 
+    override suspend fun updatePassword(newPassword: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            SupabaseClient.client.auth.modifyUser(updateCurrentUser = true) {
+                password = newPassword
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Result.failure(e)
+        }
+    }
+
     override suspend fun logout(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             SupabaseClient.client.auth.signOut()

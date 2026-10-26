@@ -1,14 +1,23 @@
 package com.example.biodontos.presentation.doctor.profile
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Base64
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -19,22 +28,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.biodontos.core.designsystem.*
-import com.example.biodontos.core.util.DateTimeUtils
-import com.example.biodontos.domain.model.Appointment
-import com.example.biodontos.domain.model.AppointmentStatus
-import com.example.biodontos.domain.model.Doctor
-import com.example.biodontos.domain.model.DoctorId
-import com.example.biodontos.domain.model.Patient
-import java.time.LocalDateTime
+import java.io.ByteArrayOutputStream
 
 @Composable
 fun DoctorProfileScreen(
@@ -73,15 +82,28 @@ fun DoctorProfileContent(
     onEvent: (DoctorProfileEvent) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    var appointmentToCancel by remember { mutableStateOf<Appointment?>(null) }
-    var cancelReason by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        uri?.let {
+            val dataUri = ImageCompressor.compressUriToBase64(context, it, maxDimension = 300, quality = 80)
+            if (dataUri != null) {
+                onEvent(DoctorProfileEvent.UpdatePhotoUrl(dataUri))
+            } else {
+                Toast.makeText(context, "No se pudo procesar la imagen seleccionada", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Mi Perfil & Agenda",
+                        text = "Mi Cuenta Profesional",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark
@@ -89,7 +111,13 @@ fun DoctorProfileContent(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onNavigateBack()
+                        },
+                        modifier = Modifier.size(48.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
@@ -98,14 +126,26 @@ fun DoctorProfileContent(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onEvent(DoctorProfileEvent.LoadData) }) {
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onEvent(DoctorProfileEvent.LoadProfile)
+                        },
+                        modifier = Modifier.size(48.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Actualizar",
                             tint = BiodontosDark
                         )
                     }
-                    IconButton(onClick = { onEvent(DoctorProfileEvent.Logout) }) {
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onEvent(DoctorProfileEvent.RequestLogout)
+                        },
+                        modifier = Modifier.size(48.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "Cerrar sesión",
@@ -121,422 +161,465 @@ fun DoctorProfileContent(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BiodontosScreenGradient)
                 .padding(padding)
                 .consumeWindowInsets(padding)
+                .imePadding()
         ) {
-            // --- BANNER DE ERROR ---
-            state.errorMessage?.let { errorMsg ->
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = BiodontosErrorBg,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .align(Alignment.TopCenter)
-                ) {
-                    Text(
-                        text = errorMsg,
-                        color = BiodontosErrorRed,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-            }
-
-            if (state.isLoading && state.doctor == null) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Zafiro
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // --- PERFIL DEL DOCTOR ---
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Banner de error si existe
+                state.errorMessage?.let { errorMsg ->
                     item {
-                        DoctorInfoCard(doctor = state.doctor)
-                    }
-
-                    // --- BANNER DE CITAS PENDIENTES ---
-                    if (state.pendingAppointments.isNotEmpty()) {
-                        item {
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color(0xFFFFF8E1),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFFB300)),
-                                modifier = Modifier.fillMaxWidth()
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = BiodontosErrorBg,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                Text(
+                                    text = errorMsg,
+                                    color = BiodontosErrorRed,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = { onEvent(DoctorProfileEvent.DismissError) },
+                                    modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = null,
-                                        tint = Color(0xFFE65100),
-                                        modifier = Modifier.size(24.dp)
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Cerrar mensaje de error",
+                                        tint = BiodontosErrorRed
                                     )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            text = "¡Tienes ${state.pendingAppointments.size} cita(s) por confirmar!",
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFFE65100)
-                                            )
-                                        )
-                                        Text(
-                                            text = "Los pacientes están a la espera de tu aprobación para apartar su cupo.",
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                color = BiodontosDark
-                                            )
-                                        )
-                                    }
                                 }
                             }
                         }
                     }
+                }
 
-                    // --- SELECTOR DE PESTAÑAS ---
+                // Banner de éxito si existe
+                state.successMessage?.let { successMsg ->
                     item {
-                        Row(
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFFE8F5E9),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = successMsg,
+                                color = StatusConfirmed,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (state.isLoading && state.doctor == null) {
+                    item {
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(BiodontosWhite, RoundedCornerShape(12.dp))
-                                .padding(4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            TabButton(
-                                text = "Pendientes (${state.pendingAppointments.size})",
-                                isSelected = state.selectedTab == DoctorAppointmentTab.PENDING,
-                                onClick = { onEvent(DoctorProfileEvent.SelectTab(DoctorAppointmentTab.PENDING)) },
-                                modifier = Modifier.weight(1f)
-                            )
-                            TabButton(
-                                text = "Confirmadas (${state.confirmedAppointments.size})",
-                                isSelected = state.selectedTab == DoctorAppointmentTab.CONFIRMED,
-                                onClick = { onEvent(DoctorProfileEvent.SelectTab(DoctorAppointmentTab.CONFIRMED)) },
-                                modifier = Modifier.weight(1f)
-                            )
-                            TabButton(
-                                text = "Historial (${state.historyAppointments.size})",
-                                isSelected = state.selectedTab == DoctorAppointmentTab.HISTORY,
-                                onClick = { onEvent(DoctorProfileEvent.SelectTab(DoctorAppointmentTab.HISTORY)) },
-                                modifier = Modifier.weight(1f)
-                            )
+                            CircularProgressIndicator(color = Zafiro)
                         }
                     }
-
-                    // --- LISTADO SEGÚN PESTAÑA ---
-                    val currentList = when (state.selectedTab) {
-                        DoctorAppointmentTab.PENDING -> state.pendingAppointments
-                        DoctorAppointmentTab.CONFIRMED -> state.confirmedAppointments
-                        DoctorAppointmentTab.HISTORY -> state.historyAppointments
+                } else {
+                    // Sección 1: Cabecera con Avatar interactivo
+                    item {
+                        DoctorAvatarHeaderSection(
+                            photoUrl = state.photoUrl,
+                            firstName = state.firstName,
+                            lastName = state.lastName,
+                            specialty = state.specialty,
+                            licenseNumber = state.licenseNumber,
+                            isSavingPhoto = state.isSavingProfile,
+                            onPickPhotoClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                photoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
+                        )
                     }
 
-                    if (currentList.isEmpty()) {
-                        item {
-                            EmptyStateNotice(
-                                title = when (state.selectedTab) {
-                                    DoctorAppointmentTab.PENDING -> "No hay citas pendientes"
-                                    DoctorAppointmentTab.CONFIRMED -> "No tienes citas confirmadas próximas"
-                                    DoctorAppointmentTab.HISTORY -> "Historial sin registros"
-                                },
-                                subtitle = when (state.selectedTab) {
-                                    DoctorAppointmentTab.PENDING -> "Las solicitudes de tus pacientes aparecerán aquí para tu confirmación."
-                                    DoctorAppointmentTab.CONFIRMED -> "Las citas que confirmes se organizarán en este espacio."
-                                    DoctorAppointmentTab.HISTORY -> "Tus consultas realizadas o canceladas quedarán archivadas aquí."
-                                }
-                            )
-                        }
-                    } else {
-                        items(currentList, key = { it.id.ifEmpty { it.startTime } }) { appointment ->
-                            val patient = state.patientsMap[appointment.patientId]
-                            DoctorAppointmentItemCard(
-                                appointment = appointment,
-                                patient = patient,
-                                isPending = !appointment.isConfirmed && appointment.status == AppointmentStatus.SCHEDULED,
-                                onConfirmClick = {
-                                    onEvent(DoctorProfileEvent.ConfirmAppointment(appointment.id))
-                                },
-                                onCancelClick = {
-                                    appointmentToCancel = appointment
-                                }
-                            )
-                        }
+                    // Sección 2: Información Profesional (CRUD)
+                    item {
+                        DoctorProfessionalInfoCard(
+                            state = state,
+                            onEvent = onEvent
+                        )
+                    }
+
+                    // Sección 3: Seguridad y Cuenta
+                    item {
+                        DoctorSecurityCard(
+                            state = state,
+                            onEvent = onEvent
+                        )
                     }
                 }
             }
+
+            // Diálogo de confirmación para cerrar sesión
+            if (state.showLogoutConfirmation) {
+                AlertDialog(
+                    onDismissRequest = { onEvent(DoctorProfileEvent.DismissLogoutDialog) },
+                    shape = RoundedCornerShape(20.dp),
+                    containerColor = BiodontosWhite,
+                    title = {
+                        Text(
+                            text = "Cerrar Sesión",
+                            fontWeight = FontWeight.Bold,
+                            color = BiodontosDark
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = "¿Está seguro de que desea cerrar la sesión de su cuenta profesional en este dispositivo?",
+                            color = BiodontosGreyText,
+                            fontSize = 14.sp
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onEvent(DoctorProfileEvent.ConfirmLogout)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Carmesi),
+                            modifier = Modifier.heightIn(min = 48.dp)
+                        ) {
+                            Text("Cerrar Sesión", color = BiodontosWhite, fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    dismissButton = {
+                        OutlinedButton(
+                            onClick = {
+                                onEvent(DoctorProfileEvent.DismissLogoutDialog)
+                            },
+                            modifier = Modifier.heightIn(min = 48.dp)
+                        ) {
+                            Text("Cancelar", color = BiodontosDark)
+                        }
+                    }
+                )
+            }
         }
     }
+}
 
-    // Modal de cancelación por el doctor
-    appointmentToCancel?.let { apt ->
-        AlertDialog(
-            onDismissRequest = { appointmentToCancel = null },
-            icon = {
-                Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = Carmesi, modifier = Modifier.size(32.dp))
-            },
-            title = {
-                Text(
-                    text = "¿Rechazar o cancelar esta cita?",
+@Composable
+fun DoctorAvatarHeaderSection(
+    photoUrl: String?,
+    firstName: String,
+    lastName: String,
+    specialty: String,
+    licenseNumber: String,
+    isSavingPhoto: Boolean,
+    onPickPhotoClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
+        border = BorderStroke(1.dp, BiodontosBorder.copy(alpha = 0.4f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier.size(104.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val bitmap = remember(photoUrl) {
+                    ImageCompressor.decodeBase64ToBitmap(photoUrl)
+                }
+
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Foto de perfil del doctor",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(88.dp)
+                            .clip(CircleShape)
+                    )
+                } else {
+                    DoctorInitialsAvatar(
+                        firstName = firstName,
+                        lastName = lastName,
+                        size = 88.dp
+                    )
+                }
+
+                if (isSavingPhoto) {
+                    Box(
+                        modifier = Modifier
+                            .size(88.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.4f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = BiodontosWhite,
+                            modifier = Modifier.size(28.dp),
+                            strokeWidth = 3.dp
+                        )
+                    }
+                }
+
+                // Botón / Badge de selección de foto (Touch target garantizado >= 48.dp)
+                Surface(
+                    shape = CircleShape,
+                    color = Zafiro,
+                    contentColor = BiodontosWhite,
+                    shadowElevation = 4.dp,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(48.dp)
+                ) {
+                    IconButton(
+                        onClick = onPickPhotoClick,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Cambiar foto de perfil",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val fullName = listOf(firstName, lastName).filter { it.isNotBlank() }.joinToString(" ")
+            Text(
+                text = if (fullName.isNotBlank()) "Dr. $fullName" else "Dr. Especialista",
+                style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
+                ),
+                textAlign = TextAlign.Center
+            )
+
+            if (specialty.isNotBlank()) {
+                Text(
+                    text = specialty,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Zafiro,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    textAlign = TextAlign.Center
                 )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "El paciente será notificado de la cancelación de su cita del ${DateTimeUtils.formatToReadableDate(apt.startTime)}.",
-                        style = MaterialTheme.typography.bodySmall.copy(color = BiodontosGreyText)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = cancelReason,
-                        onValueChange = { cancelReason = it },
-                        placeholder = { Text("Motivo clínico o administrativo...", color = BiodontosGreyText) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = biodontosTextFieldColors(),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onEvent(DoctorProfileEvent.CancelAppointment(apt.id, cancelReason.ifBlank { null }))
-                        appointmentToCancel = null
-                        cancelReason = ""
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Carmesi)
-                ) {
-                    Text("Sí, Cancelar Cita", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { appointmentToCancel = null }) {
-                    Text("Volver")
-                }
-            },
-            containerColor = BiodontosWhite
+            }
+
+            if (licenseNumber.isNotBlank()) {
+                Text(
+                    text = "Reg. Profesional: $licenseNumber",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = BiodontosGreyText
+                    ),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DoctorInitialsAvatar(
+    firstName: String,
+    lastName: String,
+    size: Dp = 88.dp,
+    modifier: Modifier = Modifier
+) {
+    val initials = buildString {
+        firstName.trim().firstOrNull()?.let { append(it.uppercaseChar()) }
+        lastName.trim().firstOrNull()?.let { append(it.uppercaseChar()) }
+    }.ifEmpty { "DR" }
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(Zafiro),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = initials,
+            color = BiodontosWhite,
+            fontWeight = FontWeight.Bold,
+            fontSize = (size.value * 0.38f).sp
         )
     }
 }
 
 @Composable
-private fun DoctorInfoCard(doctor: Doctor?) {
+fun DoctorProfessionalInfoCard(
+    state: DoctorProfileState,
+    onEvent: (DoctorProfileEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val haptic = LocalHapticFeedback.current
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
+        border = BorderStroke(1.dp, BiodontosBorder.copy(alpha = 0.4f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .clip(CircleShape)
-                        .background(Zafiro),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = BiodontosWhite,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-                Column {
-                    Text(
-                        text = doctor?.fullName ?: "Doctor(a)",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = BiodontosDark
-                        )
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = ZafiroLight,
-                        modifier = Modifier.padding(top = 2.dp)
-                    ) {
-                        Text(
-                            text = doctor?.specialty ?: "Especialista Dental",
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Zafiro
-                            )
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-            HorizontalDivider(color = BiodontosLightGrey)
-            Spacer(modifier = Modifier.height(10.dp))
-
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                doctor?.licenseNumber?.let {
-                    Text(
-                        text = "T.P. $it",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = BiodontosGreyText
-                        )
-                    )
-                }
-                doctor?.email?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall.copy(color = BiodontosGreyText)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DoctorAppointmentItemCard(
-    appointment: Appointment,
-    patient: Patient?,
-    isPending: Boolean,
-    onConfirmClick: () -> Unit,
-    onCancelClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val (badgeText, badgeBg, badgeTextColor) = when {
-                    appointment.status == AppointmentStatus.CANCELLED -> Triple("CANCELADA", Color(0xFFFFEBEE), Carmesi)
-                    appointment.status == AppointmentStatus.COMPLETED -> Triple("REALIZADA", Color(0xFFE8F5E9), Esmeralda)
-                    !appointment.isConfirmed -> Triple("PENDIENTE DE CONFIRMACIÓN", Color(0xFFFFF8E1), Color(0xFFE65100))
-                    else -> Triple("CONFIRMADA", Color(0xFFE8F5E9), Esmeralda)
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = badgeBg
-                ) {
-                    Text(
-                        text = badgeText,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = badgeTextColor
-                        )
-                    )
-                }
-
-                Text(
-                    text = DateTimeUtils.formatToShortDate(appointment.startTime),
-                    style = MaterialTheme.typography.bodySmall.copy(color = BiodontosGreyText)
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = Zafiro
                 )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = patient?.fullName ?: "Paciente Registrado",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = BiodontosDark
-                )
-            )
-
-            if (patient != null && patient.dniCedula.isNotEmpty()) {
                 Text(
-                    text = "DNI / Doc: ${patient.dniCedula} ${if (patient.phone.isNotEmpty()) "• Tel: ${patient.phone}" else ""}",
-                    style = MaterialTheme.typography.bodySmall.copy(color = BiodontosGreyText)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-            HorizontalDivider(color = BiodontosLightGrey)
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.DateRange, contentDescription = null, tint = Zafiro, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = DateTimeUtils.formatToReadableDate(appointment.startTime),
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium, color = BiodontosDark)
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Info, contentDescription = null, tint = Zafiro, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = DateTimeUtils.extractTime(appointment.startTime),
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium, color = BiodontosDark)
-                    )
-                }
-            }
-
-            if (!appointment.reason.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Motivo: ${appointment.reason}",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.Medium,
+                    text = "Información Profesional",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
                         color = BiodontosDark
                     )
                 )
             }
 
-            // BOTONES DE ACCIÓN PARA EL DOCTOR
-            if (isPending) {
-                Spacer(modifier = Modifier.height(14.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = onConfirmClick,
-                        modifier = Modifier.weight(1.2f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Esmeralda),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Confirmar Cita", fontWeight = FontWeight.Bold, color = BiodontosWhite)
-                    }
+            OutlinedTextField(
+                value = state.firstName,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdateFirstName(it)) },
+                label = { Text("Nombre") },
+                placeholder = { Text("Ej. Carlos") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
 
-                    OutlinedButton(
-                        onClick = onCancelClick,
-                        modifier = Modifier.weight(0.8f),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Carmesi),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text("Rechazar", fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            } else if (appointment.status == AppointmentStatus.SCHEDULED) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onCancelClick) {
-                        Text("Cancelar Cita", color = Carmesi, fontWeight = FontWeight.SemiBold)
-                    }
+            OutlinedTextField(
+                value = state.lastName,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdateLastName(it)) },
+                label = { Text("Apellidos") },
+                placeholder = { Text("Ej. Mendoza Pérez") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            OutlinedTextField(
+                value = state.specialty,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdateSpecialty(it)) },
+                label = { Text("Especialidad Odontológica") },
+                placeholder = { Text("Ej. Ortodoncia & Estética") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            OutlinedTextField(
+                value = state.licenseNumber,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdateLicenseNumber(it)) },
+                label = { Text("Tarjeta / Cédula Profesional") },
+                placeholder = { Text("Ej. OD-20381") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            OutlinedTextField(
+                value = state.phone,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdatePhone(it)) },
+                label = { Text("Teléfono de Contacto") },
+                placeholder = { Text("Ej. +57 300 123 4567") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            OutlinedTextField(
+                value = state.bio,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdateBio(it)) },
+                label = { Text("Biografía / Perfil Clínico") },
+                placeholder = { Text("Resumen de experiencia, enfoque clínico y certificaciones...") },
+                minLines = 3,
+                maxLines = 5,
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            OutlinedTextField(
+                value = state.email,
+                onValueChange = {},
+                readOnly = true,
+                enabled = false,
+                label = { Text("Correo Electrónico (Cuenta de acceso)") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Button(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onEvent(DoctorProfileEvent.SaveProfile)
+                },
+                enabled = !state.isSavingProfile,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Zafiro),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+            ) {
+                if (state.isSavingProfile) {
+                    CircularProgressIndicator(
+                        color = BiodontosWhite,
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.5.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Guardar Cambios Profesionales",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
                 }
             }
         }
@@ -544,122 +627,270 @@ private fun DoctorAppointmentItemCard(
 }
 
 @Composable
-private fun TabButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
+fun DoctorSecurityCard(
+    state: DoctorProfileState,
+    onEvent: (DoctorProfileEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick),
-        color = if (isSelected) BiodontosDark else Color.Transparent,
-        shape = RoundedCornerShape(10.dp)
+    val haptic = LocalHapticFeedback.current
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
+        border = BorderStroke(1.dp, BiodontosBorder.copy(alpha = 0.4f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box(
-            modifier = Modifier.padding(vertical = 10.dp),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSelected) BiodontosWhite else BiodontosGreyText
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-private fun EmptyStateNotice(title: String, subtitle: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = Icons.Default.DateRange,
-                contentDescription = null,
-                tint = BiodontosBorder,
-                modifier = Modifier.size(36.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = BiodontosDark)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall.copy(color = BiodontosGreyText),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun DoctorProfileLoadingPreview() {
-    DentalTheme {
-        DoctorProfileContent(
-            state = DoctorProfileState(isLoading = true),
-            onEvent = {},
-            onNavigateBack = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun DoctorProfileSuccessPreview() {
-    DentalTheme {
-        DoctorProfileContent(
-            state = DoctorProfileState(
-                isLoading = false,
-                doctor = Doctor(
-                    id = DoctorId("doc-1"),
-                    firstName = "Carlos",
-                    lastName = "Restrepo",
-                    specialty = "Endodoncia",
-                    licenseNumber = "RM-45678",
-                    email = "dr.restrepo@biodontos.com"
-                ),
-                appointments = listOf(
-                    Appointment(
-                        id = "apt-1",
-                        patientId = "pat-1",
-                        doctorId = "doc-1",
-                        startTime = LocalDateTime.now().plusDays(1),
-                        status = AppointmentStatus.SCHEDULED,
-                        isConfirmed = false,
-                        reason = "Valoración de conducto"
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = Zafiro
+                )
+                Text(
+                    text = "Seguridad & Cuenta",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = BiodontosDark
                     )
                 )
-            ),
-            onEvent = {},
-            onNavigateBack = {}
-        )
+            }
+
+            Text(
+                text = "Cambiar Contraseña",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = BiodontosDark
+                )
+            )
+
+            OutlinedTextField(
+                value = state.newPassword,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdateNewPassword(it)) },
+                label = { Text("Nueva Contraseña") },
+                placeholder = { Text("Mínimo 6 caracteres") },
+                singleLine = true,
+                visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    TextButton(
+                        onClick = { onEvent(DoctorProfileEvent.TogglePasswordVisibility) },
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    ) {
+                        Text(
+                            text = if (state.isPasswordVisible) "Ocultar" else "Ver",
+                            color = BiodontosDark,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            OutlinedTextField(
+                value = state.confirmPassword,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdateConfirmPassword(it)) },
+                label = { Text("Confirmar Nueva Contraseña") },
+                placeholder = { Text("Repita la nueva contraseña") },
+                singleLine = true,
+                visualTransformation = if (state.isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    TextButton(
+                        onClick = { onEvent(DoctorProfileEvent.ToggleConfirmPasswordVisibility) },
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    ) {
+                        Text(
+                            text = if (state.isConfirmPasswordVisible) "Ocultar" else "Ver",
+                            color = BiodontosDark,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            Button(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onEvent(DoctorProfileEvent.SubmitPasswordChange)
+                },
+                enabled = !state.isUpdatingPassword,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+            ) {
+                if (state.isUpdatingPassword) {
+                    CircularProgressIndicator(
+                        color = BiodontosWhite,
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.5.dp
+                    )
+                } else {
+                    Text(
+                        text = "Actualizar Contraseña",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
+            }
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = BiodontosBorder.copy(alpha = 0.3f)
+            )
+
+            Text(
+                text = "Restablecimiento por Correo",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = BiodontosDark
+                )
+            )
+
+            Text(
+                text = "Enviaremos un enlace seguro a ${state.email.ifBlank { "su correo institucional" }} para restablecer su clave de acceso.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = BiodontosGreyText
+                )
+            )
+
+            OutlinedButton(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onEvent(DoctorProfileEvent.SendPasswordResetEmail)
+                },
+                enabled = !state.isSendingResetEmail,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+            ) {
+                if (state.isSendingResetEmail) {
+                    CircularProgressIndicator(
+                        color = Zafiro,
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.5.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Enviar Enlace de Recuperación",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = BiodontosBorder.copy(alpha = 0.3f)
+            )
+
+            OutlinedButton(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onEvent(DoctorProfileEvent.RequestLogout)
+                },
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.5.dp, Carmesi),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Carmesi),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = Carmesi
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Cerrar Sesión Profesional",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Carmesi
+                )
+            }
+        }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun DoctorProfileErrorPreview() {
-    DentalTheme {
-        DoctorProfileContent(
-            state = DoctorProfileState(
-                isLoading = false,
-                errorMessage = "No se pudo cargar la información del perfil profesional."
-            ),
-            onEvent = {},
-            onNavigateBack = {}
-        )
+object ImageCompressor {
+    fun compressUriToBase64(
+        context: Context,
+        uri: Uri,
+        maxDimension: Int = 300,
+        quality: Int = 80
+    ): String? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream.close()
+            if (originalBitmap == null) return null
+
+            val width = originalBitmap.width
+            val height = originalBitmap.height
+            val scale = if (width > height) {
+                if (width > maxDimension) maxDimension.toFloat() / width else 1.0f
+            } else {
+                if (height > maxDimension) maxDimension.toFloat() / height else 1.0f
+            }
+
+            val scaledBitmap = if (scale < 1.0f) {
+                Bitmap.createScaledBitmap(
+                    originalBitmap,
+                    (width * scale).toInt().coerceAtLeast(1),
+                    (height * scale).toInt().coerceAtLeast(1),
+                    true
+                )
+            } else {
+                originalBitmap
+            }
+
+            val outputStream = ByteArrayOutputStream()
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            val bytes = outputStream.toByteArray()
+            val base64String = Base64.encodeToString(bytes, Base64.NO_WRAP)
+            "data:image/jpeg;base64,$base64String"
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun decodeBase64ToBitmap(dataUri: String?): Bitmap? {
+        if (dataUri.isNullOrBlank()) return null
+        return try {
+            val base64Part = if (dataUri.contains(",")) {
+                dataUri.substringAfter(",")
+            } else {
+                dataUri
+            }
+            val decodedBytes = Base64.decode(base64Part, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+        } catch (e: Exception) {
+            null
+        }
     }
 }

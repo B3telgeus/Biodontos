@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.CopAmount
+import com.example.biodontos.domain.model.Patient
+import com.example.biodontos.domain.model.Treatment
 import com.example.biodontos.domain.repository.PatientRepository
 import com.example.biodontos.domain.scheduling.ClinicClock
 import com.example.biodontos.domain.usecase.appointments.GetDoctorAppointmentsUseCase
@@ -14,7 +16,9 @@ import com.example.biodontos.domain.usecase.billing.GetDoctorRecentPaymentsUseCa
 import com.example.biodontos.domain.usecase.billing.GetPatientTreatmentsUseCase
 import com.example.biodontos.domain.usecase.billing.RecordPaymentUseCase
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -65,6 +69,9 @@ class DoctorHomeViewModel(
             is DoctorHomeUiEvent.DismissRecordPaymentDialog -> {
                 dismissRecordPaymentDialog()
             }
+            is DoctorHomeUiEvent.ClearSelectedPatient -> {
+                clearSelectedPatient()
+            }
             is DoctorHomeUiEvent.SelectPatientForPayment -> {
                 selectPatientForPayment(event.patient)
             }
@@ -106,64 +113,104 @@ class DoctorHomeViewModel(
                 return@launch
             }
 
-            // Pacientes registrados
-            val patientsResult = patientRepository.getPatients()
-            val patientsList = patientsResult.getOrDefault(emptyList())
-            val patientsMap = patientsList.associateBy { it.id }
+            try {
+                coroutineScope {
+                    val patientsDeferred = async { patientRepository.getPatients() }
+                    val appointmentsDeferred = async { getDoctorAppointmentsUseCase(doctor.id.value) }
+                    val paymentsDeferred = async { getDoctorRecentPaymentsUseCase(limit = 10) }
 
-            // Citas del doctor
-            val appointmentsResult = getDoctorAppointmentsUseCase(doctor.id.value)
-            val appointmentsList = appointmentsResult.getOrDefault(emptyList())
+                    val patientsResult = patientsDeferred.await()
+                    val appointmentsResult = appointmentsDeferred.await()
+                    val recentPaymentsResult = paymentsDeferred.await()
 
-            val now = clinicClock.now()
-            val today = now.toLocalDate()
+                    val patientsList = patientsResult.getOrDefault(emptyList())
+                    val patientsMap = patientsList.associateBy { it.id }
 
-            val todayCount = appointmentsList.count { 
-                it.startTime.toLocalDate() == today && it.status != AppointmentStatus.CANCELLED 
-            }
+                    val consentedCount = patientsList.count { it.consentSigned }
+                    val pendingCount = patientsList.count { !it.consentSigned }
 
-            val upcoming = appointmentsList
-                .filter { it.status != AppointmentStatus.CANCELLED }
-                .sortedBy { it.startTime }
-                .take(6)
-                .map { appt ->
-                    val pat = patientsMap[appt.patientId]
-                    DoctorAppointmentItem(
-                        appointmentId = appt.id,
-                        patientName = pat?.fullName ?: "Paciente",
-                        treatmentReason = appt.reason?.ifBlank { "Control dental" } ?: "Control dental",
-                        startTime = appt.startTime,
-                        isConfirmed = appt.isConfirmed
+                    val now = clinicClock.now()
+                    val today = now.toLocalDate()
+
+                    val appointmentsList = appointmentsResult.getOrDefault(emptyList())
+
+                    val todayCount = appointmentsList.count {
+                        it.startTime.toLocalDate() == today && it.status != AppointmentStatus.CANCELLED
+                    }
+
+                    val upcoming = appointmentsList
+                        .filter {
+                            it.status != AppointmentStatus.CANCELLED &&
+                            it.status != AppointmentStatus.COMPLETED &&
+                            !it.startTime.toLocalDate().isBefore(today)
+                        }
+                        .sortedBy { it.startTime }
+                        .take(6)
+                        .map { appt ->
+                            val pat = patientsMap[appt.patientId]
+                            DoctorAppointmentItem(
+                                appointmentId = appt.id,
+                                patientId = appt.patientId,
+                                patientName = pat?.fullName ?: "Paciente",
+                                treatmentReason = appt.reason?.ifBlank { "Control dental" } ?: "Control dental",
+                                startTime = appt.startTime,
+                                isConfirmed = appt.isConfirmed
+                            )
+                        }
+
+                    val paymentRecords = recentPaymentsResult.getOrDefault(emptyList())
+                    val mappedPayments = paymentRecords.map { record ->
+                        DoctorPaymentItem(
+                            id = record.id,
+                            patientId = record.patientId,
+                            patientName = record.patientName,
+                            treatmentDescription = record.treatmentDescription,
+                            dateStr = record.createdAt.format(dateFormatter),
+                            amountCop = record.amount,
+                            paymentMethod = record.paymentMethod
+                        )
+                    }
+
+                    val totalCollected = paymentRecords.fold(CopAmount.ZERO) { acc, p -> acc + p.amount }
+
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            doctor = doctor,
+                            doctorName = doctor.displayName,
+                            doctorPhotoUrl = doctor.photoUrl,
+                            patientsCount = patientsList.size,
+                            consentedPatientsCount = consentedCount,
+                            pendingConsentCount = pendingCount,
+                            todayAppointmentsCount = todayCount,
+                            upcomingAppointments = upcoming,
+                            recentPayments = mappedPayments,
+                            recentTotalCollectedCop = totalCollected,
+                            errorMessage = null
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        errorMessage = e.message ?: "Error al sincronizar el panel del doctor"
                     )
                 }
-
-            // Pagos y abonos reales desde la base de datos
-            val recentPaymentsResult = getDoctorRecentPaymentsUseCase(limit = 10)
-            val paymentRecords = recentPaymentsResult.getOrDefault(emptyList())
-            val mappedPayments = paymentRecords.map { record ->
-                DoctorPaymentItem(
-                    id = record.id,
-                    patientName = record.patientName,
-                    treatmentDescription = record.treatmentDescription,
-                    dateStr = record.createdAt.format(dateFormatter),
-                    amountCop = record.amount,
-                    paymentMethod = record.paymentMethod
-                )
             }
+        }
+    }
 
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isRefreshing = false,
-                    doctor = doctor,
-                    doctorName = doctor.displayName,
-                    patientsCount = patientsList.size,
-                    todayAppointmentsCount = todayCount,
-                    upcomingAppointments = upcoming,
-                    recentPayments = mappedPayments,
-                    errorMessage = null
-                )
-            }
+    private fun clearSelectedPatient() {
+        _uiState.update {
+            it.copy(
+                selectedPatient = null,
+                selectedTreatment = null,
+                availableTreatments = emptyList(),
+                isLoadingTreatments = false
+            )
         }
     }
 
@@ -194,7 +241,7 @@ class DoctorHomeViewModel(
         }
     }
 
-    private fun selectPatientForPayment(patient: com.example.biodontos.domain.model.Patient) {
+    private fun selectPatientForPayment(patient: Patient) {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(

@@ -9,9 +9,9 @@ import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.DoctorId
 import com.example.biodontos.domain.model.DoctorPaymentRecord
 import com.example.biodontos.domain.model.Patient
+import com.example.biodontos.domain.model.PatientId
 import com.example.biodontos.domain.model.Payment
 import com.example.biodontos.domain.model.Treatment
-import com.example.biodontos.domain.model.PatientId
 import com.example.biodontos.domain.repository.PatientRepository
 import com.example.biodontos.domain.scheduling.ClinicClock
 import com.example.biodontos.domain.usecase.appointments.GetDoctorAppointmentsUseCase
@@ -31,6 +31,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -60,11 +62,13 @@ class DoctorHomeViewModelTest {
         lastName = "Castro",
         specialty = "Ortodoncia",
         licenseNumber = "12345",
-        email = "andres@test.com"
+        email = "andres@test.com",
+        photoUrl = "https://example.com/doctor.jpg"
     )
 
     private val testPatients = listOf(
-        Patient(id = "pat-1", dniCedula = "111", firstName = "Dora", firstLastName = "Hernández")
+        Patient(id = "pat-1", dniCedula = "111", firstName = "Dora", firstLastName = "Hernández", consentSigned = true),
+        Patient(id = "pat-2", dniCedula = "222", firstName = "Luis", firstLastName = "Martínez", consentSigned = false)
     )
 
     private val testAppointments = listOf(
@@ -123,17 +127,125 @@ class DoctorHomeViewModelTest {
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
         assertEquals("Dr. Andrés Castro", state.doctorName)
-        assertEquals(1, state.patientsCount)
+        assertEquals("https://example.com/doctor.jpg", state.doctorPhotoUrl)
+        assertEquals(2, state.patientsCount)
+        assertEquals(1, state.consentedPatientsCount)
+        assertEquals(1, state.pendingConsentCount)
         assertEquals(1, state.todayAppointmentsCount)
         assertEquals(1, state.upcomingAppointments.size)
+        assertEquals("pat-1", state.upcomingAppointments.first().patientId)
         assertEquals("Dora Hernández", state.upcomingAppointments.first().patientName)
         assertFalse(state.upcomingAppointments.first().isConfirmed)
 
         // Verificación de pagos reales cargados
         assertEquals(1, state.recentPayments.size)
+        assertEquals("pat-1", state.recentPayments.first().patientId)
         assertEquals("Dora Hernández", state.recentPayments.first().patientName)
         assertEquals("Ortodoncia Brackets", state.recentPayments.first().treatmentDescription)
         assertEquals(350_000L, state.recentPayments.first().amountCop.pesos)
+        assertEquals(350_000L, state.recentTotalCollectedCop.pesos)
+    }
+
+    @Test
+    fun `when upcoming appointments are filtered, excludes cancelled, completed, and past appointments`() = runTest {
+        val mixedAppointments = listOf(
+            // Válida: hoy en el futuro (8:00 vs reloj a las 7:00)
+            Appointment(
+                id = "appt-valid-1",
+                patientId = "pat-1",
+                doctorId = "doc-1",
+                startTime = LocalDateTime.of(2026, 10, 20, 8, 0),
+                isConfirmed = false,
+                status = AppointmentStatus.PENDING
+            ),
+            // Cancelada: debe ser excluida
+            Appointment(
+                id = "appt-cancelled",
+                patientId = "pat-1",
+                doctorId = "doc-1",
+                startTime = LocalDateTime.of(2026, 10, 20, 9, 0),
+                isConfirmed = false,
+                status = AppointmentStatus.CANCELLED
+            ),
+            // Completada: debe ser excluida
+            Appointment(
+                id = "appt-completed",
+                patientId = "pat-1",
+                doctorId = "doc-1",
+                startTime = LocalDateTime.of(2026, 10, 20, 10, 0),
+                isConfirmed = true,
+                status = AppointmentStatus.COMPLETED
+            ),
+            // Pasada (ayer 19 de Octubre): debe ser excluida
+            Appointment(
+                id = "appt-past",
+                patientId = "pat-1",
+                doctorId = "doc-1",
+                startTime = LocalDateTime.of(2026, 10, 19, 14, 0),
+                isConfirmed = true,
+                status = AppointmentStatus.CONFIRMED
+            )
+        )
+        coEvery { getDoctorAppointmentsUseCase("doc-1") } returns Result.success(mixedAppointments)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.upcomingAppointments.size)
+        assertEquals("appt-valid-1", state.upcomingAppointments.first().appointmentId)
+    }
+
+    @Test
+    fun `when clearSelectedPatient is dispatched, resets selectedPatient and treatments`() = runTest {
+        val testPatient = testPatients.first()
+        val treatments = listOf(
+            Treatment(id = "tr-1", patientId = PatientId("pat-1"), description = "Profilaxis", totalCost = CopAmount(100_000L))
+        )
+        coEvery { getPatientTreatmentsUseCase("pat-1") } returns Result.success(treatments)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEvent(DoctorHomeUiEvent.SelectPatientForPayment(testPatient))
+        advanceUntilIdle()
+
+        assertEquals(testPatient, viewModel.uiState.value.selectedPatient)
+        assertEquals(1, viewModel.uiState.value.availableTreatments.size)
+
+        viewModel.onEvent(DoctorHomeUiEvent.ClearSelectedPatient)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.selectedPatient)
+        assertNull(viewModel.uiState.value.selectedTreatment)
+        assertTrue(viewModel.uiState.value.availableTreatments.isEmpty())
+        assertFalse(viewModel.uiState.value.isLoadingTreatments)
+    }
+
+    @Test
+    fun `when doctor session fails, sets errorMessage`() = runTest {
+        coEvery { getCurrentDoctorUseCase() } returns Result.failure(Exception("Sin sesión activa"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertNotNull(state.errorMessage)
+        assertEquals("No se pudo identificar la sesión del profesional", state.errorMessage)
+    }
+
+    @Test
+    fun `when parallel load throws exception, catches and sets errorMessage`() = runTest {
+        coEvery { patientRepository.getPatients() } throws RuntimeException("Error fatal de base de datos")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.isRefreshing)
+        assertEquals("Error fatal de base de datos", state.errorMessage)
     }
 
     @Test

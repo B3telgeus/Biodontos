@@ -1,31 +1,38 @@
 package com.example.biodontos.presentation.doctor.home
 
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.annotation.VisibleForTesting
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -46,14 +53,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.input.KeyboardType
-import com.example.biodontos.domain.model.Patient
-import com.example.biodontos.domain.model.Treatment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,11 +73,13 @@ import com.example.biodontos.core.designsystem.BiodontosLightGrey
 import com.example.biodontos.core.designsystem.BiodontosScreenGradient
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
-import com.example.biodontos.domain.model.CopAmount
 import com.example.biodontos.core.designsystem.StatusCancelled
 import com.example.biodontos.core.designsystem.StatusConfirmed
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
+import com.example.biodontos.domain.model.CopAmount
+import com.example.biodontos.domain.model.Patient
+import com.example.biodontos.domain.model.Treatment
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -80,6 +91,9 @@ fun DoctorHomeRoute(
     onNavigateToNewPatient: () -> Unit,
     onNavigateToAppointments: () -> Unit,
     onNavigateToDocuments: () -> Unit,
+    onNavigateToClinicalAdmission: () -> Unit = onNavigateToNewPatient,
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToPatientDetail: (patientId: String) -> Unit = {},
     onNavigateToLogin: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -105,6 +119,9 @@ fun DoctorHomeRoute(
         onNavigateToNewPatient = onNavigateToNewPatient,
         onNavigateToAppointments = onNavigateToAppointments,
         onNavigateToDocuments = onNavigateToDocuments,
+        onNavigateToClinicalAdmission = onNavigateToClinicalAdmission,
+        onNavigateToProfile = onNavigateToProfile,
+        onNavigateToPatientDetail = onNavigateToPatientDetail,
         snackbarHostState = snackbarHostState
     )
 }
@@ -118,6 +135,9 @@ fun DoctorHomeScreen(
     onNavigateToNewPatient: () -> Unit,
     onNavigateToAppointments: () -> Unit,
     onNavigateToDocuments: () -> Unit,
+    onNavigateToClinicalAdmission: () -> Unit = onNavigateToNewPatient,
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToPatientDetail: (patientId: String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     Scaffold(
@@ -149,12 +169,53 @@ fun DoctorHomeScreen(
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        // Header Principal: "Hola, Doc!"
+                        // Header Principal con Avatar navegable hacia DoctorProfile
                         DoctorHomeHeader(
                             doctorName = state.doctorName,
+                            doctorPhotoUrl = state.doctorPhotoUrl,
                             isRefreshing = state.isRefreshing,
-                            onRefresh = { onEvent(DoctorHomeUiEvent.Refresh) }
+                            onRefresh = { onEvent(DoctorHomeUiEvent.Refresh) },
+                            onAvatarClick = onNavigateToProfile
                         )
+
+                        // Banner de Error persistente con acción de reintento
+                        if (state.errorMessage != null) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = Color(0xFFC62828),
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = state.errorMessage,
+                                            color = Color(0xFFC62828),
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                    TextButton(
+                                        onClick = { onEvent(DoctorHomeUiEvent.Refresh) },
+                                        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                                    ) {
+                                        Text("Reintentar", color = Color(0xFFC62828), fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
 
                         // Fila Superior (3 Tarjetas): Pacientes & Evolución, Documentos, Tu agenda
                         if (isExpanded) {
@@ -164,11 +225,13 @@ fun DoctorHomeScreen(
                             ) {
                                 PatientsEvolutionCard(
                                     patientsCount = state.patientsCount,
-                                    onNewEvolutionClick = onNavigateToPatients,
-                                    onNewPatientClick = onNavigateToNewPatient,
+                                    onNavigateToClinicalAdmission = onNavigateToClinicalAdmission,
+                                    onNavigateToPatients = onNavigateToPatients,
                                     modifier = Modifier.weight(1f)
                                 )
                                 DocumentsSummaryCard(
+                                    consentedPatientsCount = state.consentedPatientsCount,
+                                    pendingConsentCount = state.pendingConsentCount,
                                     onViewDocumentsClick = onNavigateToDocuments,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -185,10 +248,12 @@ fun DoctorHomeScreen(
                             ) {
                                 PatientsEvolutionCard(
                                     patientsCount = state.patientsCount,
-                                    onNewEvolutionClick = onNavigateToPatients,
-                                    onNewPatientClick = onNavigateToNewPatient
+                                    onNavigateToClinicalAdmission = onNavigateToClinicalAdmission,
+                                    onNavigateToPatients = onNavigateToPatients
                                 )
                                 DocumentsSummaryCard(
+                                    consentedPatientsCount = state.consentedPatientsCount,
+                                    pendingConsentCount = state.pendingConsentCount,
                                     onViewDocumentsClick = onNavigateToDocuments
                                 )
                                 AgendaSummaryCard(
@@ -211,12 +276,15 @@ fun DoctorHomeScreen(
                                         onEvent(DoctorHomeUiEvent.ToggleConfirmAppointment(id, confirmed))
                                     },
                                     onSeeAll = onNavigateToAppointments,
+                                    onNavigateToPatientDetail = onNavigateToPatientDetail,
                                     modifier = Modifier.weight(1.5f)
                                 )
 
                                 PaymentsSummaryCard(
                                     payments = state.recentPayments,
+                                    totalCollectedCop = state.recentTotalCollectedCop,
                                     onNewPaymentClick = { onEvent(DoctorHomeUiEvent.OpenRecordPaymentDialog) },
+                                    onNavigateToPatientDetail = onNavigateToPatientDetail,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -230,12 +298,15 @@ fun DoctorHomeScreen(
                                     onToggleConfirm = { id, confirmed ->
                                         onEvent(DoctorHomeUiEvent.ToggleConfirmAppointment(id, confirmed))
                                     },
-                                    onSeeAll = onNavigateToAppointments
+                                    onSeeAll = onNavigateToAppointments,
+                                    onNavigateToPatientDetail = onNavigateToPatientDetail
                                 )
 
                                 PaymentsSummaryCard(
                                     payments = state.recentPayments,
-                                    onNewPaymentClick = { onEvent(DoctorHomeUiEvent.OpenRecordPaymentDialog) }
+                                    totalCollectedCop = state.recentTotalCollectedCop,
+                                    onNewPaymentClick = { onEvent(DoctorHomeUiEvent.OpenRecordPaymentDialog) },
+                                    onNavigateToPatientDetail = onNavigateToPatientDetail
                                 )
                             }
                         }
@@ -247,6 +318,7 @@ fun DoctorHomeScreen(
                 RecordPaymentDialog(
                     state = state,
                     onDismiss = { onEvent(DoctorHomeUiEvent.DismissRecordPaymentDialog) },
+                    onClearSelectedPatient = { onEvent(DoctorHomeUiEvent.ClearSelectedPatient) },
                     onSelectPatient = { onEvent(DoctorHomeUiEvent.SelectPatientForPayment(it)) },
                     onSelectTreatment = { onEvent(DoctorHomeUiEvent.SelectTreatmentForPayment(it)) },
                     onSubmit = { patientId, treatmentId, newDesc, newCost, amount, method ->
@@ -261,35 +333,106 @@ fun DoctorHomeScreen(
 @Composable
 private fun DoctorHomeHeader(
     doctorName: String,
+    doctorPhotoUrl: String?,
     isRefreshing: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onAvatarClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Text(
-                text = "Hola, Doc!",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = BiodontosDark
-            )
-            if (doctorName.isNotBlank()) {
-                Text(
-                    text = doctorName,
-                    fontSize = 14.sp,
-                    color = BiodontosGreyText,
-                    fontWeight = FontWeight.Medium
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .clickable(onClick = onAvatarClick)
+                .padding(vertical = 4.dp, horizontal = 4.dp)
+        ) {
+            val bitmap = remember(doctorPhotoUrl) {
+                if (doctorPhotoUrl.isNullOrBlank()) null
+                else {
+                    try {
+                        val base64Part = if (doctorPhotoUrl.contains(",")) doctorPhotoUrl.substringAfter(",") else doctorPhotoUrl
+                        val decodedBytes = Base64.decode(base64Part, Base64.DEFAULT)
+                        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+            }
+
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Mi Perfil",
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(BiodontosDark),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val initials = doctorName
+                        .split(" ")
+                        .filter { it.isNotBlank() && !it.equals("Dr.", ignoreCase = true) && !it.equals("Dra.", ignoreCase = true) }
+                        .take(2)
+                        .mapNotNull { it.firstOrNull()?.uppercase() }
+                        .joinToString("")
+
+                    if (initials.isNotBlank()) {
+                        Text(
+                            text = initials,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BiodontosWhite
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Mi Perfil",
+                            tint = BiodontosWhite,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column {
+                Text(
+                    text = "Hola, Doc!",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BiodontosDark
+                )
+                if (doctorName.isNotBlank()) {
+                    Text(
+                        text = doctorName,
+                        fontSize = 14.sp,
+                        color = BiodontosGreyText,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
 
-        IconButton(onClick = onRefresh, enabled = !isRefreshing) {
+        IconButton(
+            onClick = onRefresh,
+            enabled = !isRefreshing,
+            modifier = Modifier.size(48.dp)
+        ) {
             if (isRefreshing) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(22.dp),
                     strokeWidth = 2.dp,
                     color = BiodontosDark
                 )
@@ -297,7 +440,8 @@ private fun DoctorHomeHeader(
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Actualizar",
-                    tint = BiodontosDark
+                    tint = BiodontosDark,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -307,8 +451,8 @@ private fun DoctorHomeHeader(
 @Composable
 private fun PatientsEvolutionCard(
     patientsCount: Int,
-    onNewEvolutionClick: () -> Unit,
-    onNewPatientClick: () -> Unit,
+    onNavigateToClinicalAdmission: () -> Unit,
+    onNavigateToPatients: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -339,15 +483,15 @@ private fun PatientsEvolutionCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 BiodontosPillButton(
-                    text = "Nueva evolución",
+                    text = "+ Ingreso Clínico",
                     variant = PillButtonVariant.DARK,
-                    onClick = onNewEvolutionClick,
+                    onClick = onNavigateToClinicalAdmission,
                     modifier = Modifier.weight(1f)
                 )
                 BiodontosPillButton(
-                    text = "Nuevo Paciente",
-                    variant = PillButtonVariant.DARK,
-                    onClick = onNewPatientClick,
+                    text = "Directorio",
+                    variant = PillButtonVariant.LIGHT,
+                    onClick = onNavigateToPatients,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -357,6 +501,8 @@ private fun PatientsEvolutionCard(
 
 @Composable
 private fun DocumentsSummaryCard(
+    consentedPatientsCount: Int,
+    pendingConsentCount: Int,
     onViewDocumentsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -381,16 +527,26 @@ private fun DocumentsSummaryCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Ultimo control", fontSize = 13.sp, color = BiodontosGreyText)
-                Text(text = "18 Mar", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
+                Text(text = "Consentimientos OK", fontSize = 13.sp, color = BiodontosGreyText)
+                Text(
+                    text = "$consentedPatientsCount",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BiodontosDark
+                )
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Archivos", fontSize = 13.sp, color = BiodontosGreyText)
-                Text(text = "12", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
+                Text(text = "Firma Pendiente", fontSize = 13.sp, color = BiodontosGreyText)
+                Text(
+                    text = "$pendingConsentCount",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (pendingConsentCount > 0) Color(0xFFC62828) else BiodontosDark
+                )
             }
 
             BiodontosPillButton(
@@ -445,6 +601,7 @@ private fun UpcomingAppointmentsCard(
     appointments: List<DoctorAppointmentItem>,
     onToggleConfirm: (String, Boolean) -> Unit,
     onSeeAll: () -> Unit,
+    onNavigateToPatientDetail: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -488,7 +645,12 @@ private fun UpcomingAppointmentsCard(
                     appointments.forEach { appt ->
                         AppointmentTableRow(
                             item = appt,
-                            onToggleConfirm = { onToggleConfirm(appt.appointmentId, appt.isConfirmed) }
+                            onToggleConfirm = { onToggleConfirm(appt.appointmentId, appt.isConfirmed) },
+                            onClick = {
+                                if (appt.patientId.isNotBlank()) {
+                                    onNavigateToPatientDetail(appt.patientId)
+                                }
+                            }
                         )
                     }
                 }
@@ -500,8 +662,10 @@ private fun UpcomingAppointmentsCard(
 @Composable
 private fun AppointmentTableRow(
     item: DoctorAppointmentItem,
-    onToggleConfirm: () -> Unit
+    onToggleConfirm: () -> Unit,
+    onClick: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a EEEE, d 'de' MMMM", Locale.forLanguageTag("es-CO"))
     val formattedTime = runCatching { item.startTime.format(timeFormatter) }
         .getOrDefault("${item.startTime.hour}:${item.startTime.minute}")
@@ -511,6 +675,7 @@ private fun AppointmentTableRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFFF7F8FA))
+            .clickable(onClick = onClick)
             .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -554,45 +719,37 @@ private fun AppointmentTableRow(
             }
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Chip de confirmación interactivo
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (item.isConfirmed) StatusConfirmed.copy(alpha = 0.12f)
-                        else StatusCancelled.copy(alpha = 0.12f)
-                    )
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = if (item.isConfirmed) Icons.Default.Check else Icons.Default.Close,
-                        contentDescription = null,
-                        tint = if (item.isConfirmed) StatusConfirmed else StatusCancelled,
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (item.isConfirmed) "Confirmada" else "Sin Confirmar",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (item.isConfirmed) StatusConfirmed else StatusCancelled
-                    )
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Chip de confirmación interactivo >= 48.dp con feedback háptico
+        Box(
+            modifier = Modifier
+                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    if (item.isConfirmed) StatusConfirmed.copy(alpha = 0.12f)
+                    else StatusCancelled.copy(alpha = 0.12f)
+                )
+                .clickable {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onToggleConfirm()
                 }
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(
-                onClick = onToggleConfirm,
-                modifier = Modifier.size(32.dp)
-            ) {
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Cambiar estado de confirmación",
-                    tint = BiodontosDark,
-                    modifier = Modifier.size(18.dp)
+                    imageVector = if (item.isConfirmed) Icons.Default.Check else Icons.Default.Close,
+                    contentDescription = null,
+                    tint = if (item.isConfirmed) StatusConfirmed else StatusCancelled,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (item.isConfirmed) "Confirmada" else "Sin Confirmar",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (item.isConfirmed) StatusConfirmed else StatusCancelled
                 )
             }
         }
@@ -602,7 +759,9 @@ private fun AppointmentTableRow(
 @Composable
 private fun PaymentsSummaryCard(
     payments: List<DoctorPaymentItem>,
+    totalCollectedCop: CopAmount,
     onNewPaymentClick: () -> Unit,
+    onNavigateToPatientDetail: (patientId: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -615,18 +774,32 @@ private fun PaymentsSummaryCard(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column {
-                Text(
-                    text = "Pagos y Abonos",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BiodontosDark
-                )
-                Text(
-                    text = "Tus últimos pagos registrados",
-                    fontSize = 12.sp,
-                    color = BiodontosGreyText
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Pagos y Abonos",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BiodontosDark
+                    )
+                    Text(
+                        text = "Tus últimos pagos registrados",
+                        fontSize = 12.sp,
+                        color = BiodontosGreyText
+                    )
+                }
+                if (payments.isNotEmpty()) {
+                    Text(
+                        text = totalCollectedCop.formatCop(),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BiodontosDark
+                    )
+                }
             }
 
             if (payments.isEmpty()) {
@@ -659,11 +832,19 @@ private fun PaymentsSummaryCard(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
                             .background(Color(0xFFF7F8FA))
+                            .clickable {
+                                if (payment.patientId.isNotBlank()) {
+                                    onNavigateToPatientDetail(payment.patientId)
+                                }
+                            }
                             .padding(12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(34.dp)
@@ -694,12 +875,25 @@ private fun PaymentsSummaryCard(
                             }
                         }
 
-                        Text(
-                            text = payment.amountCop.formatCop(),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BiodontosDark
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = payment.amountCop.formatCop(),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BiodontosDark
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            TextButton(
+                                onClick = {
+                                    if (payment.patientId.isNotBlank()) {
+                                        onNavigateToPatientDetail(payment.patientId)
+                                    }
+                                },
+                                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                            ) {
+                                Text("Ver", fontSize = 12.sp, color = BiodontosDark, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
@@ -717,10 +911,12 @@ private fun PaymentsSummaryCard(
 private fun RecordPaymentDialog(
     state: DoctorHomeUiState,
     onDismiss: () -> Unit,
+    onClearSelectedPatient: () -> Unit,
     onSelectPatient: (Patient) -> Unit,
     onSelectTreatment: (Treatment?) -> Unit,
     onSubmit: (patientId: String, treatmentId: String?, newDesc: String?, newCost: Long?, amount: Long, method: String) -> Unit
 ) {
+    var patientSearchQuery by remember { mutableStateOf("") }
     var amountInput by remember { mutableStateOf("") }
     var selectedMethod by remember { mutableStateOf("EFECTIVO") }
     var isNewTreatmentMode by remember(state.selectedPatient, state.availableTreatments) {
@@ -731,6 +927,16 @@ private fun RecordPaymentDialog(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val methods = listOf("EFECTIVO", "TARJETA", "TRANSFERENCIA")
+
+    val filteredPatients = remember(state.availablePatients, patientSearchQuery) {
+        if (patientSearchQuery.isBlank()) state.availablePatients
+        else {
+            val q = patientSearchQuery.trim().lowercase()
+            state.availablePatients.filter {
+                it.fullName.lowercase().contains(q) || it.dniCedula.contains(q)
+            }
+        }
+    }
 
     AlertDialog(
         onDismissRequest = { if (!state.isRecordingPayment) onDismiss() },
@@ -755,6 +961,7 @@ private fun RecordPaymentDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .imePadding()
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -774,6 +981,25 @@ private fun RecordPaymentDialog(
                             color = BiodontosGreyText
                         )
                     } else {
+                        OutlinedTextField(
+                            value = patientSearchQuery,
+                            onValueChange = { patientSearchQuery = it },
+                            placeholder = { Text("Buscar paciente...") },
+                            leadingIcon = {
+                                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = BiodontosGreyText)
+                            },
+                            trailingIcon = {
+                                if (patientSearchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { patientSearchQuery = "" }) {
+                                        Icon(Icons.Default.Close, contentDescription = "Limpiar", tint = BiodontosGreyText)
+                                    }
+                                }
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -781,36 +1007,51 @@ private fun RecordPaymentDialog(
                                 .verticalScroll(rememberScrollState()),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            state.availablePatients.forEach { pat ->
-                                Row(
+                            if (filteredPatients.isEmpty()) {
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(BiodontosLightGrey)
-                                        .clickable { onSelectPatient(pat) }
-                                        .padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Column {
+                                    Text(
+                                        text = "No se encontraron pacientes para \"$patientSearchQuery\"",
+                                        fontSize = 12.sp,
+                                        color = BiodontosGreyText
+                                    )
+                                }
+                            } else {
+                                filteredPatients.forEach { pat ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(BiodontosLightGrey)
+                                            .clickable { onSelectPatient(pat) }
+                                            .padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = pat.fullName,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = BiodontosDark
+                                            )
+                                            Text(
+                                                text = "DNI: ${pat.dniCedula}",
+                                                fontSize = 11.sp,
+                                                color = BiodontosGreyText
+                                            )
+                                        }
                                         Text(
-                                            text = pat.fullName,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.SemiBold,
+                                            text = "Seleccionar",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
                                             color = BiodontosDark
                                         )
-                                        Text(
-                                            text = "DNI: ${pat.dniCedula}",
-                                            fontSize = 11.sp,
-                                            color = BiodontosGreyText
-                                        )
                                     }
-                                    Text(
-                                        text = "Seleccionar",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = BiodontosDark
-                                    )
                                 }
                             }
                         }
@@ -838,8 +1079,11 @@ private fun RecordPaymentDialog(
                                 color = BiodontosGreyText
                             )
                         }
-                        TextButton(onClick = { onDismiss() }) {
-                            Text("Cambiar", color = BiodontosDark, fontSize = 12.sp)
+                        TextButton(
+                            onClick = onClearSelectedPatient,
+                            modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                        ) {
+                            Text("Cambiar", color = BiodontosDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -966,6 +1210,7 @@ private fun RecordPaymentDialog(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
+                                    .defaultMinSize(minHeight = 48.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(if (isSelected) BiodontosDark else BiodontosLightGrey)
                                     .clickable { selectedMethod = method }
@@ -1020,7 +1265,8 @@ private fun RecordPaymentDialog(
                 },
                 enabled = !state.isRecordingPayment && state.selectedPatient != null,
                 colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
             ) {
                 if (state.isRecordingPayment) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
@@ -1032,7 +1278,8 @@ private fun RecordPaymentDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                enabled = !state.isRecordingPayment
+                enabled = !state.isRecordingPayment,
+                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
             ) {
                 Text("Cancelar", color = BiodontosDark)
             }
@@ -1064,10 +1311,14 @@ private fun DoctorHomeSuccessPreview() {
                 isLoading = false,
                 doctorName = "Dr. Carlos Restrepo",
                 patientsCount = 24,
+                consentedPatientsCount = 18,
+                pendingConsentCount = 6,
                 todayAppointmentsCount = 5,
+                recentTotalCollectedCop = CopAmount(470000L),
                 upcomingAppointments = listOf(
                     DoctorAppointmentItem(
                         appointmentId = "apt-1",
+                        patientId = "pat-1",
                         patientName = "María Gómez",
                         treatmentReason = "Limpieza dental",
                         startTime = LocalDateTime.of(2026, 10, 23, 10, 0),
@@ -1077,6 +1328,7 @@ private fun DoctorHomeSuccessPreview() {
                 recentPayments = listOf(
                     DoctorPaymentItem(
                         id = "pay-1",
+                        patientId = "pat-1",
                         patientName = "María Gómez",
                         treatmentDescription = "Profilaxis",
                         dateStr = "23/10/2026",

@@ -1,44 +1,55 @@
 package com.example.biodontos.presentation.doctor.profile
 
 import androidx.compose.runtime.Immutable
-import com.example.biodontos.core.util.DateTimeUtils
-import com.example.biodontos.domain.model.Appointment
-import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.Doctor
-import com.example.biodontos.domain.model.Patient
-
-enum class DoctorAppointmentTab {
-    PENDING,
-    CONFIRMED,
-    HISTORY
-}
 
 @Immutable
 data class DoctorProfileState(
     val doctor: Doctor? = null,
-    val appointments: List<Appointment> = emptyList(),
-    val patientsMap: Map<String, Patient> = emptyMap(),
-    val selectedTab: DoctorAppointmentTab = DoctorAppointmentTab.PENDING,
+    // Professional Profile Form Fields
+    val firstName: String = "",
+    val lastName: String = "",
+    val specialty: String = "",
+    val licenseNumber: String = "",
+    val phone: String = "",
+    val bio: String = "",
+    val photoUrl: String? = null,
+    val email: String = "",
+    // Security Form Fields
+    val newPassword: String = "",
+    val confirmPassword: String = "",
+    val isPasswordVisible: Boolean = false,
+    val isConfirmPasswordVisible: Boolean = false,
+    // Status Flags
     val isLoading: Boolean = false,
-    val isActionInProgress: Boolean = false,
-    val errorMessage: String? = null
-) {
-    val pendingAppointments: List<Appointment>
-        get() = appointments.filter { !it.isConfirmed && it.status == AppointmentStatus.SCHEDULED && DateTimeUtils.isUpcoming(it.startTime) }
-
-    val confirmedAppointments: List<Appointment>
-        get() = appointments.filter { it.isConfirmed && it.status == AppointmentStatus.SCHEDULED && DateTimeUtils.isUpcoming(it.startTime) }
-
-    val historyAppointments: List<Appointment>
-        get() = appointments.filter { it.status != AppointmentStatus.SCHEDULED || !DateTimeUtils.isUpcoming(it.startTime) }
-}
+    val isSavingProfile: Boolean = false,
+    val isUpdatingPassword: Boolean = false,
+    val isSendingResetEmail: Boolean = false,
+    val showLogoutConfirmation: Boolean = false,
+    val errorMessage: String? = null,
+    val successMessage: String? = null
+)
 
 sealed interface DoctorProfileEvent {
-    data object LoadData : DoctorProfileEvent
-    data class SelectTab(val tab: DoctorAppointmentTab) : DoctorProfileEvent
-    data class ConfirmAppointment(val appointmentId: String) : DoctorProfileEvent
-    data class CancelAppointment(val appointmentId: String, val reason: String? = null) : DoctorProfileEvent
-    data object Logout : DoctorProfileEvent
+    data object LoadProfile : DoctorProfileEvent
+    data class UpdateFirstName(val value: String) : DoctorProfileEvent
+    data class UpdateLastName(val value: String) : DoctorProfileEvent
+    data class UpdateSpecialty(val value: String) : DoctorProfileEvent
+    data class UpdateLicenseNumber(val value: String) : DoctorProfileEvent
+    data class UpdatePhone(val value: String) : DoctorProfileEvent
+    data class UpdateBio(val value: String) : DoctorProfileEvent
+    data class UpdatePhotoUrl(val photoUrl: String) : DoctorProfileEvent
+    data object SaveProfile : DoctorProfileEvent
+    data class UpdateNewPassword(val value: String) : DoctorProfileEvent
+    data class UpdateConfirmPassword(val value: String) : DoctorProfileEvent
+    data object TogglePasswordVisibility : DoctorProfileEvent
+    data object ToggleConfirmPasswordVisibility : DoctorProfileEvent
+    data object SubmitPasswordChange : DoctorProfileEvent
+    data object SendPasswordResetEmail : DoctorProfileEvent
+    data object RequestLogout : DoctorProfileEvent
+    data object ConfirmLogout : DoctorProfileEvent
+    data object DismissLogoutDialog : DoctorProfileEvent
+    data object DismissError : DoctorProfileEvent
 }
 
 sealed interface DoctorProfileEffect {

@@ -29,6 +29,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -126,7 +127,7 @@ class DoctorAppointmentsViewModelTest {
     )
 
     @Test
-    fun `al inicializar carga citas y calcula slots del cronograma correctamente`() = runTest {
+    fun `al inicializar carga citas, disponibilidad y pacientes en paralelo y calcula slots`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -136,7 +137,18 @@ class DoctorAppointmentsViewModelTest {
         assertEquals("doc-1", state.doctorId)
         assertEquals("Dr. Andrés Castro", state.doctorName)
 
-        // Verificamos que hay slots calculados para el día (8:00 a 12:00 cada 30 min = 8 slots)
+        // Verificamos que patientId y patientName se poblaron desde el repositorio de pacientes
+        val firstAppt = state.appointments.first()
+        assertEquals("pat-1", firstAppt.patientId)
+        assertEquals("Luis Camilo", firstAppt.patientName)
+
+        // Verificamos que se ejecutaron las llamadas en paralelo
+        coVerify(exactly = 1) { getCurrentDoctorUseCase() }
+        coVerify(exactly = 1) { patientRepository.getPatients() }
+        coVerify(exactly = 1) { getDoctorAppointmentsUseCase("doc-1") }
+        coVerify(exactly = 1) { getDoctorAvailabilityUseCase("doc-1") }
+
+        // Verificamos cálculo de slots (8:00 a 12:00 cada 30 min = 8 slots)
         assertFalse(state.isDayOff)
         assertEquals(8, state.timelineSlots.size)
 
@@ -149,7 +161,9 @@ class DoctorAppointmentsViewModelTest {
         assertNotNull(occupiedSlot)
         val status = occupiedSlot?.status
         assertTrue(status is DoctorSlotStatus.Occupied)
-        assertEquals("appt-1", (status as DoctorSlotStatus.Occupied).appointment.appointmentId)
+        val occupiedAppt = (status as DoctorSlotStatus.Occupied).appointment
+        assertEquals("appt-1", occupiedAppt.appointmentId)
+        assertEquals("pat-1", occupiedAppt.patientId)
 
         // El slot de 10:00 a 10:30 debe ser Available
         val availableSlot = state.timelineSlots.find { it.startTime.hour == 10 && it.startTime.minute == 0 }
@@ -158,9 +172,61 @@ class DoctorAppointmentsViewModelTest {
     }
 
     @Test
+    fun `al fallar la identificacion del doctor expone errorMessage y no se queda cargando`() = runTest {
+        coEvery { getCurrentDoctorUseCase() } returns Result.failure(RuntimeException("Sesión expirada"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.isRefreshing)
+        assertEquals("No se pudo identificar la sesión del profesional", state.errorMessage)
+    }
+
+    @Test
+    fun `al fallar getDoctorAppointmentsUseCase expone errorMessage amigable en el estado`() = runTest {
+        coEvery { getDoctorAppointmentsUseCase("doc-1") } returns Result.failure(RuntimeException("Timeout de red"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.isRefreshing)
+        assertNotNull(state.errorMessage)
+    }
+
+    @Test
+    fun `al presionar Refresh se limpia errorMessage y se recarga todo`() = runTest {
+        // Inicialmente falla
+        coEvery { getDoctorAppointmentsUseCase("doc-1") } returns Result.failure(RuntimeException("Error inicial"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value.errorMessage)
+
+        // Al refrescar tiene éxito
+        coEvery { getDoctorAppointmentsUseCase("doc-1") } returns Result.success(testAppointments)
+        viewModel.onEvent(DoctorAppointmentsUiEvent.Refresh)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.isRefreshing)
+        assertNull(state.errorMessage)
+        assertEquals(2, state.appointments.size)
+    }
+
+    @Test
     fun `al filtrar citas devuelve el subconjunto correcto`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
+
+        // Filtro Todas
+        viewModel.onEvent(DoctorAppointmentsUiEvent.SelectFilter(DoctorAppointmentFilter.ALL))
+        val allItems = viewModel.uiState.value.filteredAppointments(todayDate)
+        assertEquals(2, allItems.size)
 
         // Filtro Hoy
         viewModel.onEvent(DoctorAppointmentsUiEvent.SelectFilter(DoctorAppointmentFilter.TODAY))
@@ -197,6 +263,27 @@ class DoctorAppointmentsViewModelTest {
 
             val effect = awaitItem()
             assertTrue(effect is DoctorAppointmentsUiEffect.ShowMessage)
+        }
+    }
+
+    @Test
+    fun `al fallar conmutar confirmacion revierte el estado y emite efecto de error`() = runTest {
+        coEvery { toggleAppointmentConfirmationUseCase("appt-1", false) } returns Result.failure(RuntimeException("Error en base de datos"))
+
+        val viewModel = createViewModel()
+
+        viewModel.effects.test {
+            advanceUntilIdle()
+
+            viewModel.onEvent(DoctorAppointmentsUiEvent.ToggleConfirm("appt-1", true))
+            advanceUntilIdle()
+
+            // Debe haberse revertido a true
+            assertTrue(viewModel.uiState.value.appointments.first { it.appointmentId == "appt-1" }.isConfirmed)
+
+            val effect = awaitItem()
+            assertTrue(effect is DoctorAppointmentsUiEffect.ShowMessage)
+            assertEquals("No se pudo actualizar el estado de confirmación", (effect as DoctorAppointmentsUiEffect.ShowMessage).message)
         }
     }
 
@@ -318,5 +405,99 @@ class DoctorAppointmentsViewModelTest {
             assertTrue(effect is DoctorAppointmentsUiEffect.ShowMessage)
             assertEquals("Horario semanal actualizado exitosamente", (effect as DoctorAppointmentsUiEffect.ShowMessage).message)
         }
+    }
+
+    @Test
+    fun `al intentar guardar disponibilidad con hora fin anterior o igual a inicio no guarda y emite mensaje de error explicativo`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Configuramos Martes con hora fin anterior a hora inicio (ej. 17:00 a 08:00)
+        viewModel.onEvent(
+            DoctorAppointmentsUiEvent.UpdateDayAvailability(
+                day = DayOfWeek.TUESDAY,
+                isActive = true,
+                startTime = LocalTime.of(17, 0),
+                endTime = LocalTime.of(8, 0),
+                slotMinutes = 30
+            )
+        )
+        advanceUntilIdle()
+
+        viewModel.effects.test {
+            viewModel.onEvent(DoctorAppointmentsUiEvent.SaveAvailability)
+            advanceUntilIdle()
+
+            // No debe haber llamado al usecase de guardar
+            coVerify(exactly = 0) { saveDoctorAvailabilityUseCase(any(), any()) }
+
+            val effect = awaitItem()
+            assertTrue(effect is DoctorAppointmentsUiEffect.ShowMessage)
+            val msg = (effect as DoctorAppointmentsUiEffect.ShowMessage).message
+            assertTrue(msg.contains("La hora de fin debe ser posterior a la de inicio"))
+        }
+    }
+
+    @Test
+    fun `al copiar disponibilidad de lunes a dias habiles replica la configuracion de lunes a viernes`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Configuramos Lunes con horario específico
+        viewModel.onEvent(
+            DoctorAppointmentsUiEvent.UpdateDayAvailability(
+                day = DayOfWeek.MONDAY,
+                isActive = true,
+                startTime = LocalTime.of(7, 0),
+                endTime = LocalTime.of(15, 0),
+                slotMinutes = 45
+            )
+        )
+        advanceUntilIdle()
+
+        // Copiamos a días hábiles
+        viewModel.onEvent(DoctorAppointmentsUiEvent.CopyWeekdayAvailability(DayOfWeek.MONDAY))
+        advanceUntilIdle()
+
+        val weekly = viewModel.uiState.value.weeklyAvailability
+        val weekdays = listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY)
+
+        weekdays.forEach { day ->
+            val dayConfig = weekly.first { it.dayOfWeek == day }
+            assertTrue(dayConfig.isActive)
+            assertEquals(LocalTime.of(7, 0), dayConfig.startTime)
+            assertEquals(LocalTime.of(15, 0), dayConfig.endTime)
+            assertEquals(45, dayConfig.slotMinutes)
+        }
+    }
+
+    @Test
+    fun `al actualizar disponibilidad de un dia especifico modifica solo ese dia`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val originalTuesday = viewModel.uiState.value.weeklyAvailability.first { it.dayOfWeek == DayOfWeek.TUESDAY }
+
+        viewModel.onEvent(
+            DoctorAppointmentsUiEvent.UpdateDayAvailability(
+                day = DayOfWeek.WEDNESDAY,
+                isActive = true,
+                startTime = LocalTime.of(10, 0),
+                endTime = LocalTime.of(14, 0),
+                slotMinutes = 60
+            )
+        )
+        advanceUntilIdle()
+
+        val updatedWednesday = viewModel.uiState.value.weeklyAvailability.first { it.dayOfWeek == DayOfWeek.WEDNESDAY }
+        assertEquals(LocalTime.of(10, 0), updatedWednesday.startTime)
+        assertEquals(LocalTime.of(14, 0), updatedWednesday.endTime)
+        assertEquals(60, updatedWednesday.slotMinutes)
+
+        // Martes permanece inalterado
+        val currentTuesday = viewModel.uiState.value.weeklyAvailability.first { it.dayOfWeek == DayOfWeek.TUESDAY }
+        assertEquals(originalTuesday.startTime, currentTuesday.startTime)
+        assertEquals(originalTuesday.endTime, currentTuesday.endTime)
+        assertEquals(originalTuesday.slotMinutes, currentTuesday.slotMinutes)
     }
 }

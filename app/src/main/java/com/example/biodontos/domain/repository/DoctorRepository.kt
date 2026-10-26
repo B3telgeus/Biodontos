@@ -18,4 +18,5 @@ interface DoctorRepository {
         limit: Int = 20,
         offset: Int = 0
     ): Result<List<Doctor>>
+    suspend fun updateDoctorProfile(doctor: Doctor): Result<Doctor>
 }

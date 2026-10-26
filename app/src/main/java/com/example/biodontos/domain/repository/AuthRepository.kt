@@ -25,6 +25,8 @@ interface AuthRepository {
     ): Result<UserSession>
     
     suspend fun resetPassword(email: String): Result<Unit>
+
+    suspend fun updatePassword(newPassword: String): Result<Unit>
     
     suspend fun getCurrentSession(): UserSession?
     

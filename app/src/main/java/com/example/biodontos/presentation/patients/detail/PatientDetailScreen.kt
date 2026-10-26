@@ -1,6 +1,7 @@
 package com.example.biodontos.presentation.patients.detail
 
 import androidx.annotation.VisibleForTesting
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -60,9 +63,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -257,6 +262,13 @@ fun PatientDetailScreen(
                 .imePadding()
                 .background(BiodontosLightGrey)
         ) {
+            // Persistent compact Clinical Status Bar across all tabs
+            ClinicalStatusBar(
+                patient = patient,
+                anamnesis = state.anamnesis,
+                consent = state.consent
+            )
+
             // Tabs de Navegación del Hub Clínico
             ScrollableTabRow(
                 selectedTabIndex = state.selectedTab.ordinal,
@@ -1089,6 +1101,106 @@ private fun NewAppointmentDialog(
             }
         }
     )
+}
+
+@Composable
+private fun ClinicalStatusBar(
+    patient: Patient?,
+    anamnesis: Anamnesis?,
+    consent: InformedConsent?,
+    modifier: Modifier = Modifier
+) {
+    val isConsentSigned = consent?.status.equals("SIGNED", ignoreCase = true) ||
+        consent?.signedAt != null ||
+        patient?.consentSigned == true
+    val hasAllergies = patient?.hasCriticalAllergies == true || anamnesis?.alergias == true
+    val allergyText = when {
+        anamnesis?.alergiasDescripcion?.isNotBlank() == true -> anamnesis.alergiasDescripcion
+        patient?.hasCriticalAllergies == true && patient.allergiesDescription.isNotBlank() ->
+            patient.allergiesDescription
+        hasAllergies -> "Alergias presentes"
+        else -> "Sin alergias"
+    }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = BiodontosWhite,
+        shadowElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Consent Status Badge
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = if (isConsentSigned) Esmeralda.copy(alpha = 0.12f) else Carmesi.copy(alpha = 0.12f),
+                border = BorderStroke(
+                    1.dp,
+                    if (isConsentSigned) Esmeralda.copy(alpha = 0.4f) else Carmesi.copy(alpha = 0.4f)
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = if (isConsentSigned) Icons.Default.Check else Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = if (isConsentSigned) Esmeralda else Carmesi,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (isConsentSigned) "Consentimiento OK" else "Firma Pendiente",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isConsentSigned) Esmeralda else Carmesi,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // Critical Allergy Badge
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = if (hasAllergies) Carmesi.copy(alpha = 0.12f) else BiodontosInputBg,
+                border = BorderStroke(
+                    1.dp,
+                    if (hasAllergies) Carmesi.copy(alpha = 0.4f) else Color.Transparent
+                ),
+                modifier = Modifier.weight(1.2f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = if (hasAllergies) Icons.Default.Warning else Icons.Default.Info,
+                        contentDescription = null,
+                        tint = if (hasAllergies) Carmesi else BiodontosGreyText,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (hasAllergies) "Alergia: $allergyText" else "Sin alergias conocidas",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (hasAllergies) Carmesi else BiodontosGreyText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true)
