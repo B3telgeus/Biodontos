@@ -99,9 +99,9 @@ fun UserTypeSelectionScreen(
 
                     Spacer(modifier = Modifier.height(48.dp))
 
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         // Soy Doctor
                         Button(
@@ -112,7 +112,7 @@ fun UserTypeSelectionScreen(
                                 contentColor = Color.White
                             ),
                             modifier = Modifier
-                                .weight(1f)
+                                .fillMaxWidth()
                                 .height(68.dp)
                         ) {
                             Icon(
@@ -137,7 +137,7 @@ fun UserTypeSelectionScreen(
                                 contentColor = Color.White
                             ),
                             modifier = Modifier
-                                .weight(1f)
+                                .fillMaxWidth()
                                 .height(68.dp)
                         ) {
                             Icon(

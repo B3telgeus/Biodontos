@@ -36,12 +36,12 @@ val supabaseKey = envProperties.getProperty(
 
 android {
     namespace = "com.example.biodontos"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.biodontos"
-        minSdk = 36
-        targetSdk = 36
+        minSdk = 26
+        targetSdk = 35
         versionCode = 2
         versionName = "1.1.0"
 
