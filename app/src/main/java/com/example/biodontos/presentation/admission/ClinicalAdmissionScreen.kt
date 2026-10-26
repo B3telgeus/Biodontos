@@ -366,7 +366,11 @@ private fun Step1IdentificationContent(
             // DNI
             OutlinedTextField(
                 value = state.dniCedula,
-                onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateDni(it)) },
+                onValueChange = { input ->
+                    if (input.all { it.isDigit() } && input.length <= 10) {
+                        onEvent(ClinicalAdmissionEvent.UpdateDni(value = input))
+                    }
+                },
                 label = { Text("Número de Documento (DNI/Cédula) *") },
                 isError = state.dniError != null,
                 supportingText = state.dniError?.let { { Text(it, color = BiodontosErrorRed) } },
