@@ -815,23 +815,82 @@ class ClinicalAdmissionViewModel(
         val s = _state.value
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
+            var scheduledTimeNote = ""
+
             // Si el doctor programó fecha para la próxima cita
             if (s.nextAppointmentDate.isNotBlank()) {
-                val appointment = Appointment(
+                val validDoctorId = resolveDoctorUuid(s.doctorId)
+                var targetTime = s.nextAppointmentTime.ifBlank { "10:00" }.trim()
+                if (targetTime.length == 5) {
+                    targetTime = "$targetTime:00"
+                }
+
+                // 1. Consultar franjas ocupadas
+                val busySlots = appointmentRepository.getDoctorBusySlots(validDoctorId, s.nextAppointmentDate)
+                    .getOrDefault(emptyList())
+
+                val requestedIso = "${s.nextAppointmentDate}T$targetTime"
+                val isBusy = busySlots.any { busy ->
+                    busy.startsWith("${s.nextAppointmentDate}T${targetTime.take(5)}") || busy == requestedIso
+                }
+
+                // Si está ocupado, buscar la siguiente franja horaria disponible en la jornada
+                val candidateTimes = listOf(
+                    "08:00:00", "08:30:00", "09:00:00", "09:30:00", "10:00:00", "10:30:00",
+                    "11:00:00", "11:30:00", "12:00:00", "14:00:00", "14:30:00", "15:00:00",
+                    "15:30:00", "16:00:00", "16:30:00", "17:00:00"
+                )
+
+                if (isBusy) {
+                    val availableTime = candidateTimes.firstOrNull { candidate ->
+                        val iso = "${s.nextAppointmentDate}T$candidate"
+                        busySlots.none { busy -> busy.startsWith(iso.take(16)) }
+                    }
+                    if (availableTime != null) {
+                        targetTime = availableTime
+                    }
+                }
+
+                var appointmentCreated = false
+                val appointmentToTry = Appointment(
                     patientId = s.patientId,
-                    doctorId = s.doctorId.ifBlank { null },
-                    startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T${s.nextAppointmentTime}:00"),
-                    reason = s.nextAppointmentReason,
+                    doctorId = validDoctorId,
+                    startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T$targetTime"),
+                    reason = s.nextAppointmentReason.ifBlank { "Control y seguimiento post-tratamiento" },
                     status = AppointmentStatus.SCHEDULED,
                     isConfirmed = false
                 )
-                appointmentRepository.createAppointment(appointment)
+
+                val primaryResult = appointmentRepository.createAppointment(appointmentToTry)
+                if (primaryResult.isSuccess) {
+                    appointmentCreated = true
+                    scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${targetTime.take(5)}."
+                } else {
+                    // Intento de recuperación probando las siguientes franjas horarias
+                    for (candidate in candidateTimes) {
+                        if (candidate == targetTime) continue
+                        val fallbackAppt = appointmentToTry.copy(
+                            startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T$candidate")
+                        )
+                        val fallbackResult = appointmentRepository.createAppointment(fallbackAppt)
+                        if (fallbackResult.isSuccess) {
+                            appointmentCreated = true
+                            scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${candidate.take(5)}."
+                            break
+                        }
+                    }
+                }
+
+                if (!appointmentCreated) {
+                    scheduledTimeNote = " (Nota: No se pudo agendar la próxima cita automáticamente por conflicto de horario)."
+                }
             }
+
             _state.update {
                 it.copy(
                     isLoading = false,
                     isFinished = true,
-                    successMessage = "¡Proceso de ingreso clínico finalizado con éxito!"
+                    successMessage = "¡Proceso de ingreso clínico finalizado con éxito!$scheduledTimeNote"
                 )
             }
         }

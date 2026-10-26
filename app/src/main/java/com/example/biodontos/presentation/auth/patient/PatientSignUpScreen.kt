@@ -375,7 +375,7 @@ fun PatientSignUpScreen(
                     // --- BARRA INFERIOR DE NAVEGACIÓN: [ <- ATRÁS ]  y  [ SIGUIENTE -> ] ---
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // BOTÓN RETROCEDER / ATRÁS
@@ -383,6 +383,7 @@ fun PatientSignUpScreen(
                             onClick = onBackClick,
                             shape = RoundedCornerShape(24.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                             modifier = Modifier
                                 .weight(1f)
                                 .height(54.dp)
@@ -392,11 +393,12 @@ fun PatientSignUpScreen(
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = if (state.currentStep == 1) "Cancelar" else "Atrás",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
                             )
                         }
 
@@ -409,8 +411,9 @@ fun PatientSignUpScreen(
                                 containerColor = BiodontosDark,
                                 contentColor = Color.White
                             ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                             modifier = Modifier
-                                .weight(1.3f)
+                                .weight(1f)
                                 .height(54.dp)
                         ) {
                             if (state.isLoading) {
@@ -422,10 +425,11 @@ fun PatientSignUpScreen(
                             } else {
                                 Text(
                                     text = if (state.currentStep == 3) "Crear Cuenta" else "Siguiente",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Icon(
                                     imageVector = if (state.currentStep == 3) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward,
                                     contentDescription = null,

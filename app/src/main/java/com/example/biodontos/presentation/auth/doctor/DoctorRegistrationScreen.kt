@@ -344,7 +344,7 @@ fun DoctorRegistrationScreen(
                     // --- BARRA INFERIOR DE NAVEGACIÓN: [ <- ATRÁS ]  y  [ CONTINUAR -> ] ---
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // BOTÓN RETROCEDER / ATRÁS
@@ -352,6 +352,7 @@ fun DoctorRegistrationScreen(
                             onClick = onBackClick,
                             shape = RoundedCornerShape(24.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                             modifier = Modifier
                                 .weight(1f)
                                 .height(54.dp)
@@ -361,11 +362,12 @@ fun DoctorRegistrationScreen(
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = if (state.currentStep == 1) "Cancelar" else "Atrás",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
                             )
                         }
 
@@ -378,8 +380,9 @@ fun DoctorRegistrationScreen(
                                 containerColor = BiodontosDark,
                                 contentColor = Color.White
                             ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                             modifier = Modifier
-                                .weight(1.3f)
+                                .weight(1f)
                                 .height(54.dp)
                         ) {
                             if (state.isLoading) {
@@ -391,10 +394,11 @@ fun DoctorRegistrationScreen(
                             } else {
                                 Text(
                                     text = if (state.currentStep == 2) "Crear Cuenta" else "Continuar",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Icon(
                                     imageVector = if (state.currentStep == 2) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward,
                                     contentDescription = null,
