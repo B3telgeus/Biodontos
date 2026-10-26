@@ -59,17 +59,17 @@ fun OnboardingScreen(
                     modifier = Modifier
                         .weight(1f)
                         .padding(end = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     // Imagen personalizada del Diente (Tablet)
                     Image(
                         painter = painterResource(id = R.drawable.diente),
                         contentDescription = "Logo Biodontos",
-                        modifier = Modifier
-                            .size(110.dp)
-                            .offset(y = (-8).dp)
+                        modifier = Modifier.size(180.dp),
+                        alignment = Alignment.Center
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "¡SONRÍE!",
                         fontSize = 54.sp,
@@ -169,11 +169,10 @@ fun OnboardingScreen(
                 Image(
                     painter = painterResource(id = R.drawable.diente),
                     contentDescription = "Logo Biodontos",
-                    modifier = Modifier
-                        .size(90.dp)
-                        .offset(y = (-12).dp)
+                    modifier = Modifier.size(150.dp),
+                    alignment = Alignment.Center
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = "¡SONRÍE!",
                     fontSize = 42.sp,

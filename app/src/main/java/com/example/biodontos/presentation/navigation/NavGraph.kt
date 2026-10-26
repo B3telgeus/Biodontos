@@ -448,7 +448,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 DoctorHomeRoute(
                     viewModel = viewModel,
                     onNavigateToPatients = { navController.navigate(PatientList) },
-                    onNavigateToNewPatient = { navController.navigate(PatientRegistration) },
+                    onNavigateToNewPatient = { navController.navigate(ClinicalAdmission()) },
                     onNavigateToAppointments = { navController.navigate(DoctorAppointments) },
                     onNavigateToDocuments = { navController.navigate(DoctorDocuments) },
                     onNavigateToLogin = {
@@ -488,7 +488,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 PatientListScreen(
                     state = state,
                     onSearchQueryChange = viewModel::onSearchQueryChange,
-                    onAddPatientClick = { navController.navigate(PatientRegistration) },
+                    onAddPatientClick = { navController.navigate(ClinicalAdmission()) },
                     onClinicalAdmissionClick = { navController.navigate(ClinicalAdmission()) },
                     onPatientClick = { patient ->
                         navController.navigate(PatientDetail(patientId = patient.id))
