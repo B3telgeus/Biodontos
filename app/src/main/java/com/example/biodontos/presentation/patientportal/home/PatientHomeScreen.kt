@@ -653,7 +653,7 @@ private fun DoctorsCard(
                     )
                 }
 
-                doctor.bio?.let { bio ->
+                doctor.bio?.takeIf { it.isNotBlank() }?.let { bio ->
                     Text(
                         text = bio,
                         fontSize = 12.sp,

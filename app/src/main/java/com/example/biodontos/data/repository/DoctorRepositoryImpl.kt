@@ -156,9 +156,10 @@ class DoctorRepositoryImpl : DoctorRepository {
     }
 
     override suspend fun updateDoctorProfile(doctor: Doctor): Result<Doctor> {
+        val docId = doctor.id.value
+        val userId = doctor.userId
+
         return try {
-            val docId = doctor.id.value
-            val userId = doctor.userId
             SupabaseClient.client.from("doctors").update(
                 {
                     set("first_name", doctor.firstName.trim())
@@ -187,7 +188,49 @@ class DoctorRepositoryImpl : DoctorRepository {
             Result.success(doctor)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            Result.failure(e)
+            val msg = e.message?.lowercase().orEmpty()
+            val isMissingColumnError = msg.contains("bio") ||
+                msg.contains("photo_url") ||
+                msg.contains("column") ||
+                msg.contains("42703") ||
+                msg.contains("schema cache") ||
+                msg.contains("pgrst204")
+
+            if (isMissingColumnError) {
+                // Fallback defensivo: Si la columna 'bio' o 'photo_url' no existe aún en la tabla 'doctors' de Supabase,
+                // reintentar guardando los campos esenciales para no bloquear la actualización del perfil del doctor.
+                try {
+                    SupabaseClient.client.from("doctors").update(
+                        {
+                            set("first_name", doctor.firstName.trim())
+                            set("last_name", doctor.lastName.trim())
+                            set("specialty", doctor.specialty.trim())
+                            set("license_number", doctor.licenseNumber.trim())
+                            set("phone", doctor.phone?.trim()?.ifEmpty { null })
+                        }
+                    ) {
+                        filter {
+                            if (!userId.isNullOrBlank()) {
+                                or {
+                                    eq("id", docId)
+                                    eq("user_id", userId)
+                                }
+                            } else {
+                                or {
+                                    eq("id", docId)
+                                    eq("user_id", docId)
+                                }
+                            }
+                        }
+                    }
+                    Result.success(doctor.copy(bio = null, photoUrl = null))
+                } catch (fallbackEx: Exception) {
+                    if (fallbackEx is CancellationException) throw fallbackEx
+                    Result.failure(fallbackEx)
+                }
+            } else {
+                Result.failure(e)
+            }
         }
     }
 }
