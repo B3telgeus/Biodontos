@@ -16,19 +16,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,7 +52,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.BiodontosCardGradient
+import com.example.biodontos.core.designsystem.BiodontosCardTop
 import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.core.designsystem.BiodontosErrorBg
+import com.example.biodontos.core.designsystem.BiodontosErrorRed
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosRowHighlight
@@ -73,7 +83,8 @@ fun PatientHomeRoute(
     onNavigateToDoctors: () -> Unit,
     onNavigateToBooking: (String) -> Unit,
     onNavigateToLogin: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isExpanded: Boolean = LocalConfiguration.current.screenWidthDp >= 600
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -93,7 +104,8 @@ fun PatientHomeRoute(
     PatientHomeScreen(
         state = state,
         onEvent = viewModel::onEvent,
-        modifier = modifier
+        modifier = modifier,
+        isExpanded = isExpanded
     )
 }
 
@@ -127,17 +139,76 @@ fun PatientHomeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "¡Hola, ${state.patientName.ifBlank { "Usuario" }}!",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = BiodontosDark
-            )
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_tooth),
-                contentDescription = "Biodontos",
-                modifier = Modifier.size(44.dp)
-            )
+            Column(modifier = Modifier.weight(1f, fill = false)) {
+                Text(
+                    text = "¡Hola, ${state.patientName.ifBlank { "Usuario" }}!",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BiodontosDark
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = { onEvent(PatientHomeUiEvent.Refresh) },
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Actualizar información",
+                        tint = BiodontosDark
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_tooth),
+                    contentDescription = "Biodontos",
+                    modifier = Modifier.size(44.dp)
+                )
+            }
+        }
+
+        // --- BANNER DE ERROR REACTIVO ---
+        state.errorMessage?.let { errorMsg ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = BiodontosErrorBg),
+                border = BorderStroke(1.dp, BiodontosErrorRed)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Warning,
+                            contentDescription = "Error",
+                            tint = BiodontosErrorRed,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = errorMsg,
+                            fontSize = 13.sp,
+                            color = BiodontosDark,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    BiodontosPillButton(
+                        text = "Reintentar",
+                        onClick = { onEvent(PatientHomeUiEvent.Refresh) },
+                        modifier = Modifier.height(36.dp)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -170,7 +241,7 @@ fun PatientHomeScreen(
                         )
                         ClinicalRecordsSummaryCard(
                             completedCount = state.completedAppointmentsCount,
-                            onGoToRecords = { /* Próximamente */ },
+                            onGoToRecords = { onEvent(PatientHomeUiEvent.NavigateToAppointments) },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -202,7 +273,7 @@ fun PatientHomeScreen(
                 )
                 ClinicalRecordsSummaryCard(
                     completedCount = state.completedAppointmentsCount,
-                    onGoToRecords = { }
+                    onGoToRecords = { onEvent(PatientHomeUiEvent.NavigateToAppointments) }
                 )
                 DoctorsCard(
                     doctors = state.doctors,
@@ -237,7 +308,7 @@ private fun AgendaCard(
                 Column {
                     Text(
                         text = "AGENDA",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosGreyText,
                         letterSpacing = 1.sp
@@ -363,7 +434,8 @@ private fun AgendaCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(Color(0xFFF7F8FA))
+                                    .background(BiodontosCardTop)
+                                    .clickable { onGoToAppointments() }
                                     .padding(10.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -416,7 +488,7 @@ private fun PaymentsSummaryCard(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = "PAGOS",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosGreyText,
                     letterSpacing = 1.sp
@@ -473,7 +545,7 @@ private fun ClinicalRecordsSummaryCard(
         ) {
             Text(
                 text = "HISTORIA CLÍNICA",
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosGreyText,
                 letterSpacing = 1.sp
@@ -519,13 +591,24 @@ private fun DoctorsCard(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                text = "TUS DOCTORES",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = BiodontosGreyText,
-                letterSpacing = 1.sp
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "TUS DOCTORES",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BiodontosGreyText,
+                    letterSpacing = 1.sp
+                )
+                BiodontosPillButton(
+                    text = "Ver todos",
+                    variant = PillButtonVariant.LIGHT,
+                    onClick = onSeeAllDoctors
+                )
+            }
 
             if (doctor == null) {
                 Box(
@@ -567,20 +650,6 @@ private fun DoctorsCard(
                         contentDescription = doctor.displayName,
                         modifier = Modifier.size(64.dp),
                         tint = BiodontosDark.copy(alpha = 0.5f)
-                    )
-                }
-
-                // Badge de disponibilidad
-                Box(
-                    modifier = Modifier
-                        .background(BiodontosDark, shape = RoundedCornerShape(12.dp))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "Disponible hoy",
-                        color = BiodontosWhite,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
                     )
                 }
 

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -45,11 +46,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.core.designsystem.BiodontosErrorRed
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosScreenGradient
 import com.example.biodontos.core.designsystem.BiodontosWhite
@@ -72,6 +76,7 @@ fun PatientPortalShell(
     isExpandedScreen: Boolean = LocalConfiguration.current.screenWidthDp >= 600,
     content: @Composable () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     if (showLogoutDialog) {
@@ -97,7 +102,7 @@ fun PatientPortalShell(
                         onLogoutClick()
                     }
                 ) {
-                    Text("Cerrar sesión", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
+                    Text("Cerrar sesión", color = BiodontosErrorRed, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -146,7 +151,10 @@ fun PatientPortalShell(
                                 val isSelected = selectedItem == item
                                 NavigationRailItem(
                                     selected = isSelected,
-                                    onClick = { onItemSelected(item) },
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        onItemSelected(item)
+                                    },
                                     icon = {
                                         Icon(
                                             imageVector = item.icon,
@@ -157,7 +165,7 @@ fun PatientPortalShell(
                                     colors = NavigationRailItemDefaults.colors(
                                         selectedIconColor = BiodontosWhite,
                                         unselectedIconColor = BiodontosWhite.copy(alpha = 0.5f),
-                                        indicatorColor = Color(0xFF2C3240)
+                                        indicatorColor = BiodontosDark.copy(alpha = 0.85f)
                                     )
                                 )
                             }
@@ -167,6 +175,7 @@ fun PatientPortalShell(
                         Box(
                             modifier = Modifier
                                 .padding(bottom = 16.dp)
+                                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .clickable { showLogoutDialog = true }
                                 .padding(12.dp),
@@ -205,7 +214,10 @@ fun PatientPortalShell(
                             val isSelected = selectedItem == item
                             NavigationBarItem(
                                 selected = isSelected,
-                                onClick = { onItemSelected(item) },
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    onItemSelected(item)
+                                },
                                 icon = {
                                     Icon(
                                         imageVector = item.icon,
@@ -215,14 +227,15 @@ fun PatientPortalShell(
                                 label = {
                                     Text(
                                         text = item.title,
-                                        fontSize = 11.sp,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
                                         color = if (isSelected) BiodontosWhite else BiodontosWhite.copy(alpha = 0.6f)
                                     )
                                 },
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedIconColor = BiodontosWhite,
                                     unselectedIconColor = BiodontosWhite.copy(alpha = 0.5f),
-                                    indicatorColor = Color(0xFF2C3240)
+                                    indicatorColor = BiodontosDark.copy(alpha = 0.85f)
                                 )
                             )
                         }
@@ -238,14 +251,15 @@ fun PatientPortalShell(
                             label = {
                                 Text(
                                     text = "Salir",
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = BiodontosWhite.copy(alpha = 0.6f)
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = BiodontosWhite,
                                 unselectedIconColor = BiodontosWhite.copy(alpha = 0.5f),
-                                indicatorColor = Color(0xFF2C3240)
+                                indicatorColor = BiodontosDark.copy(alpha = 0.85f)
                             )
                         )
                     }

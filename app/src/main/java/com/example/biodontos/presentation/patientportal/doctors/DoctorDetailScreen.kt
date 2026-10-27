@@ -26,9 +26,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.example.biodontos.core.designsystem.BiodontosScreenBgTop
+import com.example.biodontos.core.designsystem.StatusConfirmed
 import com.example.biodontos.core.designsystem.insets.BiodontosBottomActionBar
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.runtime.LaunchedEffect
@@ -93,7 +96,9 @@ fun DoctorDetailScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFFE9E9EB),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = BiodontosScreenBgTop,
+
         bottomBar = {
             val detail = state.doctorDetail
             if (detail != null && !state.isLoading && state.errorMessage == null) {
@@ -184,6 +189,7 @@ fun DoctorDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
+                    contentPadding = PaddingValues(bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Tarjeta Principal (Hero)
@@ -199,21 +205,13 @@ fun DoctorDetailScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // Avatar grande
-                                Box(
-                                    modifier = Modifier
-                                        .size(88.dp)
-                                        .clip(CircleShape)
-                                        .background(BiodontosInputBg),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = doctor.displayName,
-                                        modifier = Modifier.size(54.dp),
-                                        tint = BiodontosDark.copy(alpha = 0.6f)
-                                    )
-                                }
+                                // Avatar grande con foto Base64 o iniciales
+                                DoctorAvatar(
+                                    photoUrl = doctor.photoUrl,
+                                    firstName = doctor.firstName,
+                                    lastName = doctor.lastName,
+                                    size = 88.dp
+                                )
 
                                 Text(
                                     text = doctor.displayName,
@@ -241,7 +239,7 @@ fun DoctorDetailScreen(
                                 if (detail.isAvailableToday) {
                                     Box(
                                         modifier = Modifier
-                                            .background(Color(0xFF2E7D32), shape = RoundedCornerShape(12.dp))
+                                            .background(StatusConfirmed, shape = RoundedCornerShape(12.dp))
                                             .padding(horizontal = 12.dp, vertical = 6.dp)
                                     ) {
                                         Text(
@@ -251,6 +249,7 @@ fun DoctorDetailScreen(
                                             fontWeight = FontWeight.SemiBold
                                         )
                                     }
+
                                 } else {
                                     Box(
                                         modifier = Modifier
@@ -284,7 +283,7 @@ fun DoctorDetailScreen(
                                 ) {
                                     Text(
                                         text = "ACERCA DEL ESPECIALISTA",
-                                        fontSize = 11.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = BiodontosGreyText,
                                         letterSpacing = 1.sp
@@ -322,7 +321,7 @@ fun DoctorDetailScreen(
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = "HORARIO DE ATENCIÓN",
-                                        fontSize = 11.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = BiodontosGreyText,
                                         letterSpacing = 1.sp
@@ -331,11 +330,12 @@ fun DoctorDetailScreen(
 
                                 if (detail.availability.isEmpty()) {
                                     Text(
-                                        text = "Lunes a Viernes: 08:00 AM - 12:00 PM y 02:00 PM - 06:00 PM",
+                                        text = "Horarios sujetos a programación clínica. Consulta cupos al agendar.",
                                         fontSize = 13.sp,
-                                        color = BiodontosDark
+                                        color = BiodontosGreyText
                                     )
                                 } else {
+
                                     detail.availability.forEach { slot ->
                                         ScheduleRow(slot)
                                     }

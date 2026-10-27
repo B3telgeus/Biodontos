@@ -22,6 +22,7 @@ data class PatientPaymentsUiState(
     val balances: List<TreatmentBalance> = emptyList(),
     val recentPayments: List<Payment> = emptyList(),
     val selectedFilter: PaymentFilter = PaymentFilter.ALL,
+    val selectedPaymentForReceipt: Payment? = null,
     val errorMessage: String? = null
 ) {
     val filteredBalances: List<TreatmentBalance>
@@ -39,6 +40,8 @@ sealed interface PatientPaymentsUiEvent {
     data object Refresh : PatientPaymentsUiEvent
     data object Retry : PatientPaymentsUiEvent
     data class SelectFilter(val filter: PaymentFilter) : PatientPaymentsUiEvent
+    data class ViewPaymentReceipt(val payment: Payment) : PatientPaymentsUiEvent
+    data object DismissPaymentReceipt : PatientPaymentsUiEvent
 }
 
 sealed interface PatientPaymentsUiEffect {

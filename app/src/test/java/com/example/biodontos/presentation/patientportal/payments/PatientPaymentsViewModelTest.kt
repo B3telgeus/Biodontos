@@ -177,4 +177,89 @@ class PatientPaymentsViewModelTest {
         assertFalse(state.isRefreshing)
         assertEquals(CopAmount(800_000), state.totalPending)
     }
+
+    @Test
+    fun `when retry event is triggered after error, re-executes loadPayments and recovers state`() = runTest {
+        coEvery { getPaymentSummaryUseCase("patient-100") } returnsMany listOf(
+            Result.failure(RuntimeException("Error temporal de red")),
+            Result.success(testSummary)
+        )
+
+        val viewModel = PatientPaymentsViewModel(getCurrentPatientUseCase, getPaymentSummaryUseCase)
+        advanceUntilIdle()
+
+        assertEquals("Error temporal de red", viewModel.uiState.value.errorMessage)
+
+        viewModel.onEvent(PatientPaymentsUiEvent.Retry)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertNull(state.errorMessage)
+        assertEquals(CopAmount(800_000), state.totalPending)
+        assertEquals(2, state.balances.size)
+    }
+
+    @Test
+    fun `when selecting payment for receipt breakdown, uiState updates selectedPaymentForReceipt`() = runTest {
+        val viewModel = PatientPaymentsViewModel(getCurrentPatientUseCase, getPaymentSummaryUseCase)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.selectedPaymentForReceipt)
+
+        viewModel.onEvent(PatientPaymentsUiEvent.ViewPaymentReceipt(payment1))
+
+        assertEquals(payment1, viewModel.uiState.value.selectedPaymentForReceipt)
+        assertEquals("pay-1", viewModel.uiState.value.selectedPaymentForReceipt?.id)
+        assertEquals(CopAmount(400_000), viewModel.uiState.value.selectedPaymentForReceipt?.amount)
+    }
+
+    @Test
+    fun `when dismissing receipt breakdown, uiState clears selectedPaymentForReceipt`() = runTest {
+        val viewModel = PatientPaymentsViewModel(getCurrentPatientUseCase, getPaymentSummaryUseCase)
+        advanceUntilIdle()
+
+        viewModel.onEvent(PatientPaymentsUiEvent.ViewPaymentReceipt(payment2))
+        assertEquals(payment2, viewModel.uiState.value.selectedPaymentForReceipt)
+
+        viewModel.onEvent(PatientPaymentsUiEvent.DismissPaymentReceipt)
+        assertNull(viewModel.uiState.value.selectedPaymentForReceipt)
+    }
+
+    @Test
+    fun `when patient session has blank id, loadPayments sets error state without calling billing usecase`() = runTest {
+        val blankPatient = testPatient.copy(id = "   ")
+        coEvery { getCurrentPatientUseCase() } returns Result.success(blankPatient)
+
+        val viewModel = PatientPaymentsViewModel(getCurrentPatientUseCase, getPaymentSummaryUseCase)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals("No se pudo identificar la sesión del paciente", state.errorMessage)
+    }
+
+    @Test
+    fun `when balances have no recent payments and zero pending, uiState reflects zero amounts cleanly`() = runTest {
+        val emptySummary = PatientPaymentSummary(
+            totalPending = CopAmount(0),
+            totalPaid = CopAmount(0),
+            balances = emptyList(),
+            recentPayments = emptyList()
+        )
+        coEvery { getPaymentSummaryUseCase("patient-100") } returns Result.success(emptySummary)
+
+        val viewModel = PatientPaymentsViewModel(getCurrentPatientUseCase, getPaymentSummaryUseCase)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertNull(state.errorMessage)
+        assertEquals(CopAmount(0), state.totalPending)
+        assertEquals(CopAmount(0), state.totalPaid)
+        assertEquals(0, state.balances.size)
+        assertEquals(0, state.recentPayments.size)
+        assertEquals(0, state.filteredBalances.size)
+        assertFalse(state.hasPendingBalance)
+    }
 }

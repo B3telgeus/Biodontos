@@ -99,4 +99,24 @@ class DoctorDetailViewModelTest {
             assertEquals(DoctorDetailUiEffect.NavigateToBooking("doc-1"), effect)
         }
     }
+
+    @Test
+    fun `retry event reloads doctor detail after failure`() = runTest {
+        coEvery { getDoctorDetailUseCase("doc-1") } returns Result.failure(Exception("Fallo temporal"))
+
+        val viewModel = createViewModel("doc-1")
+        advanceUntilIdle()
+        assertEquals("Fallo temporal", viewModel.uiState.value.errorMessage)
+
+        coEvery { getDoctorDetailUseCase("doc-1") } returns Result.success(testDetail)
+        viewModel.onEvent(DoctorDetailUiEvent.Retry)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals(null, state.errorMessage)
+        assertNotNull(state.doctorDetail)
+        assertEquals("Dr. Andrés Silva", state.doctorDetail?.doctor?.displayName)
+    }
 }
+

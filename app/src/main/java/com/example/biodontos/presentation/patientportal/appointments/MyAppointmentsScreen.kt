@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,9 +20,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -33,7 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -113,7 +122,7 @@ fun MyAppointmentsScreen(
                 Column {
                     Text(
                         text = "AGENDA",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosGreyText,
                         letterSpacing = 1.sp
@@ -126,11 +135,27 @@ fun MyAppointmentsScreen(
                     )
                 }
 
-                BiodontosPillButton(
-                    text = "Nueva Cita",
-                    variant = PillButtonVariant.DARK,
-                    onClick = { onEvent(MyAppointmentsUiEvent.BookNewAppointment) }
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = { onEvent(MyAppointmentsUiEvent.Refresh) },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Actualizar citas",
+                            tint = BiodontosDark
+                        )
+                    }
+
+                    BiodontosPillButton(
+                        text = "Nueva Cita",
+                        variant = PillButtonVariant.DARK,
+                        onClick = { onEvent(MyAppointmentsUiEvent.BookNewAppointment) }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -149,9 +174,15 @@ fun MyAppointmentsScreen(
                     modifier = Modifier.weight(1f)
                 )
                 TabItem(
-                    text = "Historial (${state.pastAppointments.size})",
-                    isSelected = state.selectedTab == AppointmentTab.PAST,
-                    onClick = { onEvent(MyAppointmentsUiEvent.SelectTab(AppointmentTab.PAST)) },
+                    text = "Completadas (${state.completedAppointments.size})",
+                    isSelected = state.selectedTab == AppointmentTab.COMPLETED,
+                    onClick = { onEvent(MyAppointmentsUiEvent.SelectTab(AppointmentTab.COMPLETED)) },
+                    modifier = Modifier.weight(1f)
+                )
+                TabItem(
+                    text = "Canceladas (${state.cancelledAppointments.size})",
+                    isSelected = state.selectedTab == AppointmentTab.CANCELLED,
+                    onClick = { onEvent(MyAppointmentsUiEvent.SelectTab(AppointmentTab.CANCELLED)) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -159,10 +190,10 @@ fun MyAppointmentsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Lista de Citas
-            val activeList = if (state.selectedTab == AppointmentTab.UPCOMING) {
-                state.upcomingAppointments
-            } else {
-                state.pastAppointments
+            val activeList = when (state.selectedTab) {
+                AppointmentTab.UPCOMING -> state.upcomingAppointments
+                AppointmentTab.COMPLETED -> state.completedAppointments
+                AppointmentTab.CANCELLED -> state.cancelledAppointments
             }
 
             when {
@@ -174,6 +205,19 @@ fun MyAppointmentsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(color = BiodontosDark)
+                    }
+                }
+                state.errorMessage != null && activeList.isEmpty() -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AppointmentsErrorCard(
+                            message = state.errorMessage,
+                            onRetry = { onEvent(MyAppointmentsUiEvent.Refresh) }
+                        )
                     }
                 }
                 activeList.isEmpty() -> {
@@ -188,12 +232,14 @@ fun MyAppointmentsScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = if (state.selectedTab == AppointmentTab.UPCOMING)
-                                    "No tienes citas próximas agendadas."
-                                else
-                                    "No tienes historial de citas finalizadas.",
+                                text = when (state.selectedTab) {
+                                    AppointmentTab.UPCOMING -> "No tienes citas próximas agendadas."
+                                    AppointmentTab.COMPLETED -> "No tienes historial de citas finalizadas."
+                                    AppointmentTab.CANCELLED -> "No tienes citas canceladas."
+                                },
                                 color = BiodontosGreyText,
-                                fontSize = 14.sp
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center
                             )
                             if (state.selectedTab == AppointmentTab.UPCOMING) {
                                 BiodontosPillButton(
@@ -253,25 +299,68 @@ fun MyAppointmentsScreen(
 }
 
 @Composable
+private fun AppointmentsErrorCard(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = message,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = BiodontosErrorRed,
+                textAlign = TextAlign.Center
+            )
+            BiodontosPillButton(
+                text = "Reintentar",
+                variant = PillButtonVariant.DARK,
+                onClick = onRetry
+            )
+        }
+    }
+}
+
+@Composable
 private fun TabItem(
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
     Box(
         modifier = modifier
+            .defaultMinSize(minHeight = 48.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(if (isSelected) BiodontosDark else Color.Transparent)
-            .clickable { onClick() }
-            .padding(vertical = 10.dp),
+            .clickable {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onClick()
+            }
+            .padding(horizontal = 6.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) BiodontosWhite else BiodontosDark
+            color = if (isSelected) BiodontosWhite else BiodontosDark,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
         )
     }
 }

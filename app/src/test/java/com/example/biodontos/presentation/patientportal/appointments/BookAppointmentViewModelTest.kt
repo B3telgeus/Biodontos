@@ -23,6 +23,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -128,7 +129,7 @@ class BookAppointmentViewModelTest {
     }
 
     @Test
-    fun `confirm booking successfully books and navigates to my appointments`() = runTest {
+    fun `confirm booking successfully books and emits NavigateToConfirmation`() = runTest {
         val testAppointment = Appointment(
             id = "appt-99",
             patientId = "patient-1",
@@ -156,12 +157,44 @@ class BookAppointmentViewModelTest {
             val toast = awaitItem()
             assert(toast is BookAppointmentUiEffect.ShowToast)
             val navigate = awaitItem()
-            assertEquals(BookAppointmentUiEffect.NavigateToMyAppointments, navigate)
+            assert(navigate is BookAppointmentUiEffect.NavigateToConfirmation)
+            val confirmation = (navigate as BookAppointmentUiEffect.NavigateToConfirmation).confirmation
+            assertEquals("appt-99", confirmation.appointmentId)
+            assertEquals("Dr. Carolina Duque", confirmation.doctorName)
+            assertEquals("Ortodoncia", confirmation.specialty)
+            assertEquals(testSlot.start.toString(), confirmation.startIso)
+            assertEquals("Control de rutina", confirmation.reason)
+            assertFalse(confirmation.isRescheduled)
         }
     }
 
     @Test
-    fun `confirm booking with rescheduleId calls reschedule and navigates`() = runTest {
+    fun `confirm booking when rescheduling triggers 2-step confirmation dialog`() = runTest {
+        val viewModel = createViewModel(rescheduleId = "appt-existing")
+        advanceUntilIdle()
+
+        viewModel.onEvent(BookAppointmentUiEvent.SelectSlot(testSlot))
+        assertFalse(viewModel.uiState.value.showRescheduleConfirmDialog)
+
+        viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
+        assertTrue(viewModel.uiState.value.showRescheduleConfirmDialog)
+    }
+
+    @Test
+    fun `dismiss reschedule dialog resets dialog flag`() = runTest {
+        val viewModel = createViewModel(rescheduleId = "appt-existing")
+        advanceUntilIdle()
+
+        viewModel.onEvent(BookAppointmentUiEvent.SelectSlot(testSlot))
+        viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
+        assertTrue(viewModel.uiState.value.showRescheduleConfirmDialog)
+
+        viewModel.onEvent(BookAppointmentUiEvent.DismissRescheduleDialog)
+        assertFalse(viewModel.uiState.value.showRescheduleConfirmDialog)
+    }
+
+    @Test
+    fun `execute reschedule completes and emits NavigateToConfirmation`() = runTest {
         coEvery {
             rescheduleAppointmentUseCase(
                 appointmentId = "appt-existing",
@@ -174,13 +207,61 @@ class BookAppointmentViewModelTest {
         advanceUntilIdle()
 
         viewModel.onEvent(BookAppointmentUiEvent.SelectSlot(testSlot))
+        viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
+        assertTrue(viewModel.uiState.value.showRescheduleConfirmDialog)
+
+        viewModel.effects.test {
+            viewModel.onEvent(BookAppointmentUiEvent.ExecuteReschedule)
+            val toast = awaitItem()
+            assert(toast is BookAppointmentUiEffect.ShowToast)
+            val navigate = awaitItem()
+            assert(navigate is BookAppointmentUiEffect.NavigateToConfirmation)
+            val confirmation = (navigate as BookAppointmentUiEffect.NavigateToConfirmation).confirmation
+            assertEquals("appt-existing", confirmation.appointmentId)
+            assertEquals("Dr. Carolina Duque", confirmation.doctorName)
+            assertTrue(confirmation.isRescheduled)
+        }
+        assertFalse(viewModel.uiState.value.showRescheduleConfirmDialog)
+    }
+
+    @Test
+    fun `slot load failure updates errorMessage and allows retry`() = runTest {
+        coEvery { getAvailableSlotsUseCase(DoctorId("doc-1"), any()) } returns Result.failure(RuntimeException("Error de conexión"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isSlotsLoading)
+        assertEquals("No se pudieron consultar los horarios disponibles. Intenta nuevamente.", state.errorMessage)
+        assertEquals(0, state.slots.size)
+
+        coEvery { getAvailableSlotsUseCase(DoctorId("doc-1"), any()) } returns Result.success(listOf(testSlot))
+        viewModel.onEvent(BookAppointmentUiEvent.RetrySlots)
+        advanceUntilIdle()
+
+        val recoveredState = viewModel.uiState.value
+        assertEquals(null, recoveredState.errorMessage)
+        assertEquals(1, recoveredState.slots.size)
+    }
+
+    @Test
+    fun `confirm booking with slot less than 2 hours emits past slot toast`() = runTest {
+        val pastSlot = TimeSlot(
+            start = testNow.plusMinutes(60),
+            end = testNow.plusMinutes(90)
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEvent(BookAppointmentUiEvent.SelectSlot(pastSlot))
 
         viewModel.effects.test {
             viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
             val toast = awaitItem()
             assert(toast is BookAppointmentUiEffect.ShowToast)
-            val navigate = awaitItem()
-            assertEquals(BookAppointmentUiEffect.NavigateToMyAppointments, navigate)
+            assertEquals("El horario seleccionado ya no está disponible (mínimo 2 horas de anticipación)", (toast as BookAppointmentUiEffect.ShowToast).message)
         }
     }
 }
+

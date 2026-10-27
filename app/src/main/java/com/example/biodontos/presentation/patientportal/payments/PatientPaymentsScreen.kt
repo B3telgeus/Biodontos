@@ -47,8 +47,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.biodontos.core.designsystem.Ambar
 import com.example.biodontos.core.designsystem.BiodontosCardGradient
+import com.example.biodontos.core.designsystem.BiodontosCardTop
 import com.example.biodontos.core.designsystem.BiodontosDark
+import com.example.biodontos.core.designsystem.BiodontosErrorRed
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosLightGrey
@@ -68,7 +79,8 @@ import java.time.LocalDateTime
 @Composable
 fun PatientPaymentsRoute(
     viewModel: PatientPaymentsViewModel,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    canNavigateBack: Boolean = false
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -87,6 +99,7 @@ fun PatientPaymentsRoute(
         state = state,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        canNavigateBack = canNavigateBack,
         snackbarHostState = snackbarHostState
     )
 }
@@ -96,7 +109,8 @@ fun PatientPaymentsRoute(
 fun PatientPaymentsScreen(
     state: PatientPaymentsUiState,
     onEvent: (PatientPaymentsUiEvent) -> Unit,
-    onNavigateBack: () -> Unit,
+    onNavigateBack: () -> Unit = {},
+    canNavigateBack: Boolean = false,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     Scaffold(
@@ -109,6 +123,7 @@ fun PatientPaymentsScreen(
                 .fillMaxSize()
                 .background(BiodontosScreenGradient)
                 .padding(paddingValues)
+                .imePadding()
         ) {
             if (state.isLoading && !state.isRefreshing) {
                 Box(
@@ -134,7 +149,8 @@ fun PatientPaymentsScreen(
                             patientName = state.patientName,
                             isRefreshing = state.isRefreshing,
                             onRefreshClick = { onEvent(PatientPaymentsUiEvent.Refresh) },
-                            onBackClick = onNavigateBack
+                            onBackClick = onNavigateBack,
+                            canNavigateBack = canNavigateBack
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -175,7 +191,10 @@ fun PatientPaymentsScreen(
                                         modifier = Modifier.weight(0.9f),
                                         verticalArrangement = Arrangement.spacedBy(20.dp)
                                     ) {
-                                        RecentPaymentsCard(payments = state.recentPayments)
+                                        RecentPaymentsCard(
+                                            payments = state.recentPayments,
+                                            onPaymentClick = { onEvent(PatientPaymentsUiEvent.ViewPaymentReceipt(it)) }
+                                        )
                                         FinancialInfoCard()
                                     }
                                 }
@@ -197,13 +216,24 @@ fun PatientPaymentsScreen(
                                         onFilterSelected = { onEvent(PatientPaymentsUiEvent.SelectFilter(it)) }
                                     )
 
-                                    RecentPaymentsCard(payments = state.recentPayments)
+                                    RecentPaymentsCard(
+                                        payments = state.recentPayments,
+                                        onPaymentClick = { onEvent(PatientPaymentsUiEvent.ViewPaymentReceipt(it)) }
+                                    )
                                     FinancialInfoCard()
                                 }
                             }
                         }
                     }
                 }
+            }
+
+            if (state.selectedPaymentForReceipt != null) {
+                PaymentReceiptDialog(
+                    payment = state.selectedPaymentForReceipt,
+                    balances = state.balances,
+                    onDismiss = { onEvent(PatientPaymentsUiEvent.DismissPaymentReceipt) }
+                )
             }
         }
     }
@@ -214,7 +244,8 @@ private fun PaymentsHeader(
     patientName: String,
     isRefreshing: Boolean,
     onRefreshClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    canNavigateBack: Boolean
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -222,18 +253,23 @@ private fun PaymentsHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Regresar",
-                    tint = BiodontosDark
-                )
+            if (canNavigateBack) {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Regresar",
+                        tint = BiodontosDark
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
             }
-            Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(
                     text = "ESTADO DE CUENTA",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosGreyText,
                     letterSpacing = 1.2.sp
@@ -249,7 +285,8 @@ private fun PaymentsHeader(
 
         IconButton(
             onClick = onRefreshClick,
-            enabled = !isRefreshing
+            enabled = !isRefreshing,
+            modifier = Modifier.size(48.dp)
         ) {
             if (isRefreshing) {
                 CircularProgressIndicator(
@@ -290,7 +327,7 @@ private fun HeroBalanceCard(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     text = if (hasPending) "SALDO TOTAL PENDIENTE" else "ESTADO GENERAL",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosGreyText,
                     letterSpacing = 1.sp
@@ -325,6 +362,7 @@ private fun TreatmentsSection(
     onFilterSelected: (PaymentFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -341,16 +379,20 @@ private fun TreatmentsSection(
                 color = BiodontosDark
             )
 
-            // Filtros de estado (Pills)
+            // Filtros de estado (Pills con altura mínima 48dp y háptica)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 PaymentFilter.entries.forEach { filter ->
                     val isSelected = selectedFilter == filter
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
+                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(if (isSelected) BiodontosDark else BiodontosInputBg)
-                            .clickable { onFilterSelected(filter) }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .clickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onFilterSelected(filter)
+                            }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -365,7 +407,7 @@ private fun TreatmentsSection(
         }
 
         if (balances.isEmpty()) {
-            EmptyTreatmentsCard()
+            EmptyTreatmentsCard(filter = selectedFilter)
         } else {
             balances.forEach { balance ->
                 TreatmentBalanceCard(balance = balance)
@@ -426,7 +468,7 @@ private fun TreatmentBalanceCard(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "PAGADO",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = StatusConfirmed
                             )
@@ -436,14 +478,14 @@ private fun TreatmentBalanceCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFFFF3E0))
+                            .background(Ambar.copy(alpha = 0.15f))
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = "PENDIENTE",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFE65100)
+                            color = Ambar
                         )
                     }
                 }
@@ -458,7 +500,7 @@ private fun TreatmentBalanceCard(
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp)),
                     color = if (balance.isPaidInFull) StatusConfirmed else BiodontosDark,
-                    trackColor = Color(0xFFE7EAF1)
+                    trackColor = BiodontosInputBg
                 )
 
                 Row(
@@ -475,7 +517,7 @@ private fun TreatmentBalanceCard(
                         text = "Saldo: ${balance.pendingAmount.formatCop()}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (balance.isPaidInFull) StatusConfirmed else Color(0xFFD32F2F)
+                        color = if (balance.isPaidInFull) StatusConfirmed else BiodontosErrorRed
                     )
                 }
             }
@@ -486,6 +528,7 @@ private fun TreatmentBalanceCard(
 @Composable
 private fun RecentPaymentsCard(
     payments: List<Payment>,
+    onPaymentClick: (Payment) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -506,14 +549,38 @@ private fun RecentPaymentsCard(
             )
 
             if (payments.isEmpty()) {
-                Text(
-                    text = "Aún no registras abonos o pagos en la clínica.",
-                    fontSize = 13.sp,
-                    color = BiodontosGreyText
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(BiodontosCardTop)
+                        .padding(20.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = BiodontosGreyText,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "Aún no registras abonos o pagos en la clínica.",
+                            fontSize = 13.sp,
+                            color = BiodontosGreyText,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             } else {
                 payments.forEach { payment ->
-                    PaymentRow(payment = payment)
+                    PaymentRow(
+                        payment = payment,
+                        onClick = { onPaymentClick(payment) }
+                    )
                 }
             }
         }
@@ -521,7 +588,11 @@ private fun RecentPaymentsCard(
 }
 
 @Composable
-private fun PaymentRow(payment: Payment) {
+private fun PaymentRow(
+    payment: Payment,
+    onClick: () -> Unit
+) {
+    val haptic = LocalHapticFeedback.current
     val dateStr = payment.createdAt?.let { dt ->
         "%02d/%02d/%d".format(dt.dayOfMonth, dt.monthValue, dt.year)
     } ?: "Fecha reciente"
@@ -530,7 +601,11 @@ private fun PaymentRow(payment: Payment) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFF7F8FA))
+            .background(BiodontosCardTop)
+            .clickable {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onClick()
+            }
             .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -560,7 +635,7 @@ private fun PaymentRow(payment: Payment) {
                 )
                 Text(
                     text = dateStr,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
             }
@@ -580,7 +655,7 @@ private fun FinancialInfoCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4FA)),
+        colors = CardDefaults.cardColors(containerColor = BiodontosCardTop),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -603,9 +678,9 @@ private fun FinancialInfoCard(modifier: Modifier = Modifier) {
                 )
                 Text(
                     text = "Los abonos realizados en la clínica se ven reflejados de forma inmediata. Para facturación electrónica con NIT o solicitudes de crédito, comunícate con el área de recepción.",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = BiodontosGreyText,
-                    lineHeight = 16.sp
+                    lineHeight = 18.sp
                 )
             }
         }
@@ -613,7 +688,28 @@ private fun FinancialInfoCard(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EmptyTreatmentsCard(modifier: Modifier = Modifier) {
+private fun EmptyTreatmentsCard(
+    filter: PaymentFilter,
+    modifier: Modifier = Modifier
+) {
+    val (title, description, isSuccess) = when (filter) {
+        PaymentFilter.PENDING -> Triple(
+            "¡Al día!",
+            "¡Excelente! No tienes saldos pendientes por pagar.",
+            true
+        )
+        PaymentFilter.COMPLETED -> Triple(
+            "Sin tratamientos completados",
+            "Aún no tienes tratamientos totalmente pagados en tu historial.",
+            false
+        )
+        PaymentFilter.ALL -> Triple(
+            "Sin tratamientos en esta sección",
+            "Tus planes dentales y presupuestos aprobados aparecerán aquí.",
+            false
+        )
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -626,16 +722,33 @@ private fun EmptyTreatmentsCard(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            if (isSuccess) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(StatusConfirmed.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = StatusConfirmed,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
             Text(
-                text = "Sin tratamientos en esta sección",
+                text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                color = BiodontosDark
+                color = if (isSuccess) StatusConfirmed else BiodontosDark
             )
             Text(
-                text = "Tus planes dentales y presupuestos aprobados aparecerán aquí.",
+                text = description,
                 fontSize = 12.sp,
-                color = BiodontosGreyText
+                color = BiodontosGreyText,
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -662,7 +775,7 @@ private fun ErrorCard(
             Text(
                 text = message,
                 fontSize = 14.sp,
-                color = Color(0xFFD32F2F),
+                color = BiodontosErrorRed,
                 fontWeight = FontWeight.Medium
             )
             BiodontosPillButton(
@@ -671,6 +784,217 @@ private fun ErrorCard(
                 onClick = onRetry
             )
         }
+    }
+}
+
+@Composable
+fun PaymentReceiptDialog(
+    payment: Payment,
+    balances: List<TreatmentBalance>,
+    onDismiss: () -> Unit
+) {
+    val treatmentDesc = balances.find { it.treatment.id == payment.treatmentId }
+        ?.treatment?.description?.ifBlank { null }
+        ?: "Tratamiento Odontológico General"
+
+    val receiptNumber = if (payment.id.isNotBlank()) {
+        "#REC-${payment.id.takeLast(6).uppercase()}"
+    } else {
+        "#REC-BIODONTOS"
+    }
+
+    val formattedDateTime = payment.createdAt?.let { dt ->
+        val hour12 = if (dt.hour % 12 == 0) 12 else dt.hour % 12
+        val amPm = if (dt.hour < 12) "a. m." else "p. m."
+        "%02d/%02d/%d, %02d:%02d %s".format(dt.dayOfMonth, dt.monthValue, dt.year, hour12, dt.minute, amPm)
+    } ?: "Fecha registrada en clínica"
+
+    val methodLabel = payment.paymentMethod?.ifBlank { null } ?: "Abono en Sede"
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .clip(RoundedCornerShape(28.dp))
+                .imePadding(),
+            colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Encabezado y botón cerrar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "BIODONTOS CLÍNICA",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BiodontosGreyText,
+                            letterSpacing = 1.2.sp
+                        )
+                        Text(
+                            text = "Comprobante de Abono",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BiodontosDark
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cerrar comprobante",
+                            tint = BiodontosDark
+                        )
+                    }
+                }
+
+                // Número de comprobante y estado
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(BiodontosCardTop)
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = receiptNumber,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BiodontosDark
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (payment.isVoided) BiodontosErrorRed.copy(alpha = 0.12f)
+                                else StatusConfirmed.copy(alpha = 0.12f)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = if (payment.isVoided) "ANULADO" else "APLICADO A CUENTA",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (payment.isVoided) BiodontosErrorRed else StatusConfirmed
+                        )
+                    }
+                }
+
+                // Monto destacado
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(BiodontosCardTop)
+                        .padding(vertical = 16.dp, horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Monto Abonado",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = BiodontosGreyText
+                    )
+                    Text(
+                        text = "+ ${payment.amount.formatCop()}",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (payment.isVoided) BiodontosGreyText else StatusConfirmed
+                    )
+                }
+
+                // Desglose de información
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ReceiptDetailRow(label = "Tratamiento Imputado", value = treatmentDesc)
+                    ReceiptDetailRow(label = "Método de Pago", value = methodLabel)
+                    ReceiptDetailRow(label = "Fecha y Hora", value = formattedDateTime)
+                }
+
+                // Nota informativa legal / sede clínica
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(BiodontosCardTop)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = BiodontosGreyText,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Comprobante generado electrónicamente. Válido como soporte de abono en sede clínica.",
+                        fontSize = 12.sp,
+                        color = BiodontosGreyText,
+                        lineHeight = 16.sp
+                    )
+                }
+
+                // Botón Cerrar (minHeight >= 48dp)
+                BiodontosPillButton(
+                    text = "Entendido / Cerrar",
+                    variant = PillButtonVariant.DARK,
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReceiptDetailRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = BiodontosGreyText,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = value,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = BiodontosDark,
+            modifier = Modifier.weight(1.2f),
+            textAlign = TextAlign.End
+        )
     }
 }
 

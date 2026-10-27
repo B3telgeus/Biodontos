@@ -38,6 +38,12 @@ class PatientPaymentsViewModel(
             is PatientPaymentsUiEvent.SelectFilter -> {
                 _uiState.update { it.copy(selectedFilter = event.filter) }
             }
+            is PatientPaymentsUiEvent.ViewPaymentReceipt -> {
+                _uiState.update { it.copy(selectedPaymentForReceipt = event.payment) }
+            }
+            is PatientPaymentsUiEvent.DismissPaymentReceipt -> {
+                _uiState.update { it.copy(selectedPaymentForReceipt = null) }
+            }
         }
     }
 

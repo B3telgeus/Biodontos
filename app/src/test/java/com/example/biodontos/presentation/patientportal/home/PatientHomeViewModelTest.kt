@@ -156,4 +156,116 @@ class PatientHomeViewModelTest {
 
         coVerify { authRepository.logout() }
     }
+
+    @Test
+    fun `loadDashboard emits NavigateToLogin when session is null`() = runTest {
+        coEvery { authRepository.getCurrentSession() } returns null
+
+        val viewModel = createViewModel()
+
+        viewModel.effects.test {
+            val effect = awaitItem()
+            assertEquals(PatientHomeUiEffect.NavigateToLogin, effect)
+        }
+    }
+
+    @Test
+    fun `loadDashboard emits NavigateToLogin when session role is not PATIENT`() = runTest {
+        coEvery { authRepository.getCurrentSession() } returns testSession.copy(role = UserRole.DOCTOR)
+
+        val viewModel = createViewModel()
+
+        viewModel.effects.test {
+            val effect = awaitItem()
+            assertEquals(PatientHomeUiEffect.NavigateToLogin, effect)
+        }
+    }
+
+    @Test
+    fun `loadDashboard populates errorMessage when appointments and billing fail`() = runTest {
+        coEvery { appointmentRepository.getAppointmentsByPatientId(any()) } returns Result.failure(RuntimeException("Network error"))
+        coEvery { billingRepository.getPaymentSummaryByPatientId(any()) } returns Result.failure(RuntimeException("Network error"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals("No fue posible actualizar tu información clínica. Comprueba tu conexión.", state.errorMessage)
+    }
+
+    @Test
+    fun `onEvent Refresh triggers reload and clears previous errorMessage`() = runTest {
+        // Primero forzar error
+        coEvery { appointmentRepository.getAppointmentsByPatientId(any()) } returns Result.failure(RuntimeException("Network error"))
+        coEvery { billingRepository.getPaymentSummaryByPatientId(any()) } returns Result.failure(RuntimeException("Network error"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals("No fue posible actualizar tu información clínica. Comprueba tu conexión.", viewModel.uiState.value.errorMessage)
+
+        // Ahora reintentar con éxito
+        coEvery { appointmentRepository.getAppointmentsByPatientId(any()) } returns Result.success(emptyList())
+        coEvery { billingRepository.getPaymentSummaryByPatientId(any()) } returns Result.success(
+            PatientPaymentSummary(
+                totalPending = CopAmount(0),
+                totalPaid = CopAmount(0),
+                balances = emptyList(),
+                recentPayments = emptyList()
+            )
+        )
+
+        viewModel.onEvent(PatientHomeUiEvent.Refresh)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals(null, state.errorMessage)
+    }
+
+    @Test
+    fun `onEvent NavigateToAppointments emits NavigateToAppointments effect`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.effects.test {
+            viewModel.onEvent(PatientHomeUiEvent.NavigateToAppointments)
+            val effect = awaitItem()
+            assertEquals(PatientHomeUiEffect.NavigateToAppointments, effect)
+        }
+    }
+
+    @Test
+    fun `onEvent NavigateToPayments emits NavigateToPayments effect`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.effects.test {
+            viewModel.onEvent(PatientHomeUiEvent.NavigateToPayments)
+            val effect = awaitItem()
+            assertEquals(PatientHomeUiEffect.NavigateToPayments, effect)
+        }
+    }
+
+    @Test
+    fun `onEvent NavigateToDoctors emits NavigateToDoctors effect`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.effects.test {
+            viewModel.onEvent(PatientHomeUiEvent.NavigateToDoctors)
+            val effect = awaitItem()
+            assertEquals(PatientHomeUiEffect.NavigateToDoctors, effect)
+        }
+    }
+
+    @Test
+    fun `loadDashboard uses fallback when patientRepository returns failure`() = runTest {
+        coEvery { patientRepository.getPatientByUserId("user-pat-1") } returns Result.failure(RuntimeException("Patient not found"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals("user-pat-1", state.patientId)
+        assertEquals("Pepito", state.patientName)
+    }
 }

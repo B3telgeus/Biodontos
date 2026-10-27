@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -56,9 +57,11 @@ import com.example.biodontos.presentation.odontogram.OdontogramScreen
 import com.example.biodontos.presentation.odontogram.OdontogramViewModel
 import com.example.biodontos.presentation.odontogram.OdontogramViewModelFactory
 import com.example.biodontos.presentation.patientportal.PatientPortalViewModelFactory
+import com.example.biodontos.presentation.patientportal.appointments.AppointmentConfirmationScreen
 import com.example.biodontos.presentation.patientportal.appointments.BookAppointmentRoute
 import com.example.biodontos.presentation.patientportal.appointments.BookAppointmentViewModel
 import com.example.biodontos.presentation.patientportal.appointments.MyAppointmentsRoute
+
 import com.example.biodontos.presentation.patientportal.appointments.MyAppointmentsViewModel
 import com.example.biodontos.presentation.patientportal.doctors.DoctorDetailRoute
 import com.example.biodontos.presentation.patientportal.doctors.DoctorDetailViewModel
@@ -284,6 +287,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
         // --- PORTAL DE PACIENTES ---
         composable<PatientHome> {
             val viewModel: PatientHomeViewModel = viewModel(factory = PatientPortalViewModelFactory.HomeFactory)
+            val isExpanded = LocalConfiguration.current.screenWidthDp >= 600
             PatientPortalShell(
                 selectedItem = PatientNavItem.HOME,
                 onItemSelected = { item ->
@@ -308,7 +312,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                         navController.navigate(Login) {
                             popUpTo(PatientHome) { inclusive = true }
                         }
-                    }
+                    },
+                    isExpanded = isExpanded
                 )
             }
         }
@@ -396,13 +401,41 @@ fun BiodontosNavGraph(navController: NavHostController) {
             BookAppointmentRoute(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateToConfirmation = { confirmation ->
+                    navController.navigate(confirmation) {
+                        popUpTo(BookAppointment(doctorId = route.doctorId, rescheduleAppointmentId = route.rescheduleAppointmentId)) {
+                            inclusive = true
+                        }
+                    }
+                },
                 onNavigateToMyAppointments = {
                     navController.navigate(MyAppointments) {
-                        popUpTo(BookAppointment(doctorId = route.doctorId)) { inclusive = true }
+                        popUpTo(BookAppointment(doctorId = route.doctorId, rescheduleAppointmentId = route.rescheduleAppointmentId)) {
+                            inclusive = true
+                        }
                     }
                 }
             )
         }
+
+        // --- RESUMEN Y CONFIRMACIÓN DE CITA (PACIENTE) ---
+        composable<AppointmentConfirmation> { backStackEntry ->
+            val route = backStackEntry.toRoute<AppointmentConfirmation>()
+            AppointmentConfirmationScreen(
+                confirmation = route,
+                onNavigateToMyAppointments = {
+                    navController.navigate(MyAppointments) {
+                        popUpTo(PatientHome) { inclusive = false }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(PatientHome) {
+                        popUpTo(PatientHome) { inclusive = true }
+                    }
+                }
+            )
+        }
+
 
         // --- PAGOS Y ABONOS (PACIENTE) ---
         composable<PatientPayments> {

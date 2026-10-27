@@ -12,22 +12,21 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,6 +46,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -55,13 +56,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
+import com.example.biodontos.core.designsystem.BiodontosScreenBgTop
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
+import com.example.biodontos.core.designsystem.components.TwoStepConfirmationDialog
+import com.example.biodontos.core.designsystem.insets.BiodontosBottomActionBar
 import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.DoctorId
 import com.example.biodontos.domain.scheduling.TimeSlot
+import com.example.biodontos.presentation.navigation.AppointmentConfirmation
+import com.example.biodontos.presentation.patientportal.doctors.DoctorAvatar
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -70,7 +76,8 @@ import java.util.Locale
 fun BookAppointmentRoute(
     viewModel: BookAppointmentViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToMyAppointments: () -> Unit,
+    onNavigateToConfirmation: (AppointmentConfirmation) -> Unit,
+    onNavigateToMyAppointments: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -79,6 +86,7 @@ fun BookAppointmentRoute(
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
             when (effect) {
+                is BookAppointmentUiEffect.NavigateToConfirmation -> onNavigateToConfirmation(effect.confirmation)
                 is BookAppointmentUiEffect.NavigateToMyAppointments -> onNavigateToMyAppointments()
                 is BookAppointmentUiEffect.ShowToast -> {
                     snackbarHostState.showSnackbar(effect.message)
@@ -109,13 +117,31 @@ fun BookAppointmentScreen(
     val isRescheduling = state.rescheduleAppointmentId != null
     val titleText = if (isRescheduling) "Reagendar Cita" else "Agendar Cita"
 
+    // Critical PP-02: TwoStepConfirmationDialog on reschedule
+    if (state.showRescheduleConfirmDialog) {
+        val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.forLanguageTag("es-CO"))
+        val dateFormatter = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", Locale.forLanguageTag("es-CO"))
+        val slotDesc = state.selectedSlot?.let {
+            "${it.start.toLocalDate().format(dateFormatter)} a las ${it.start.format(timeFormatter)}"
+        } ?: "la fecha y hora seleccionadas"
+
+        TwoStepConfirmationDialog(
+            title = "Confirmar Reagendamiento",
+            impactSummary = "¿Deseas mover tu cita para el $slotDesc? Tu cita anterior será liberada inmediatamente.",
+            confirmActionLabel = "Sí, reagendar cita",
+            onConfirm = { onEvent(BookAppointmentUiEvent.ExecuteReschedule) },
+            onDismiss = { onEvent(BookAppointmentUiEvent.DismissRescheduleDialog) }
+        )
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFFE9E9EB),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = BiodontosScreenBgTop,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             // Barra inferior con botón de confirmación consciente de insets
-            com.example.biodontos.core.designsystem.insets.BiodontosBottomActionBar(
+            BiodontosBottomActionBar(
                 containerColor = BiodontosWhite,
                 contentPadding = PaddingValues(16.dp)
             ) {
@@ -166,9 +192,11 @@ fun BookAppointmentScreen(
             }
 
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
+                contentPadding = PaddingValues(bottom = 88.dp)
             ) {
                 // Tarjeta del Doctor
                 state.doctor?.let { doctor ->
@@ -183,20 +211,12 @@ fun BookAppointmentScreen(
                                 modifier = Modifier.padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(52.dp)
-                                        .clip(CircleShape)
-                                        .background(BiodontosInputBg),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = null,
-                                        tint = BiodontosDark.copy(alpha = 0.6f),
-                                        modifier = Modifier.size(30.dp)
-                                    )
-                                }
+                                DoctorAvatar(
+                                    photoUrl = doctor.photoUrl,
+                                    firstName = doctor.firstName,
+                                    lastName = doctor.lastName,
+                                    size = 52.dp
+                                )
                                 Spacer(modifier = Modifier.width(14.dp))
                                 Column {
                                     Text(
@@ -227,7 +247,7 @@ fun BookAppointmentScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
                                 text = "1. SELECCIONA LA FECHA",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosGreyText,
                                 letterSpacing = 1.sp
@@ -261,7 +281,7 @@ fun BookAppointmentScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
                                 text = "2. HORARIOS DISPONIBLES",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosGreyText,
                                 letterSpacing = 1.sp
@@ -277,6 +297,30 @@ fun BookAppointmentScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         CircularProgressIndicator(color = BiodontosDark)
+                                    }
+                                }
+                                state.errorMessage != null && state.slots.isEmpty() -> {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Text(
+                                                text = state.errorMessage,
+                                                fontSize = 13.sp,
+                                                color = BiodontosDark
+                                            )
+                                            BiodontosPillButton(
+                                                text = "Reintentar horarios",
+                                                variant = PillButtonVariant.OUTLINED,
+                                                onClick = { onEvent(BookAppointmentUiEvent.RetrySlots) }
+                                            )
+                                        }
                                     }
                                 }
                                 state.slots.isEmpty() -> {
@@ -360,13 +404,14 @@ fun BookAppointmentScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
                                 text = "3. MOTIVO DE CONSULTA",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosGreyText,
                                 letterSpacing = 1.sp
                             )
                             Spacer(modifier = Modifier.height(10.dp))
 
+                            val haptic = LocalHapticFeedback.current
                             FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -376,10 +421,15 @@ fun BookAppointmentScreen(
                                     val isSelected = reason == state.selectedReason
                                     Box(
                                         modifier = Modifier
+                                            .defaultMinSize(minHeight = 48.dp)
                                             .clip(RoundedCornerShape(16.dp))
                                             .background(if (isSelected) BiodontosDark else BiodontosInputBg)
-                                            .clickable { onEvent(BookAppointmentUiEvent.SelectReason(reason)) }
-                                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                                            .clickable {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                onEvent(BookAppointmentUiEvent.SelectReason(reason))
+                                            }
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = reason,
@@ -426,6 +476,7 @@ private fun DateStripItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     val dayFormatter = DateTimeFormatter.ofPattern("EEE", Locale.forLanguageTag("es-CO"))
     val dayName = date.format(dayFormatter).uppercase().take(3)
     val dayNumber = date.dayOfMonth.toString()
@@ -433,16 +484,20 @@ private fun DateStripItem(
     Column(
         modifier = Modifier
             .width(58.dp)
+            .defaultMinSize(minHeight = 48.dp)
             .clip(RoundedCornerShape(18.dp))
             .background(if (isSelected) BiodontosDark else BiodontosInputBg)
-            .clickable { onClick() }
+            .clickable {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onClick()
+            }
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = dayName,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             color = if (isSelected) BiodontosWhite.copy(alpha = 0.8f) else BiodontosGreyText
         )
@@ -462,11 +517,13 @@ private fun SlotChip(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.forLanguageTag("es-CO"))
     val timeStr = slot.start.format(timeFormatter)
 
     Box(
         modifier = Modifier
+            .defaultMinSize(minHeight = 48.dp, minWidth = 72.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(if (isSelected) BiodontosDark else BiodontosInputBg)
             .border(
@@ -474,8 +531,12 @@ private fun SlotChip(
                 color = if (isSelected) BiodontosDark else Color.Transparent,
                 shape = RoundedCornerShape(16.dp)
             )
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 10.dp)
+            .clickable {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onClick()
+            }
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = timeStr,

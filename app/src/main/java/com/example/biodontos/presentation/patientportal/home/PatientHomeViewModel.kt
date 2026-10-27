@@ -12,6 +12,7 @@ import com.example.biodontos.domain.repository.DoctorRepository
 import com.example.biodontos.domain.repository.PatientRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -74,14 +75,25 @@ class PatientHomeViewModel(
             val effectivePatientId = patient?.id ?: session.id
             val patientName = patient?.firstName ?: session.displayName.ifBlank { "Usuario" }
 
-            // Cargas en paralelo de citas, pagos y doctores
-            val appointmentsDeferred = async { appointmentRepository.getAppointmentsByPatientId(effectivePatientId) }
-            val billingDeferred = async { billingRepository.getPaymentSummaryByPatientId(effectivePatientId) }
-            val doctorsDeferred = async { doctorRepository.getDoctors() }
+            // Cargas en paralelo con concurrencia estructurada
+            val (appointmentsResult, billingResult, doctorsResult) = coroutineScope {
+                val appointmentsDeferred = async { appointmentRepository.getAppointmentsByPatientId(effectivePatientId) }
+                val billingDeferred = async { billingRepository.getPaymentSummaryByPatientId(effectivePatientId) }
+                val doctorsDeferred = async { doctorRepository.getDoctors() }
 
-            val appointmentsResult = appointmentsDeferred.await()
-            val billingResult = billingDeferred.await()
-            val doctorsResult = doctorsDeferred.await()
+                Triple(appointmentsDeferred.await(), billingDeferred.await(), doctorsDeferred.await())
+            }
+
+            if (appointmentsResult.isFailure && billingResult.isFailure) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        patientName = patientName,
+                        errorMessage = "No fue posible actualizar tu información clínica. Comprueba tu conexión."
+                    )
+                }
+                return@launch
+            }
 
             val now = LocalDateTime.now()
             val allAppointments = appointmentsResult.getOrDefault(emptyList())
@@ -108,7 +120,8 @@ class PatientHomeViewModel(
                     upcomingAppointments = followingAppts,
                     completedAppointmentsCount = completedCount,
                     pendingBalance = pendingBalance,
-                    doctors = doctorsList
+                    doctors = doctorsList,
+                    errorMessage = null
                 )
             }
         }

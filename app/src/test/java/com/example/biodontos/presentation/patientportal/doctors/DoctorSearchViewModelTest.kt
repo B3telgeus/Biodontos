@@ -117,4 +117,36 @@ class DoctorSearchViewModelTest {
             assertEquals(DoctorSearchUiEffect.NavigateToBooking("doc-2"), effect)
         }
     }
+
+    @Test
+    fun `search failure populates errorMessage and stops loading`() = runTest {
+        coEvery { searchDoctorsUseCase(any(), any(), any(), any()) } returns Result.failure(RuntimeException("Error de red"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals("Error de red", state.errorMessage)
+        assertEquals(0, state.doctors.size)
+    }
+
+    @Test
+    fun `retry event triggers reload and recovers from error`() = runTest {
+        coEvery { searchDoctorsUseCase(any(), any(), any(), any()) } returns Result.failure(RuntimeException("Fallo inicial"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals("Fallo inicial", viewModel.uiState.value.errorMessage)
+
+        coEvery { searchDoctorsUseCase(any(), any(), any(), any()) } returns Result.success(testDoctors)
+        viewModel.onEvent(DoctorSearchUiEvent.Retry)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals(null, state.errorMessage)
+        assertEquals(2, state.doctors.size)
+    }
 }
+

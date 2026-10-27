@@ -3,6 +3,7 @@ package com.example.biodontos.presentation.patientportal.appointments
 import androidx.compose.runtime.Immutable
 import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.scheduling.TimeSlot
+import com.example.biodontos.presentation.navigation.AppointmentConfirmation
 import java.time.LocalDate
 
 @Immutable
@@ -26,7 +27,8 @@ data class BookAppointmentUiState(
     val isLoading: Boolean = false,
     val isSlotsLoading: Boolean = false,
     val isSubmitting: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val showRescheduleConfirmDialog: Boolean = false
 )
 
 sealed interface BookAppointmentUiEvent {
@@ -35,10 +37,15 @@ sealed interface BookAppointmentUiEvent {
     data class SelectReason(val reason: String) : BookAppointmentUiEvent
     data class CustomReasonChanged(val reason: String) : BookAppointmentUiEvent
     data object ConfirmBooking : BookAppointmentUiEvent
+    data object ExecuteReschedule : BookAppointmentUiEvent
+    data object DismissRescheduleDialog : BookAppointmentUiEvent
     data object Retry : BookAppointmentUiEvent
+    data object RetrySlots : BookAppointmentUiEvent
 }
 
 sealed interface BookAppointmentUiEffect {
+    data class NavigateToConfirmation(val confirmation: AppointmentConfirmation) : BookAppointmentUiEffect
     data object NavigateToMyAppointments : BookAppointmentUiEffect
     data class ShowToast(val message: String) : BookAppointmentUiEffect
 }
+

@@ -48,6 +48,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.Dp
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
@@ -57,6 +66,40 @@ import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.DoctorId
+import com.example.biodontos.presentation.doctor.profile.DoctorInitialsAvatar
+import com.example.biodontos.presentation.doctor.profile.ImageCompressor
+
+@Composable
+fun DoctorAvatar(
+    photoUrl: String?,
+    firstName: String,
+    lastName: String,
+    size: Dp = 54.dp,
+    modifier: Modifier = Modifier
+) {
+    val bitmap = remember(photoUrl) {
+        ImageCompressor.decodeBase64ToBitmap(photoUrl)
+    }
+
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = "Foto del especialista",
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+                .size(size)
+                .clip(CircleShape)
+        )
+    } else {
+        DoctorInitialsAvatar(
+            firstName = firstName,
+            lastName = lastName,
+            size = size,
+            modifier = modifier
+        )
+    }
+}
+
 
 @Composable
 fun DoctorSearchRoute(
@@ -90,15 +133,18 @@ fun DoctorSearchScreen(
     onEvent: (DoctorSearchUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Column(
         modifier = modifier
             .fillMaxSize()
+            .imePadding()
             .padding(16.dp)
     ) {
         // Título de la pantalla
         Text(
             text = "DOCTORES",
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             color = BiodontosGreyText,
             letterSpacing = 1.sp
@@ -164,6 +210,7 @@ fun DoctorSearchScreen(
                 val isSelected = specialty == state.selectedSpecialty
                 Box(
                     modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(if (isSelected) BiodontosDark else BiodontosWhite)
                         .border(
@@ -171,7 +218,10 @@ fun DoctorSearchScreen(
                             color = if (isSelected) BiodontosDark else BiodontosGreyText.copy(alpha = 0.3f),
                             shape = RoundedCornerShape(20.dp)
                         )
-                        .clickable { onEvent(DoctorSearchUiEvent.SpecialtySelected(specialty)) }
+                        .clickable {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onEvent(DoctorSearchUiEvent.SpecialtySelected(specialty))
+                        }
                         .padding(horizontal = 14.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -184,6 +234,7 @@ fun DoctorSearchScreen(
                 }
             }
         }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -295,21 +346,13 @@ private fun DoctorItemCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Avatar circular con icono o inicial
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .clip(CircleShape)
-                        .background(BiodontosInputBg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = doctor.displayName,
-                        modifier = Modifier.size(32.dp),
-                        tint = BiodontosDark.copy(alpha = 0.6f)
-                    )
-                }
+                // Avatar con soporte de foto Base64 o iniciales
+                DoctorAvatar(
+                    photoUrl = doctor.photoUrl,
+                    firstName = doctor.firstName,
+                    lastName = doctor.lastName,
+                    size = 54.dp
+                )
 
                 Spacer(modifier = Modifier.width(12.dp))
 

@@ -2,6 +2,7 @@ package com.example.biodontos.presentation.patientportal.appointments
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.biodontos.domain.model.AppointmentError
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.repository.AppointmentRepository
 import com.example.biodontos.domain.repository.DoctorRepository
@@ -48,9 +49,14 @@ class MyAppointmentsViewModel(
                 confirmCancel()
             }
             is MyAppointmentsUiEvent.RescheduleAppointment -> {
-                val doctorId = event.appointment.doctorId ?: ""
+                val doctorId = event.appointment.doctorId
                 viewModelScope.launch {
-                    _effects.send(MyAppointmentsUiEffect.NavigateToReschedule(doctorId, event.appointment.id))
+                    if (doctorId.isNullOrBlank()) {
+                        _effects.send(MyAppointmentsUiEffect.ShowToast("Selecciona un especialista para reagendar tu cita"))
+                        _effects.send(MyAppointmentsUiEffect.NavigateToDoctorSearch)
+                    } else {
+                        _effects.send(MyAppointmentsUiEffect.NavigateToReschedule(doctorId, event.appointment.id))
+                    }
                 }
             }
             is MyAppointmentsUiEvent.BookNewAppointment -> {
@@ -82,6 +88,18 @@ class MyAppointmentsViewModel(
             }
 
             val appointmentsResult = appointmentRepository.getAppointmentsByPatientId(patientId)
+            if (appointmentsResult.isFailure) {
+                val errorMsg = appointmentsResult.exceptionOrNull()?.localizedMessage
+                    ?: "No se pudieron cargar tus citas programadas"
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = errorMsg
+                    )
+                }
+                return@launch
+            }
+
             val allAppointments = appointmentsResult.getOrDefault(emptyList())
 
             val doctorsResult = doctorRepository.getDoctors()
@@ -93,6 +111,14 @@ class MyAppointmentsViewModel(
                 .filter { it.status != AppointmentStatus.CANCELLED && it.status != AppointmentStatus.COMPLETED && it.startTime >= now }
                 .sortedBy { it.startTime }
 
+            val completed = allAppointments
+                .filter { it.status == AppointmentStatus.COMPLETED || (it.status != AppointmentStatus.CANCELLED && it.startTime < now) }
+                .sortedByDescending { it.startTime }
+
+            val cancelled = allAppointments
+                .filter { it.status == AppointmentStatus.CANCELLED }
+                .sortedByDescending { it.startTime }
+
             val past = allAppointments
                 .filter { it.status == AppointmentStatus.CANCELLED || it.status == AppointmentStatus.COMPLETED || it.startTime < now }
                 .sortedByDescending { it.startTime }
@@ -101,6 +127,8 @@ class MyAppointmentsViewModel(
                 it.copy(
                     patientId = patientId,
                     upcomingAppointments = upcoming,
+                    completedAppointments = completed,
+                    cancelledAppointments = cancelled,
                     pastAppointments = past,
                     doctorsMap = doctorsMap,
                     isLoading = false,
@@ -120,7 +148,19 @@ class MyAppointmentsViewModel(
             result.fold(
                 ifLeft = { error ->
                     _uiState.update { it.copy(isCancelling = false, appointmentToCancel = null) }
-                    _effects.send(MyAppointmentsUiEffect.ShowToast("No es posible cancelar: ventana mínima de 2 horas superada"))
+                    val message = when (error) {
+                        is AppointmentError.ModificationWindowClosed ->
+                            "No es posible cancelar: se requiere un mínimo de ${error.minHoursBefore} horas de anticipación."
+                        is AppointmentError.AlreadyCancelled ->
+                            "Esta cita ya se encuentra cancelada en el sistema."
+                        is AppointmentError.NotOwner ->
+                            "No tienes permisos para modificar esta cita clínica."
+                        is AppointmentError.AppointmentNotFound ->
+                            "No se encontró la cita especificada."
+                        else ->
+                            "No fue posible cancelar la cita. Comunícate con recepción."
+                    }
+                    _effects.send(MyAppointmentsUiEffect.ShowToast(message))
                 },
                 ifRight = {
                     _uiState.update { it.copy(isCancelling = false, appointmentToCancel = null) }
