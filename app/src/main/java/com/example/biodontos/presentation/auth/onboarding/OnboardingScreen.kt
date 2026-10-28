@@ -4,7 +4,9 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,6 +15,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,20 +68,20 @@ fun OnboardingScreen(
                     // Imagen personalizada del Diente (Tablet)
                     Image(
                         painter = painterResource(id = R.drawable.diente),
-                        contentDescription = "Logo Biodontos",
+                        contentDescription = stringResource(R.string.cd_biodontos_logo),
                         modifier = Modifier.size(180.dp),
                         alignment = Alignment.Center
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        text = "¡SONRÍE!",
+                        text = stringResource(R.string.onboarding_title),
                         fontSize = 54.sp,
                         fontWeight = FontWeight.Black,
                         color = BiodontosDark
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Tu salud dental, organizada fácilmente!",
+                        text = stringResource(R.string.onboarding_subtitle),
                         fontSize = 20.sp,
                         color = BiodontosGreyText,
                         lineHeight = 28.sp
@@ -102,7 +105,7 @@ fun OnboardingScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Bienvenido a Biodontos.",
+                            text = stringResource(R.string.onboarding_welcome),
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark,
@@ -111,7 +114,7 @@ fun OnboardingScreen(
                         Spacer(modifier = Modifier.height(36.dp))
 
                         Text(
-                            text = "Ya tengo una cuenta",
+                            text = stringResource(R.string.onboarding_have_account),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = BiodontosGreyText
@@ -128,13 +131,17 @@ fun OnboardingScreen(
                                 .fillMaxWidth()
                                 .height(56.dp)
                         ) {
-                            Text("Inicia Sesión", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = stringResource(R.string.onboarding_login),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(36.dp))
 
                         Text(
-                            text = "¿Es la primera vez que usas la app?",
+                            text = stringResource(R.string.onboarding_first_time),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = BiodontosGreyText
@@ -150,7 +157,11 @@ fun OnboardingScreen(
                                 .fillMaxWidth()
                                 .height(56.dp)
                         ) {
-                            Text("Crea una cuenta", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = stringResource(R.string.onboarding_create_account),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -161,6 +172,7 @@ fun OnboardingScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .safeDrawingPadding()
+                    .verticalScroll(rememberScrollState())
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
@@ -168,20 +180,20 @@ fun OnboardingScreen(
                 // Imagen personalizada del Diente (Móvil)
                 Image(
                     painter = painterResource(id = R.drawable.diente),
-                    contentDescription = "Logo Biodontos",
+                    contentDescription = stringResource(R.string.cd_biodontos_logo),
                     modifier = Modifier.size(150.dp),
                     alignment = Alignment.Center
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "¡SONRÍE!",
+                    text = stringResource(R.string.onboarding_title),
                     fontSize = 42.sp,
                     fontWeight = FontWeight.Black,
                     color = BiodontosDark
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Tu salud dental, organizada fácilmente!",
+                    text = stringResource(R.string.onboarding_subtitle),
                     fontSize = 16.sp,
                     color = BiodontosGreyText,
                     textAlign = TextAlign.Center
@@ -201,12 +213,21 @@ fun OnboardingScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Bienvenido a Biodontos",
+                            text = stringResource(R.string.onboarding_welcome),
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = BiodontosDark
+                            color = BiodontosDark,
+                            textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(24.dp))
+
+                        Text(
+                            text = stringResource(R.string.onboarding_have_account),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = BiodontosGreyText
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                         Button(
                             onClick = onLoginClick,
                             shape = RoundedCornerShape(24.dp),
@@ -218,17 +239,39 @@ fun OnboardingScreen(
                                 .fillMaxWidth()
                                 .height(50.dp)
                         ) {
-                            Text("Inicia Sesión", fontWeight = FontWeight.Bold)
+                            Text(
+                                text = stringResource(R.string.onboarding_login),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text(
+                            text = stringResource(R.string.onboarding_first_time),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = BiodontosGreyText,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                         OutlinedButton(
                             onClick = onCreateAccountClick,
                             shape = RoundedCornerShape(24.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = BiodontosDark
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp)
                         ) {
-                            Text("Crea una cuenta", fontWeight = FontWeight.Bold, color = BiodontosDark)
+                            Text(
+                                text = stringResource(R.string.onboarding_create_account),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BiodontosDark
+                            )
                         }
                     }
                 }

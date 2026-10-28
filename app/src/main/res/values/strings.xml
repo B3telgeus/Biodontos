@@ -12,4 +12,18 @@
     <string name="cd_signature_pad">Panel de firma digital</string>
     <string name="cd_increase_value">Aumentar valor</string>
     <string name="cd_decrease_value">Disminuir valor</string>
+
+    <!-- Onboarding & Bienvenida -->
+    <string name="cd_biodontos_logo">Logo Biodontos</string>
+    <string name="onboarding_title">¡SONRÍE!</string>
+    <string name="onboarding_subtitle">Tu salud dental, organizada fácilmente!</string>
+    <string name="onboarding_welcome">Bienvenido a Biodontos.</string>
+    <string name="onboarding_welcome_simple">Bienvenido a Biodontos</string>
+    <string name="onboarding_have_account">Ya tengo una cuenta</string>
+    <string name="onboarding_login">Inicia Sesión</string>
+    <string name="onboarding_first_time">¿Es la primera vez que usas la app?</string>
+    <string name="onboarding_create_account">Crea una cuenta</string>
+    <string name="onboarding_patient_description">Con Biodontos podrás crear, reagendar o cancelar citas, y ver todos los detalles de tu tratamiento. Todo.</string>
+    <string name="onboarding_doctor_description">Con Biodontos podrás manejar todo, pacientes, citas, historial clínico y cuentas de cobro. Todo.</string>
+    <string name="action_next">Siguiente</string>
 </resources>
