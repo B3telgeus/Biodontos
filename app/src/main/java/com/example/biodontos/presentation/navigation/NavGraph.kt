@@ -56,6 +56,8 @@ import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsViewMo
 import com.example.biodontos.presentation.doctor.home.DoctorHomeRoute
 import com.example.biodontos.presentation.doctor.home.DoctorHomeUiEvent
 import com.example.biodontos.presentation.doctor.home.DoctorHomeViewModel
+import com.example.biodontos.presentation.doctor.materials.MaterialsRoute
+import com.example.biodontos.presentation.doctor.materials.MaterialsViewModel
 import com.example.biodontos.presentation.doctor.profile.DoctorProfileScreen
 import com.example.biodontos.presentation.doctor.profile.DoctorProfileViewModel
 import com.example.biodontos.presentation.doctor.profile.DoctorProfileViewModelFactory
@@ -533,6 +535,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
                         DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
                         DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
                         DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                        DoctorNavItem.MATERIALS -> navController.navigate(DoctorMaterials)
                     }
                 },
                 onLogoutClick = {
@@ -572,6 +575,7 @@ fun BiodontosNavGraph(navController: NavHostController) {
                         DoctorNavItem.PATIENTS -> {}
                         DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
                         DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                        DoctorNavItem.MATERIALS -> navController.navigate(DoctorMaterials)
                     }
                 },
                 onLogoutClick = {
@@ -678,6 +682,7 @@ onFilterSelected = viewModel::onFilterSelected,
                         DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
                         DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
                         DoctorNavItem.APPOINTMENTS -> {}
+                        DoctorNavItem.MATERIALS -> navController.navigate(DoctorMaterials)
                     }
                 },
                 onLogoutClick = {
@@ -707,6 +712,7 @@ onFilterSelected = viewModel::onFilterSelected,
                         DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
                         DoctorNavItem.DOCUMENTS -> {}
                         DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                        DoctorNavItem.MATERIALS -> navController.navigate(DoctorMaterials)
                     }
                 },
                 onLogoutClick = {
@@ -724,6 +730,33 @@ onFilterSelected = viewModel::onFilterSelected,
                     onNavigateToAdmission = { patientId ->
                         navController.navigate(ClinicalAdmission(patientId = patientId))
                     }
+                )
+            }
+        }
+
+        // --- GESTIÓN DE MATERIALES CLÍNICOS (PORTAL DOCTOR) ---
+        composable<DoctorMaterials> {
+            val viewModel: MaterialsViewModel = viewModel(factory = DoctorViewModelFactory.MaterialsFactory)
+            DoctorPortalShell(
+                selectedItem = DoctorNavItem.MATERIALS,
+                onItemSelected = { item ->
+                    when (item) {
+                        DoctorNavItem.HOME -> navController.navigate(DoctorHome)
+                        DoctorNavItem.PATIENTS -> navController.navigate(PatientList)
+                        DoctorNavItem.DOCUMENTS -> navController.navigate(DoctorDocuments)
+                        DoctorNavItem.APPOINTMENTS -> navController.navigate(DoctorAppointments)
+                        DoctorNavItem.MATERIALS -> {}
+                    }
+                },
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(DoctorMaterials) { inclusive = true }
+                    }
+                }
+            ) {
+                MaterialsRoute(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
         }

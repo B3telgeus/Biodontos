@@ -22,6 +22,17 @@ value class AppointmentId(val value: String) {
 }
 
 @JvmInline
+value class MaterialId(val value: String) {
+    init {
+        require(value.isNotBlank()) { "MaterialId no puede ser vacío" }
+    }
+
+    companion object {
+        fun generate(): MaterialId = MaterialId(java.util.UUID.randomUUID().toString())
+    }
+}
+
+@JvmInline
 value class CopAmount(val pesos: Long) {
     init {
         require(pesos >= 0) { "El monto en COP no puede ser negativo: $pesos" }

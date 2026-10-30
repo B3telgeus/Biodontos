@@ -60,7 +60,7 @@ class EvolutionRepositoryImpl : EvolutionRepository {
 
             if (evolution.materialsUsed.isNotEmpty() && evoId.isNotBlank()) {
                 val materialDtos = evolution.materialsUsed.map { it.toDto(evoId) }
-                SupabaseClient.client.from("evolution_materials_used").upsert(materialDtos)
+                SupabaseClient.client.from("evolution_materials_used").insert(materialDtos)
             }
 
             Result.success(savedEvo.toDomain(evolution.materialsUsed))

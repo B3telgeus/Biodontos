@@ -1,6 +1,7 @@
 package com.example.biodontos.domain.model
 
 import com.example.biodontos.domain.model.history.VoidInfo
+import java.time.LocalDate
 
 data class EvolutionMaterialUsed(
     val id: String = "",
@@ -9,8 +10,32 @@ data class EvolutionMaterialUsed(
     val quantityUsed: Double = 1.0,
     val lotNumberSnapshot: String,
     val invimaSnapshot: String,
-    val expirationDateSnapshot: String
-)
+    val expirationDateSnapshot: String,
+    val materialNameSnapshot: String = materialName,
+    val manufacturingDateSnapshot: String = ""
+) {
+    constructor(
+        id: String = "",
+        materialId: MaterialId,
+        materialName: String,
+        quantityUsed: Double = 1.0,
+        lotNumberSnapshot: String,
+        invimaSnapshot: String,
+        expirationDateSnapshot: LocalDate,
+        materialNameSnapshot: String = materialName,
+        manufacturingDateSnapshot: String = ""
+    ) : this(
+        id = id,
+        materialId = materialId.value,
+        materialName = materialName,
+        quantityUsed = quantityUsed,
+        lotNumberSnapshot = lotNumberSnapshot,
+        invimaSnapshot = invimaSnapshot,
+        expirationDateSnapshot = expirationDateSnapshot.toString(),
+        materialNameSnapshot = materialNameSnapshot,
+        manufacturingDateSnapshot = manufacturingDateSnapshot
+    )
+}
 
 data class Evolution(
     val id: String = "",

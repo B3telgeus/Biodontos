@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,11 +38,15 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ScrollableTabRow
@@ -71,6 +76,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.biodontos.core.designsystem.Ambar
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosErrorBg
 import com.example.biodontos.core.designsystem.BiodontosGreyText
@@ -80,6 +86,7 @@ import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.Carmesi
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.Esmeralda
+import com.example.biodontos.core.designsystem.SlateLight
 import com.example.biodontos.core.designsystem.Zafiro
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.core.designsystem.components.DateBadge
@@ -95,6 +102,7 @@ import com.example.biodontos.domain.model.billing.TreatmentStatus
 import com.example.biodontos.domain.model.history.ActivityType
 import com.example.biodontos.domain.model.history.PatientActivity
 import com.example.biodontos.presentation.patients.detail.history.ClarificationNoteDialog
+import com.example.biodontos.presentation.patients.detail.history.EvolutionMaterialsSnapshotCard
 import com.example.biodontos.presentation.patients.detail.history.NewPaymentDialog
 import com.example.biodontos.presentation.patients.detail.history.NewTreatmentBudgetDialog
 import com.example.biodontos.presentation.patients.detail.history.PatientHistoryTab
@@ -810,19 +818,7 @@ private fun EvolutionItemCard(evolution: Evolution) {
             }
             if (evolution.materialsUsed.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Materiales INVIMA trazados:",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Zafiro
-                )
-                evolution.materialsUsed.forEach { mat ->
-                    Text(
-                        text = "• ${mat.materialName.ifBlank { "Material" }} (Lote: ${mat.lotNumberSnapshot} - Reg: ${mat.invimaSnapshot})",
-                        fontSize = 11.sp,
-                        color = BiodontosGreyText
-                    )
-                }
+                EvolutionMaterialsSnapshotCard(materials = evolution.materialsUsed)
             }
         }
     }
@@ -934,6 +930,7 @@ private fun NewEvolutionDialog(
     onDismiss: () -> Unit
 ) {
     var materialQty by remember { mutableStateOf("1.0") }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -984,35 +981,247 @@ private fun NewEvolutionDialog(
                     }
                 }
                 item {
-                    Text("Materiales INVIMA Usados:", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    if (catalog.isNotEmpty()) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = selectedMaterial?.name ?: "Seleccione material",
-                                fontSize = 12.sp,
-                                modifier = Modifier.weight(1f)
+                    Text("Trazabilidad de Materiales INVIMA:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BiodontosDark)
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    if (catalog.isEmpty()) {
+                        Text(
+                            text = "No hay insumos registrados en el catálogo.",
+                            fontSize = 11.sp,
+                            color = BiodontosGreyText
+                        )
+                    } else {
+                        ExposedDropdownMenuBox(
+                            expanded = isDropdownExpanded,
+                            onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }
+                        ) {
+                            val selectedDisplayText = selectedMaterial?.let {
+                                "${it.name} (Lote: ${it.batchLotNumber})"
+                            } ?: "Seleccione un material del catálogo"
+
+                            OutlinedTextField(
+                                value = selectedDisplayText,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Material del Catálogo") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded) },
+                                modifier = Modifier
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                    .fillMaxWidth(),
+                                colors = biodontosTextFieldColors(),
+                                shape = RoundedCornerShape(8.dp)
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Button(
-                                onClick = { onAddMaterial(materialQty.toDoubleOrNull() ?: 1.0) },
-                                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+
+                            ExposedDropdownMenu(
+                                expanded = isDropdownExpanded,
+                                onDismissRequest = { isDropdownExpanded = false },
+                                modifier = Modifier.heightIn(max = 260.dp)
                             ) {
-                                Text("Agregar")
+                                catalog.forEach { mat ->
+                                    val isExpired = mat.isExpired()
+                                    val isNearExpiry = mat.isNearExpiration()
+
+                                    DropdownMenuItem(
+                                        text = {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 4.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = mat.name,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 12.sp,
+                                                        color = if (isExpired) BiodontosGreyText else BiodontosDark
+                                                    )
+                                                    if (isExpired) {
+                                                        Surface(
+                                                            color = Carmesi.copy(alpha = 0.14f),
+                                                            shape = RoundedCornerShape(4.dp)
+                                                        ) {
+                                                            Text(
+                                                                text = "VENCIDO",
+                                                                color = Carmesi,
+                                                                fontSize = 9.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                            )
+                                                        }
+                                                    } else if (isNearExpiry) {
+                                                        Surface(
+                                                            color = Ambar.copy(alpha = 0.15f),
+                                                            shape = RoundedCornerShape(4.dp)
+                                                        ) {
+                                                            Text(
+                                                                text = "POR VENCER",
+                                                                color = Ambar,
+                                                                fontSize = 9.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                Text(
+                                                    text = "INVIMA: ${mat.invimaRegistration} · Lote: ${mat.batchLotNumber}",
+                                                    fontSize = 10.sp,
+                                                    color = BiodontosGreyText
+                                                )
+                                                Text(
+                                                    text = "Vencimiento: ${mat.expirationDate}",
+                                                    fontSize = 10.sp,
+                                                    color = if (isExpired) Carmesi else if (isNearExpiry) Ambar else BiodontosGreyText
+                                                )
+                                            }
+                                        },
+                                        enabled = !isExpired,
+                                        onClick = {
+                                            if (!isExpired) {
+                                                onSelectCatalogMaterial(mat)
+                                                isDropdownExpanded = false
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Selected material details card & quantity input
+                        selectedMaterial?.let { selMat ->
+                            val isExpired = selMat.isExpired()
+                            val isNear = selMat.isNearExpiration()
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = SlateLight),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(10.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(text = selMat.name, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BiodontosDark)
+                                        if (isExpired) {
+                                            Surface(color = Carmesi.copy(alpha = 0.14f), shape = RoundedCornerShape(4.dp)) {
+                                                Text("VENCIDO", color = Carmesi, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp))
+                                            }
+                                        } else if (isNear) {
+                                            Surface(color = Ambar.copy(alpha = 0.15f), shape = RoundedCornerShape(4.dp)) {
+                                                Text("POR VENCER (≤30d)", color = Ambar, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp))
+                                            }
+                                        }
+                                    }
+                                    Text(text = "Registro INVIMA: ${selMat.invimaRegistration}", fontSize = 11.sp, color = BiodontosGreyText)
+                                    Text(text = "Lote: ${selMat.batchLotNumber} | Vence: ${selMat.expirationDate}", fontSize = 11.sp, color = if (isExpired) Carmesi else BiodontosGreyText)
+                                    if (isExpired) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "Material vencido. Bloqueado por seguridad sanitaria (INVIMA).",
+                                            fontSize = 11.sp,
+                                            color = Carmesi,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        OutlinedTextField(
+                                            value = materialQty,
+                                            onValueChange = { input ->
+                                                if (input.isEmpty() || input.matches(Regex("""^\d*\.?\d*$"""))) {
+                                                    materialQty = input
+                                                }
+                                            },
+                                            label = { Text("Cantidad *") },
+                                            placeholder = { Text("1.0") },
+                                            enabled = !isExpired,
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                            modifier = Modifier.weight(1f),
+                                            colors = biodontosTextFieldColors()
+                                        )
+
+                                        val qtyDouble = materialQty.toDoubleOrNull() ?: 0.0
+                                        val canAdd = !isExpired && qtyDouble > 0.0
+                                        Button(
+                                            onClick = {
+                                                if (canAdd) {
+                                                    onAddMaterial(qtyDouble)
+                                                    materialQty = "1.0"
+                                                }
+                                            },
+                                            enabled = canAdd,
+                                            colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                                        ) {
+                                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Agregar")
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                items(materials) { mat ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("• ${mat.materialName} (Lote: ${mat.lotNumberSnapshot})", fontSize = 11.sp, color = BiodontosGreyText)
-                        IconButton(onClick = { onRemoveMaterial(mat.materialId) }, modifier = Modifier.size(24.dp)) {
-                            Icon(Icons.Default.Delete, contentDescription = null, tint = Carmesi, modifier = Modifier.size(16.dp))
+
+                if (materials.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Materiales Agregados (${materials.size}):",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = Zafiro
+                        )
+                    }
+                    items(materials, key = { it.materialId }) { mat ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = BiodontosInputBg.copy(alpha = 0.5f)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "${mat.quantityUsed}x ${mat.materialName}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = BiodontosDark
+                                    )
+                                    Text(
+                                        text = "INVIMA: ${mat.invimaSnapshot} | Lote: ${mat.lotNumberSnapshot} | Vence: ${mat.expirationDateSnapshot}",
+                                        fontSize = 10.sp,
+                                        color = BiodontosGreyText
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { onRemoveMaterial(mat.materialId) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Eliminar insumo",
+                                        tint = Carmesi,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

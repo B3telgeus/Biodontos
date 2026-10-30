@@ -24,6 +24,7 @@ import com.example.biodontos.domain.model.PeriodontalSiteMeasurement
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClinicalAdmissionMappersTest {
@@ -178,23 +179,29 @@ class ClinicalAdmissionMappersTest {
     fun `ClinicalMaterialDto toDomain and ClinicalMaterial toDto map fields accurately`() {
         val dto = ClinicalMaterialDto(
             id = "mat-1",
+            doctorId = "doc-1",
             name = "Resina 3M Filtek",
             invimaRegistration = "INVIMA-2022DM",
             batchLotNumber = "B-2026",
             manufacturingDate = "2025-01-01",
             expirationDate = "2028-01-01",
-            currentStock = 15,
-            unitOfMeasure = "JERINGA"
+            isActive = true
         )
         val domain = dto.toDomain()
-        assertEquals("mat-1", domain.id)
+        assertEquals("mat-1", domain.id.value)
+        assertEquals("doc-1", domain.doctorId?.value)
         assertEquals("Resina 3M Filtek", domain.name)
-        assertEquals(15, domain.currentStock)
-        assertEquals("JERINGA", domain.unitOfMeasure)
+        assertEquals("INVIMA-2022DM", domain.invimaRegistration)
+        assertEquals("B-2026", domain.batchLotNumber)
+        assertEquals("2025-01-01", domain.manufacturingDate.toString())
+        assertEquals("2028-01-01", domain.expirationDate.toString())
+        assertTrue(domain.isActive)
 
         val backToDto = domain.toDto()
         assertEquals("mat-1", backToDto.id)
+        assertEquals("doc-1", backToDto.doctorId)
         assertEquals("INVIMA-2022DM", backToDto.invimaRegistration)
+        assertTrue(backToDto.isActive)
     }
 
     @Test

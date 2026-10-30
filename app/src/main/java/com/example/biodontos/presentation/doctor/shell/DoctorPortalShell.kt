@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -55,6 +56,9 @@ import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosScreenGradient
 import com.example.biodontos.core.designsystem.BiodontosWhite
 
+val Icons.Filled.Category: ImageVector
+    get() = Icons.Default.Build
+
 enum class DoctorNavItem(
     val title: String,
     val icon: ImageVector
@@ -62,7 +66,8 @@ enum class DoctorNavItem(
     HOME("Inicio", Icons.Default.Home),
     PATIENTS("Pacientes", Icons.Default.Person),
     DOCUMENTS("Documentos", Icons.Default.AccountBox),
-    APPOINTMENTS("Citas", Icons.Default.DateRange)
+    APPOINTMENTS("Citas", Icons.Default.DateRange),
+    MATERIALS("Materiales", Icons.Default.Category)
 }
 
 @Composable

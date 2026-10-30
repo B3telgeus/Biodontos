@@ -11,6 +11,12 @@ fun Throwable?.toUserFriendlyMessage(defaultMessage: String = "Ocurrió un error
             "La contraseña es demasiado débil o no cumple con los requisitos mínimos."
         message.contains("nameerror") || message.contains("name error") -> 
             "Error en el nombre o formato de texto ingresado."
+        message.contains("ux_clinical_materials") ->
+            "Ya existe un material activo registrado con el mismo número de lote y registro INVIMA."
+        message.contains("chk_clinical_materials") || message.contains("posterior a la fecha de elaboración") ->
+            "La fecha de vencimiento debe ser posterior a la fecha de elaboración."
+        message.contains("clinical_materials") && message.contains("could not find the table") ->
+            "La tabla de materiales clínicos no existe aún. Ejecuta MIGRATION_CLINICAL_MATERIALS.sql en Supabase."
         message.contains("idx_appointments_doctor_slot_unique") || message.contains("duplicate key") ->
             "El horario seleccionado ya fue reservado por otro paciente. Por favor selecciona otra franja horaria."
         message.contains("trg_validate_appointment_update") || message.contains("sólo el doctor asignado") || message.contains("solo el doctor asignado") ->

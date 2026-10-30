@@ -29,8 +29,10 @@ data class EvolutionMaterialUsedDto(
     val id: String? = null,
     @SerialName("evolution_id") val evolutionId: String,
     @SerialName("material_id") val materialId: String,
+    @SerialName("material_name_snapshot") val materialNameSnapshot: String? = null,
     @SerialName("quantity_used") val quantityUsed: Double = 1.0,
     @SerialName("lot_number_snapshot") val lotNumberSnapshot: String,
     @SerialName("invima_snapshot") val invimaSnapshot: String,
-    @SerialName("expiration_date_snapshot") val expirationDateSnapshot: String
+    @SerialName("expiration_date_snapshot") val expirationDateSnapshot: String,
+    @SerialName("manufacturing_date_snapshot") val manufacturingDateSnapshot: String? = null
 )
