@@ -4,8 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.navigation.compose.rememberNavController
 import com.example.biodontos.core.designsystem.DentalTheme
-import com.example.biodontos.presentation.auth.onboarding.OnboardingScreen
+import com.example.biodontos.presentation.navigation.BiodontosNavGraph
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,10 +14,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DentalTheme {
-                OnboardingScreen(
-                    onLoginClick = {},
-                    onCreateAccountClick = {}
-                )
+                // Creamos el controlador de rutas
+                val navController = rememberNavController()
+                // Iniciamos la navegación de tu app
+                BiodontosNavGraph(navController = navController)
             }
         }
     }

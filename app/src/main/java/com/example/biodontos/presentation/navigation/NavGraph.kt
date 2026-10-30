@@ -1,5 +1,13 @@
 package com.example.biodontos.presentation.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -81,11 +89,62 @@ import com.example.biodontos.presentation.patients.PatientRegistrationScreen
 import com.example.biodontos.presentation.patients.PatientRegistrationViewModel
 import com.example.biodontos.presentation.patients.PatientsViewModelFactory
 
+private const val NAV_TRANSITION_DURATION_MS = 320
+private const val NAV_EXIT_FADE_DURATION_MS = 180
+
+private val forwardEnterTransition: EnterTransition =
+    slideInHorizontally(
+        animationSpec = tween(
+            durationMillis = NAV_TRANSITION_DURATION_MS,
+            easing = FastOutSlowInEasing
+        ),
+        initialOffsetX = { fullWidth -> fullWidth }
+    ) + fadeIn(
+        animationSpec = tween(durationMillis = NAV_TRANSITION_DURATION_MS)
+    )
+
+private val forwardExitTransition: ExitTransition =
+    slideOutHorizontally(
+        animationSpec = tween(
+            durationMillis = NAV_TRANSITION_DURATION_MS,
+            easing = FastOutSlowInEasing
+        ),
+        targetOffsetX = { fullWidth -> -fullWidth / 4 }
+    ) + fadeOut(
+        animationSpec = tween(durationMillis = NAV_EXIT_FADE_DURATION_MS)
+    )
+
+private val backwardEnterTransition: EnterTransition =
+    slideInHorizontally(
+        animationSpec = tween(
+            durationMillis = NAV_TRANSITION_DURATION_MS,
+            easing = FastOutSlowInEasing
+        ),
+        initialOffsetX = { fullWidth -> -fullWidth / 4 }
+    ) + fadeIn(
+        animationSpec = tween(durationMillis = NAV_TRANSITION_DURATION_MS)
+    )
+
+private val backwardExitTransition: ExitTransition =
+    slideOutHorizontally(
+        animationSpec = tween(
+            durationMillis = NAV_TRANSITION_DURATION_MS,
+            easing = FastOutSlowInEasing
+        ),
+        targetOffsetX = { fullWidth -> fullWidth }
+    ) + fadeOut(
+        animationSpec = tween(durationMillis = NAV_EXIT_FADE_DURATION_MS)
+    )
+
 @Composable
 fun BiodontosNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Splash
+        startDestination = Splash,
+        enterTransition = { forwardEnterTransition },
+        exitTransition = { forwardExitTransition },
+        popEnterTransition = { backwardEnterTransition },
+        popExitTransition = { backwardExitTransition }
     ) {
         // --- SPLASH SCREEN (INICIO CON AUTO-LOGIN) ---
         composable<Splash> {
