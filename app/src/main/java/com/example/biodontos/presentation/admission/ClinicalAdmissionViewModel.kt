@@ -29,12 +29,12 @@ class ClinicalAdmissionViewModel(
     private val informedConsentRepository: InformedConsentRepository,
     private val appointmentRepository: AppointmentRepository,
     private val guardianRepository: GuardianRepository,
-    private val initialPatientId: String? = null,
+    initialPatientId: String? = null,
     private val getCurrentDoctorUseCase: GetCurrentDoctorUseCase? = null,
     private val doctorRepository: DoctorRepository? = null,
     private val getMaterialsUseCase: GetMaterialsUseCase = GetMaterialsUseCase(materialRepository),
     private val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase =
-        BuildEvolutionMaterialUsageUseCase(SystemClinicClock())
+        BuildEvolutionMaterialUsageUseCase(SystemClinicClock()),
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ClinicalAdmissionState())
@@ -186,7 +186,7 @@ class ClinicalAdmissionViewModel(
                             cirugias = anamnesis.cirugias,
                             enfermedadesOrales = anamnesis.enfermedadesOrales,
                             otrasAlteraciones = anamnesis.otrasAlteraciones,
-                            anamnesisObservaciones = anamnesis.observaciones ?: "",
+                            anamnesisObservaciones = anamnesis.observaciones,
                             antecedentesFamiliares = anamnesis.antecedentesFamiliares ?: "",
                             medicamentosActuales = anamnesis.medicamentosActuales ?: ""
                         )
@@ -196,7 +196,7 @@ class ClinicalAdmissionViewModel(
 
             // 5. Odontograma
             odontogramRepository.getOdontogram(pid).onSuccess { teethList ->
-                val surfacesMap = teethList.associate { it.number to it.surfaceStates }
+                val surfacesMap = teethList.associateBy({ it.number }, { it.surfaceStates })
                 if (surfacesMap.isNotEmpty()) {
                     _state.update { it.copy(teethSurfaces = surfacesMap) }
                 }
@@ -208,7 +208,7 @@ class ClinicalAdmissionViewModel(
                     _state.update {
                         it.copy(
                             treatmentPlanDescription = consent.treatmentSummary,
-                            consentSigned = consent.status == "SIGNED" || !consent.patientSignatureUrl.isNullOrBlank(),
+                            consentSigned = (consent.status == "SIGNED") || !consent.patientSignatureUrl.isNullOrBlank(),
                             consentPatientSignature = consent.patientSignatureUrl ?: ""
                         )
                     }
@@ -867,9 +867,7 @@ class ClinicalAdmissionViewModel(
                         val iso = "${s.nextAppointmentDate}T$candidate"
                         busySlots.none { busy -> busy.startsWith(iso.take(16)) }
                     }
-                    if (availableTime != null) {
-                        targetTime = availableTime
-                    }
+                    availableTime?.let { targetTime = it }
                 }
 
                 var appointmentCreated = false

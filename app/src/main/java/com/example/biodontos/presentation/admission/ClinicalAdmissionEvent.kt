@@ -37,7 +37,7 @@ sealed interface ClinicalAdmissionEvent {
         val lastName: String,
         val phone: String,
         val address: String,
-        val locality: String = ""
+        val locality: String = "",
     ) : ClinicalAdmissionEvent
     data class UpdateAntecedents(
         val lastVisit: String,

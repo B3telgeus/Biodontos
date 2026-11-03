@@ -28,7 +28,7 @@ private const val SAVED_SNACKBAR_NAVIGATION_DELAY_MS = 1_200L
 @Composable
 fun PatientRegistrationRoute(
     viewModel: PatientRegistrationViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -194,9 +194,9 @@ fun PatientRegistrationScreen(
                 )
             }
 
-            if (state.error != null) {
+            state.error?.let { error ->
                 Text(
-                    text = state.error,
+                    text = error,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )

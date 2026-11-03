@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PatientRegistrationViewModel(
-    private val savePatientUseCase: SavePatientUseCase
+    private val savePatientUseCase: SavePatientUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PatientRegistrationState())

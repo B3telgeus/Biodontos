@@ -55,7 +55,6 @@ import com.example.biodontos.presentation.doctor.DoctorViewModelFactory
 import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsRoute
 import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsViewModel
 import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsRoute
-import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsScreen
 import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsViewModel
 import com.example.biodontos.presentation.doctor.home.DoctorHomeRoute
 import com.example.biodontos.presentation.doctor.home.DoctorHomeUiEvent
@@ -126,7 +125,7 @@ private val forwardEnterTransition: EnterTransition =
     slideInHorizontally(
         animationSpec = tween(
             durationMillis = NAV_TRANSITION_DURATION_MS,
-            easing = FastOutSlowInEasing
+            easing = FastOutSlowInEasing,
         ),
         initialOffsetX = { fullWidth -> fullWidth }
     ) + fadeIn(
