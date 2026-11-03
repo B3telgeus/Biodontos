@@ -47,6 +47,7 @@ fun ClinicalAdmissionScreen(
     onAdmissionFinished: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.isFinished) {
         if (state.isFinished) {
@@ -54,10 +55,23 @@ fun ClinicalAdmissionScreen(
         }
     }
 
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
+
+    LaunchedEffect(state.successMessage) {
+        state.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
+
     ClinicalAdmissionContent(
         state = state,
         onEvent = viewModel::onEvent,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -66,7 +80,8 @@ fun ClinicalAdmissionScreen(
 fun ClinicalAdmissionContent(
     state: ClinicalAdmissionState,
     onEvent: (ClinicalAdmissionEvent) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     if (state.showOperativeConsentDialog) {
         OperativeConsentDialog(
@@ -92,6 +107,7 @@ fun ClinicalAdmissionContent(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {

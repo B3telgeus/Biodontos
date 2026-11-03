@@ -2,6 +2,7 @@ package com.example.biodontos.presentation.patients
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.biodontos.core.util.toUserFriendlyMessage
 import com.example.biodontos.domain.model.Patient
 import com.example.biodontos.domain.usecase.patients.SavePatientUseCase
 import kotlinx.coroutines.channels.Channel
@@ -64,6 +65,7 @@ class PatientRegistrationViewModel(
 
     fun savePatient() {
         val currentState = _state.value
+        if (currentState.isLoading) return
 
         var hasError = false
         if (currentState.dniCedula.isBlank()) {
@@ -100,16 +102,18 @@ class PatientRegistrationViewModel(
             )
             savePatientUseCase(patient)
                 .onSuccess {
-                    _state.update { it.copy(isLoading = false, isSaved = true) }
+                    _state.update { it.copy(isLoading = false, isSaved = true, error = null) }
                     _events.send(PatientRegistrationEvent.SavedSuccessfully)
                 }
                 .onFailure { error ->
+                    val message = error.toUserFriendlyMessage("No se pudo guardar el paciente")
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            error = error.message ?: "Error al guardar"
+                            error = message
                         )
                     }
+                    _events.send(PatientRegistrationEvent.ShowError(message))
                 }
         }
     }

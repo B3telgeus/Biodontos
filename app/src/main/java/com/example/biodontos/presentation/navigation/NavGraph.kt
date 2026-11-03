@@ -90,8 +90,7 @@ import com.example.biodontos.presentation.patientportal.shell.PatientNavItem
 import com.example.biodontos.presentation.patientportal.shell.PatientPortalShell
 import com.example.biodontos.presentation.patients.PatientListScreen
 import com.example.biodontos.presentation.patients.PatientListViewModel
-import com.example.biodontos.presentation.patients.PatientRegistrationEvent
-import com.example.biodontos.presentation.patients.PatientRegistrationScreen
+import com.example.biodontos.presentation.patients.PatientRegistrationRoute
 import com.example.biodontos.presentation.patients.PatientRegistrationViewModel
 import com.example.biodontos.presentation.patients.PatientsViewModelFactory
 
@@ -815,27 +814,10 @@ onFilterSelected = viewModel::onFilterSelected,
         // --- REGISTRO DE PACIENTE ---
         composable<PatientRegistration> {
             val viewModel: PatientRegistrationViewModel = viewModel(factory = PatientsViewModelFactory.RegistrationFactory)
-            val state by viewModel.state.collectAsStateWithLifecycle()
 
-            LaunchedEffect(Unit) {
-                viewModel.events.collect { event ->
-                    when (event) {
-                        PatientRegistrationEvent.SavedSuccessfully -> navController.popBackStack()
-                    }
-                }
-            }
-
-            PatientRegistrationScreen(
-                state = state,
-                onDniChange = viewModel::onDniChange,
-                onFirstNameChange = viewModel::onFirstNameChange,
-                onLastNameChange = viewModel::onLastNameChange,
-                onPhoneChange = viewModel::onPhoneChange,
-                onConsentChange = viewModel::onConsentChange,
-                onAllergiesChange = viewModel::onAllergiesChange,
-                onAllergiesDescriptionChange = viewModel::onAllergiesDescriptionChange,
-                onSaveClick = viewModel::savePatient,
-                onBackClick = { navController.popBackStack() }
+            PatientRegistrationRoute(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

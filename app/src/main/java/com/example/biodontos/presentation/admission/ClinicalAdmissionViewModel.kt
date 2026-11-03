@@ -240,12 +240,17 @@ class ClinicalAdmissionViewModel(
         when (event) {
             is ClinicalAdmissionEvent.NextStep -> advanceStep()
             is ClinicalAdmissionEvent.PreviousStep -> {
+                if (_state.value.isLoading) return
                 _state.update { it.copy(currentStep = (it.currentStep - 1).coerceAtLeast(1)) }
             }
             is ClinicalAdmissionEvent.JumpToStep -> {
+                if (_state.value.isLoading) return
                 if (event.step < _state.value.currentStep || _state.value.patientId.isNotBlank()) {
                     _state.update { it.copy(currentStep = event.step.coerceIn(1, 7)) }
                 }
+            }
+            is ClinicalAdmissionEvent.ClearMessages -> {
+                _state.update { it.copy(errorMessage = null, successMessage = null) }
             }
 
             // Paso 1: Identificación

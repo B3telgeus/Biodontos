@@ -8,14 +8,62 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private const val SAVED_SNACKBAR_NAVIGATION_DELAY_MS = 1_200L
+
+@Composable
+fun PatientRegistrationRoute(
+    viewModel: PatientRegistrationViewModel,
+    onNavigateBack: () -> Unit
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                PatientRegistrationEvent.SavedSuccessfully -> {
+                    launch {
+                        snackbarHostState.showSnackbar("Paciente guardado correctamente.")
+                    }
+                    delay(SAVED_SNACKBAR_NAVIGATION_DELAY_MS)
+                    onNavigateBack()
+                }
+                is PatientRegistrationEvent.ShowError -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+            }
+        }
+    }
+
+    PatientRegistrationScreen(
+        state = state,
+        onDniChange = viewModel::onDniChange,
+        onFirstNameChange = viewModel::onFirstNameChange,
+        onLastNameChange = viewModel::onLastNameChange,
+        onPhoneChange = viewModel::onPhoneChange,
+        onConsentChange = viewModel::onConsentChange,
+        onAllergiesChange = viewModel::onAllergiesChange,
+        onAllergiesDescriptionChange = viewModel::onAllergiesDescriptionChange,
+        onSaveClick = viewModel::savePatient,
+        onBackClick = onNavigateBack,
+        snackbarHostState = snackbarHostState
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,9 +77,11 @@ fun PatientRegistrationScreen(
     onAllergiesChange: (Boolean) -> Unit,
     onAllergiesDescriptionChange: (String) -> Unit,
     onSaveClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Nuevo Paciente") },

@@ -21,4 +21,5 @@ data class PatientRegistrationState(
 
 sealed class PatientRegistrationEvent {
     object SavedSuccessfully : PatientRegistrationEvent()
+    data class ShowError(val message: String) : PatientRegistrationEvent()
 }
