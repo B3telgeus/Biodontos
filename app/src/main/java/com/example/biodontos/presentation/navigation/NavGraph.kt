@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -20,6 +21,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -91,6 +95,31 @@ import com.example.biodontos.presentation.patients.PatientsViewModelFactory
 
 private const val NAV_TRANSITION_DURATION_MS = 320
 private const val NAV_EXIT_FADE_DURATION_MS = 180
+private const val NAV_FADE_THROUGH_DURATION_MS = 200
+
+/**
+ * Pantallas raíz de los portales del doctor y del paciente. Moverse entre ellas es un cambio de
+ * pestaña, por lo que usan fade-through en lugar de desplazamiento horizontal.
+ */
+private fun NavDestination.isPortalTab(): Boolean =
+    hasRoute<DoctorHome>() ||
+        hasRoute<PatientList>() ||
+        hasRoute<DoctorAppointments>() ||
+        hasRoute<DoctorDocuments>() ||
+        hasRoute<PatientHome>() ||
+        hasRoute<MyAppointments>() ||
+        hasRoute<DoctorSearch>() ||
+        hasRoute<PatientPayments>()
+
+/**
+ * Pantallas de arranque sin contenido propio relevante (splash y gate de sesión): se desvanecen
+ * para que la primera pantalla real aparezca sin desplazamiento lateral.
+ */
+private fun NavDestination.isStartupLayer(): Boolean =
+    hasRoute<Splash>() || hasRoute<SessionGate>()
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isPortalTabSwitch(): Boolean =
+    initialState.destination.isPortalTab() && targetState.destination.isPortalTab()
 
 private val forwardEnterTransition: EnterTransition =
     slideInHorizontally(
@@ -136,15 +165,37 @@ private val backwardExitTransition: ExitTransition =
         animationSpec = tween(durationMillis = NAV_EXIT_FADE_DURATION_MS)
     )
 
+private val fadeThroughEnterTransition: EnterTransition =
+    fadeIn(animationSpec = tween(durationMillis = NAV_FADE_THROUGH_DURATION_MS))
+
+private val fadeThroughExitTransition: ExitTransition =
+    fadeOut(animationSpec = tween(durationMillis = NAV_FADE_THROUGH_DURATION_MS))
+
 @Composable
 fun BiodontosNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
         startDestination = Splash,
-        enterTransition = { forwardEnterTransition },
-        exitTransition = { forwardExitTransition },
-        popEnterTransition = { backwardEnterTransition },
-        popExitTransition = { backwardExitTransition }
+        enterTransition = {
+            when {
+                initialState.destination.isStartupLayer() -> fadeThroughEnterTransition
+                isPortalTabSwitch() -> fadeThroughEnterTransition
+                else -> forwardEnterTransition
+            }
+        },
+        exitTransition = {
+            when {
+                initialState.destination.isStartupLayer() -> fadeThroughExitTransition
+                isPortalTabSwitch() -> fadeThroughExitTransition
+                else -> forwardExitTransition
+            }
+        },
+        popEnterTransition = {
+            if (isPortalTabSwitch()) fadeThroughEnterTransition else backwardEnterTransition
+        },
+        popExitTransition = {
+            if (isPortalTabSwitch()) fadeThroughExitTransition else backwardExitTransition
+        }
     ) {
         // --- SPLASH SCREEN (INICIO CON AUTO-LOGIN) ---
         composable<Splash> {
