@@ -10,7 +10,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
+import com.example.biodontos.domain.usecase.materials.BuildEvolutionMaterialUsageUseCase
+import com.example.biodontos.domain.usecase.materials.GetMaterialsUseCase
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
@@ -28,7 +31,10 @@ class ClinicalAdmissionViewModel(
     private val guardianRepository: GuardianRepository,
     private val initialPatientId: String? = null,
     private val getCurrentDoctorUseCase: GetCurrentDoctorUseCase? = null,
-    private val doctorRepository: DoctorRepository? = null
+    private val doctorRepository: DoctorRepository? = null,
+    private val getMaterialsUseCase: GetMaterialsUseCase = GetMaterialsUseCase(materialRepository),
+    private val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase =
+        BuildEvolutionMaterialUsageUseCase(SystemClinicClock())
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ClinicalAdmissionState())
@@ -215,15 +221,18 @@ class ClinicalAdmissionViewModel(
 
     private fun loadMaterialsCatalog() {
         viewModelScope.launch {
-            materialRepository.getMaterials()
-                .onSuccess { list ->
+            getMaterialsUseCase().fold(
+                ifLeft = { /* Catálogo vacío: el doctor puede gestionarlo desde Materiales */ },
+                ifRight = { list ->
+                    val today = LocalDate.now()
                     _state.update {
                         it.copy(
                             materialsCatalog = list,
-                            selectedCatalogMaterial = list.firstOrNull()
+                            selectedCatalogMaterial = list.firstOrNull { m -> !m.isExpired(today) }
                         )
                     }
                 }
+            )
         }
     }
 
@@ -459,15 +468,22 @@ class ClinicalAdmissionViewModel(
             }
             is ClinicalAdmissionEvent.AddMaterialUsed -> {
                 val mat = _state.value.selectedCatalogMaterial ?: return
-                val used = EvolutionMaterialUsed(
-                    materialId = mat.id,
-                    materialName = mat.name,
-                    quantityUsed = event.quantity,
-                    lotNumberSnapshot = mat.batchLotNumber,
-                    invimaSnapshot = mat.invimaRegistration,
-                    expirationDateSnapshot = mat.expirationDate
-                )
-                _state.update { it.copy(usedMaterials = it.usedMaterials + used) }
+                if (_state.value.usedMaterials.any { it.materialId == mat.id.value }) {
+                    _state.update { it.copy(errorMessage = "Este material ya fue anexado a la evolución.") }
+                    return
+                }
+                viewModelScope.launch {
+                    buildEvolutionMaterialUsageUseCase(mat, event.quantity).fold(
+                        ifLeft = { error ->
+                            _state.update { it.copy(errorMessage = error.userMessage) }
+                        },
+                        ifRight = { used ->
+                            _state.update {
+                                it.copy(usedMaterials = it.usedMaterials + used, errorMessage = null)
+                            }
+                        }
+                    )
+                }
             }
             is ClinicalAdmissionEvent.RemoveMaterialUsed -> {
                 _state.update {

@@ -221,47 +221,31 @@ fun Evolution.toDto(): EvolutionDto = EvolutionDto(
     amendsEvolutionId = amendsEvolutionId?.ifBlank { null }
 )
 
-fun EvolutionMaterialUsedDto.toDomain(): EvolutionMaterialUsed = EvolutionMaterialUsed(
-    id = id ?: "",
-    materialId = materialId,
-    materialName = "",
-    quantityUsed = quantityUsed,
-    lotNumberSnapshot = lotNumberSnapshot,
-    invimaSnapshot = invimaSnapshot,
-    expirationDateSnapshot = expirationDateSnapshot
-)
+fun EvolutionMaterialUsedDto.toDomain(): EvolutionMaterialUsed {
+    val snapshotName = materialNameSnapshot?.ifBlank { null } ?: "Material Clínico"
+    return EvolutionMaterialUsed(
+        id = id ?: "",
+        materialId = materialId,
+        materialName = snapshotName,
+        quantityUsed = quantityUsed,
+        lotNumberSnapshot = lotNumberSnapshot,
+        invimaSnapshot = invimaSnapshot,
+        expirationDateSnapshot = expirationDateSnapshot,
+        materialNameSnapshot = snapshotName,
+        manufacturingDateSnapshot = manufacturingDateSnapshot ?: ""
+    )
+}
 
 fun EvolutionMaterialUsed.toDto(evolutionId: String): EvolutionMaterialUsedDto = EvolutionMaterialUsedDto(
     id = id.ifEmpty { null },
     evolutionId = evolutionId,
     materialId = materialId,
+    materialNameSnapshot = materialNameSnapshot.ifBlank { materialName.ifBlank { null } },
     quantityUsed = quantityUsed,
     lotNumberSnapshot = lotNumberSnapshot,
     invimaSnapshot = invimaSnapshot,
-    expirationDateSnapshot = expirationDateSnapshot
-)
-
-// --- Clinical Material ---
-fun ClinicalMaterialDto.toDomain(): ClinicalMaterial = ClinicalMaterial(
-    id = id ?: "",
-    name = name,
-    invimaRegistration = invimaRegistration,
-    batchLotNumber = batchLotNumber,
-    manufacturingDate = manufacturingDate,
-    expirationDate = expirationDate,
-    currentStock = currentStock,
-    unitOfMeasure = unitOfMeasure
-)
-
-fun ClinicalMaterial.toDto(): ClinicalMaterialDto = ClinicalMaterialDto(
-    id = id.ifEmpty { null },
-    name = name,
-    invimaRegistration = invimaRegistration,
-    batchLotNumber = batchLotNumber,
-    manufacturingDate = manufacturingDate,
-    expirationDate = expirationDate,
-    currentStock = currentStock,
-    unitOfMeasure = unitOfMeasure
+    expirationDateSnapshot = expirationDateSnapshot,
+    manufacturingDateSnapshot = manufacturingDateSnapshot.ifBlank { null }
 )
 
 // --- Informed Consent ---

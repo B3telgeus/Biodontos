@@ -463,4 +463,20 @@ class ClinicalAdmissionViewModelTest {
         assertEquals("55555555-5555-5555-5555-555555555555", capturedExam?.doctorId)
         assertEquals(5, vmWithClinicDoc.state.value.currentStep)
     }
+@Test
+    fun `Adding expired material in step 6 is rejected and sets errorMessage`() = runTest {
+        val expired = ClinicalMaterial(
+            id = "mat-exp",
+            name = "Anestésico Vencido",
+            invimaRegistration = "INVIMA 2016M-000111",
+            batchLotNumber = "LOTE-OLD",
+            manufacturingDate = "2020-01-10",
+            expirationDate = "2022-01-10"
+        )
+        viewModel.onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(expired))
+        viewModel.onEvent(ClinicalAdmissionEvent.AddMaterialUsed(1.0))
+
+        assertTrue(viewModel.state.value.usedMaterials.isEmpty())
+        assertEquals(MaterialError.MaterialExpired.userMessage, viewModel.state.value.errorMessage)
+    }
 }

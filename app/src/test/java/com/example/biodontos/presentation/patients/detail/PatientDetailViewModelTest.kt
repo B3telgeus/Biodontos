@@ -3,6 +3,7 @@ package com.example.biodontos.presentation.patients.detail
 import com.example.biodontos.MainDispatcherRule
 import com.example.biodontos.domain.model.Anamnesis
 import com.example.biodontos.domain.model.ClinicalMaterial
+import com.example.biodontos.domain.model.MaterialError
 import com.example.biodontos.domain.model.ClinicalRecord
 import com.example.biodontos.domain.model.CopAmount
 import com.example.biodontos.domain.model.Evolution
@@ -263,5 +264,32 @@ class PatientDetailViewModelTest {
 
         coVerify { appointmentRepository.createAppointment(match { it.patientId == testPatientId }) }
         assertFalse(viewModel.state.value.showNewAppointmentDialog)
+    }
+@Test
+    fun `Selecting or adding expired material in evolution is rejected with errorMessage`() = runTest {
+        val expired = ClinicalMaterial(
+            id = "mat-exp",
+            name = "Ionómero Vencido",
+            invimaRegistration = "INVIMA 2017DM-000222",
+            batchLotNumber = "LOTE-EXP",
+            manufacturingDate = "2020-05-01",
+            expirationDate = "2022-05-01"
+        )
+        viewModel.onSelectCatalogMaterial(expired)
+        assertNotNull(viewModel.state.value.errorMessage)
+
+        // Force expired selection and try to add via use case validation
+        val valid = viewModel.state.value.materialsCatalog.first()
+        viewModel.onSelectCatalogMaterial(valid)
+        viewModel.addMaterialToEvolution(0.0)
+        assertTrue(viewModel.state.value.newEvolutionMaterials.isEmpty())
+        assertEquals(MaterialError.InvalidQuantity.userMessage, viewModel.state.value.errorMessage)
+
+        viewModel.addMaterialToEvolution(2.5)
+        assertEquals(1, viewModel.state.value.newEvolutionMaterials.size)
+        val snap = viewModel.state.value.newEvolutionMaterials.first()
+        assertEquals(2.5, snap.quantityUsed, 0.001)
+        assertEquals(valid.name, snap.materialNameSnapshot)
+        assertEquals(valid.manufacturingDate.toString(), snap.manufacturingDateSnapshot)
     }
 }

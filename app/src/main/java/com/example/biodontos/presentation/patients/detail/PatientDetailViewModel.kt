@@ -27,12 +27,15 @@ import com.example.biodontos.domain.repository.ClinicalRecordRepository
 import com.example.biodontos.domain.repository.EvolutionRepository
 import com.example.biodontos.domain.repository.InformedConsentRepository
 import com.example.biodontos.domain.repository.MaterialRepository
+import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.domain.repository.PatientRepository
 import com.example.biodontos.domain.usecase.history.AddEvolutionClarificationUseCase
 import com.example.biodontos.domain.usecase.history.GetPatientActivityTimelineUseCase
 import com.example.biodontos.domain.usecase.history.UpdateTreatmentStatusUseCase
 import com.example.biodontos.domain.usecase.history.VoidEvolutionUseCase
 import com.example.biodontos.domain.usecase.history.VoidPaymentUseCase
+import com.example.biodontos.domain.usecase.materials.BuildEvolutionMaterialUsageUseCase
+import com.example.biodontos.domain.usecase.materials.GetMaterialsUseCase
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.channels.Channel
@@ -70,7 +73,10 @@ class PatientDetailViewModel(
     private val addEvolutionClarificationUseCase: AddEvolutionClarificationUseCase =
         AddEvolutionClarificationUseCase(evolutionRepository),
     private val updateTreatmentStatusUseCase: UpdateTreatmentStatusUseCase =
-        UpdateTreatmentStatusUseCase(billingRepository)
+        UpdateTreatmentStatusUseCase(billingRepository),
+    private val getMaterialsUseCase: GetMaterialsUseCase = GetMaterialsUseCase(materialRepository),
+    private val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase =
+        BuildEvolutionMaterialUsageUseCase(SystemClinicClock())
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -199,14 +205,25 @@ class PatientDetailViewModel(
 
     private fun loadMaterialsCatalog() {
         viewModelScope.launch {
-            materialRepository.getMaterials().onSuccess { mats ->
-                _state.update {
-                    it.copy(
-                        materialsCatalog = mats,
-                        selectedCatalogMaterial = mats.firstOrNull()
-                    )
+            getMaterialsUseCase(includeInactive = false).fold(
+                ifLeft = {
+                    _state.update {
+                        it.copy(
+                            materialsCatalog = emptyList(),
+                            selectedCatalogMaterial = null
+                        )
+                    }
+                },
+                ifRight = { mats ->
+                    val initialSelection = mats.firstOrNull { !it.isExpired() } ?: mats.firstOrNull()
+                    _state.update {
+                        it.copy(
+                            materialsCatalog = mats,
+                            selectedCatalogMaterial = initialSelection
+                        )
+                    }
                 }
-            }
+            )
         }
     }
 
@@ -675,6 +692,8 @@ class PatientDetailViewModel(
 
     // --- Control de Diálogo de Nueva Evolución ---
     fun openNewEvolutionDialog() {
+        val nonExpired = _state.value.materialsCatalog.firstOrNull { !it.isExpired() }
+            ?: _state.value.materialsCatalog.firstOrNull()
         _state.update {
             it.copy(
                 historyState = it.historyState.copy(showQuickActionSheet = false),
@@ -683,7 +702,9 @@ class PatientDetailViewModel(
                 newEvolutionToothTreated = null,
                 newEvolutionCost = "0",
                 newEvolutionPayment = "0",
-                newEvolutionMaterials = emptyList()
+                newEvolutionMaterials = emptyList(),
+                selectedCatalogMaterial = nonExpired,
+                errorMessage = null
             )
         }
     }
@@ -709,20 +730,43 @@ class PatientDetailViewModel(
     }
 
     fun onSelectCatalogMaterial(material: ClinicalMaterial) {
-        _state.update { it.copy(selectedCatalogMaterial = material) }
+        if (material.isExpired()) {
+            _state.update {
+                it.copy(errorMessage = "El material '${material.name}' se encuentra vencido y no puede ser seleccionado.")
+            }
+            return
+        }
+        _state.update { it.copy(selectedCatalogMaterial = material, errorMessage = null) }
     }
 
     fun addMaterialToEvolution(quantity: Double) {
-        val mat = _state.value.selectedCatalogMaterial ?: return
-        val used = EvolutionMaterialUsed(
-            materialId = mat.id,
-            materialName = mat.name,
-            quantityUsed = quantity,
-            lotNumberSnapshot = mat.batchLotNumber,
-            invimaSnapshot = mat.invimaRegistration,
-            expirationDateSnapshot = mat.expirationDate
-        )
-        _state.update { it.copy(newEvolutionMaterials = it.newEvolutionMaterials + used) }
+        val mat = _state.value.selectedCatalogMaterial ?: run {
+            _state.update { it.copy(errorMessage = "Seleccione un material del catálogo.") }
+            return
+        }
+
+        viewModelScope.launch {
+            buildEvolutionMaterialUsageUseCase(material = mat, quantityUsed = quantity).fold(
+                ifLeft = { err ->
+                    _state.update { it.copy(errorMessage = err.userMessage) }
+                },
+                ifRight = { used ->
+                    _state.update { current ->
+                        val existingIndex = current.newEvolutionMaterials.indexOfFirst { it.materialId == used.materialId }
+                        val updatedList = if (existingIndex >= 0) {
+                            current.newEvolutionMaterials.toMutableList().apply {
+                                this[existingIndex] = this[existingIndex].copy(
+                                    quantityUsed = this[existingIndex].quantityUsed + quantity
+                                )
+                            }
+                        } else {
+                            current.newEvolutionMaterials + used
+                        }
+                        current.copy(newEvolutionMaterials = updatedList, errorMessage = null)
+                    }
+                }
+            )
+        }
     }
 
     fun removeMaterialFromEvolution(materialId: String) {
@@ -768,6 +812,11 @@ class PatientDetailViewModel(
                         it.copy(
                             isSavingEvolution = false,
                             showNewEvolutionDialog = false,
+                            newEvolutionDescription = "",
+                            newEvolutionToothTreated = null,
+                            newEvolutionCost = "0",
+                            newEvolutionPayment = "0",
+                            newEvolutionMaterials = emptyList(),
                             successMessage = "¡Nota de evolución registrada con éxito!"
                         )
                     }

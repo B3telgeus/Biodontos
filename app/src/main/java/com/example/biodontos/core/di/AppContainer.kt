@@ -59,6 +59,10 @@ import com.example.biodontos.domain.usecase.doctor.GetMyDoctorsUseCase
 import com.example.biodontos.domain.usecase.doctor.SaveDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
 import com.example.biodontos.domain.usecase.doctor.UpdateDoctorProfileUseCase
+import com.example.biodontos.domain.usecase.materials.BuildEvolutionMaterialUsageUseCase
+import com.example.biodontos.domain.usecase.materials.GetMaterialsUseCase
+import com.example.biodontos.domain.usecase.materials.SaveMaterialUseCase
+import com.example.biodontos.domain.usecase.materials.SetMaterialActiveUseCase
 import com.example.biodontos.domain.usecase.history.AddEvolutionClarificationUseCase
 import com.example.biodontos.domain.usecase.history.GetPatientActivityTimelineUseCase
 import com.example.biodontos.domain.usecase.history.UpdateTreatmentStatusUseCase
@@ -132,6 +136,11 @@ interface AppContainer {
 
     val updateDoctorProfileUseCase: UpdateDoctorProfileUseCase
     val updatePasswordUseCase: UpdatePasswordUseCase
+
+    val getMaterialsUseCase: GetMaterialsUseCase
+    val saveMaterialUseCase: SaveMaterialUseCase
+    val setMaterialActiveUseCase: SetMaterialActiveUseCase
+    val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase
 }
 
 class DefaultAppContainer : AppContainer {
@@ -356,5 +365,21 @@ class DefaultAppContainer : AppContainer {
 
     override val updatePasswordUseCase: UpdatePasswordUseCase by lazy {
         UpdatePasswordUseCase(authRepository)
+    }
+
+    override val getMaterialsUseCase: GetMaterialsUseCase by lazy {
+        GetMaterialsUseCase(materialRepository)
+    }
+
+    override val saveMaterialUseCase: SaveMaterialUseCase by lazy {
+        SaveMaterialUseCase(materialRepository, clinicClock)
+    }
+
+    override val setMaterialActiveUseCase: SetMaterialActiveUseCase by lazy {
+        SetMaterialActiveUseCase(materialRepository)
+    }
+
+    override val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase by lazy {
+        BuildEvolutionMaterialUsageUseCase(clinicClock)
     }
 }

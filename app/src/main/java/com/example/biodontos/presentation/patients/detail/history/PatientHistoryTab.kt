@@ -2,6 +2,7 @@ package com.example.biodontos.presentation.patients.detail.history
 
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
@@ -66,11 +68,13 @@ import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.Carmesi
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.Esmeralda
+import com.example.biodontos.core.designsystem.SlateLight
 import com.example.biodontos.core.designsystem.Zafiro
 import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.CopAmount
 import com.example.biodontos.domain.model.Evolution
+import com.example.biodontos.domain.model.EvolutionMaterialUsed
 import com.example.biodontos.domain.model.PatientId
 import com.example.biodontos.domain.model.Payment
 import com.example.biodontos.domain.model.Treatment
@@ -716,13 +720,8 @@ private fun EvolutionActivityContent(activity: PatientActivity.EvolutionActivity
             textDecoration = if (isVoided) TextDecoration.LineThrough else TextDecoration.None
         )
         if (evo.materialsUsed.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Insumos INVIMA: ${evo.materialsUsed.size} lote(s) trazado(s)",
-                fontSize = 11.sp,
-                color = Zafiro,
-                fontWeight = FontWeight.SemiBold
-            )
+            Spacer(modifier = Modifier.height(6.dp))
+            EvolutionMaterialsSnapshotCard(materials = evo.materialsUsed)
         }
         if (activity.voidInfo != null) {
             Spacer(modifier = Modifier.height(6.dp))
@@ -732,6 +731,136 @@ private fun EvolutionActivityContent(activity: PatientActivity.EvolutionActivity
                 color = Carmesi,
                 fontWeight = FontWeight.SemiBold
             )
+        }
+    }
+}
+
+@Composable
+fun EvolutionMaterialsSnapshotCard(
+    materials: List<EvolutionMaterialUsed>,
+    modifier: Modifier = Modifier
+) {
+    if (materials.isEmpty()) return
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = SlateLight),
+        border = BorderStroke(1.dp, BiodontosInputBg)
+    ) {
+        Column(modifier = Modifier.padding(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Zafiro,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Text(
+                        text = "Insumos Odontológicos Trazados (INVIMA)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BiodontosDark
+                    )
+                }
+                Surface(
+                    color = Zafiro.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = "Res. 1995/1999 • Inmutable",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Zafiro,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            materials.forEachIndexed { index, mat ->
+                if (index > 0) {
+                    HorizontalDivider(
+                        color = Color.LightGray.copy(alpha = 0.4f),
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                }
+                val displayName = mat.materialNameSnapshot.ifBlank {
+                    mat.materialName.ifBlank { "Material Clínico" }
+                }
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = displayName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = BiodontosDark
+                        )
+                        Text(
+                            text = "${mat.quantityUsed} unidad(es)",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 11.sp,
+                            color = Zafiro
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "INVIMA: ${mat.invimaSnapshot}",
+                            fontSize = 10.sp,
+                            color = BiodontosGreyText
+                        )
+                        Text(
+                            text = "•",
+                            fontSize = 10.sp,
+                            color = BiodontosGreyText
+                        )
+                        Text(
+                            text = "Lote: ${mat.lotNumberSnapshot}",
+                            fontSize = 10.sp,
+                            color = BiodontosGreyText
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (mat.manufacturingDateSnapshot.isNotBlank()) {
+                            Text(
+                                text = "Elab: ${mat.manufacturingDateSnapshot}",
+                                fontSize = 10.sp,
+                                color = BiodontosGreyText
+                            )
+                            Text(
+                                text = "•",
+                                fontSize = 10.sp,
+                                color = BiodontosGreyText
+                            )
+                        }
+                        Text(
+                            text = "Vence: ${mat.expirationDateSnapshot}",
+                            fontSize = 10.sp,
+                            color = BiodontosGreyText
+                        )
+                    }
+                }
+            }
         }
     }
 }

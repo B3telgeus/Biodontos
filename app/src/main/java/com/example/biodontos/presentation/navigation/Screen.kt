@@ -43,6 +43,9 @@ object DoctorAppointments
 object DoctorDocuments
 
 @Serializable
+object DoctorMaterials
+
+@Serializable
 object DoctorProfile
 
 @Serializable

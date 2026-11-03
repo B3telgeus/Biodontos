@@ -59,4 +59,40 @@ object DoctorViewModelFactory {
             ) as T
         }
     }
+
+    class MaterialsFactory(private val container: com.example.biodontos.core.di.AppContainer? = null) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+            val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as? BiodontosApp
+            val c = container ?: requireNotNull(app?.container) { "AppContainer not found" }
+            return com.example.biodontos.presentation.doctor.materials.MaterialsViewModel(
+                getMaterialsUseCase = c.getMaterialsUseCase,
+                saveMaterialUseCase = c.saveMaterialUseCase,
+                setMaterialActiveUseCase = c.setMaterialActiveUseCase
+            ) as T
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            val c = requireNotNull(container) { "AppContainer is required when CreationExtras is not available" }
+            return com.example.biodontos.presentation.doctor.materials.MaterialsViewModel(
+                getMaterialsUseCase = c.getMaterialsUseCase,
+                saveMaterialUseCase = c.saveMaterialUseCase,
+                setMaterialActiveUseCase = c.setMaterialActiveUseCase
+            ) as T
+        }
+
+        companion object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+                val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BiodontosApp
+                val c = app.container
+                return com.example.biodontos.presentation.doctor.materials.MaterialsViewModel(
+                    getMaterialsUseCase = c.getMaterialsUseCase,
+                    saveMaterialUseCase = c.saveMaterialUseCase,
+                    setMaterialActiveUseCase = c.setMaterialActiveUseCase
+                ) as T
+            }
+        }
+    }
 }

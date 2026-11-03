@@ -1351,18 +1351,19 @@ private fun Step6EvolutionMaterialsContent(
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(state.materialsCatalog) { mat ->
                         val isSelected = state.selectedCatalogMaterial?.id == mat.id
+                        val isExpiredMat = mat.isExpired(java.time.LocalDate.now())
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = if (isSelected) BiodontosDark else BiodontosInputBg,
-                            modifier = Modifier.clickable {
+                            modifier = Modifier.clickable(enabled = !isExpiredMat) {
                                 onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(mat))
                             }
                         ) {
                             Text(
-                                text = mat.name,
+                                text = if (isExpiredMat) "${mat.name} · Vencido" else mat.name,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) BiodontosWhite else BiodontosDark,
+                                color = if (isExpiredMat) Carmesi else if (isSelected) BiodontosWhite else BiodontosDark,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                             )
                         }
@@ -1378,10 +1379,28 @@ private fun Step6EvolutionMaterialsContent(
                         Column(modifier = Modifier.padding(10.dp)) {
                             Text(text = "Material: ${selectedMat.name}", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             Text(text = "Registro INVIMA: ${selectedMat.invimaRegistration}", fontSize = 11.sp)
-                            Text(text = "Lote: ${selectedMat.batchLotNumber} | Vence: ${selectedMat.expirationDate}", fontSize = 11.sp)
+                            Text(text = "Lote: ${selectedMat.batchLotNumber} | Elaboración: ${selectedMat.manufacturingDate} | Vence: ${selectedMat.expirationDate}", fontSize = 11.sp)
+                            val today = java.time.LocalDate.now()
+                            val selectedExpired = selectedMat.isExpired(today)
+                            if (selectedExpired) {
+                                Text(text = "Vencido: no puede usarse en la evolución.", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Carmesi)
+                            } else if (selectedMat.isNearExpiration(today)) {
+                                Text(text = "Próximo a vencer (${java.time.temporal.ChronoUnit.DAYS.between(today, selectedMat.expirationDate)} días)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Ambar)
+                            }
+                            var quantityText by remember(selectedMat.id) { mutableStateOf("1.0") }
+                            OutlinedTextField(
+                                value = quantityText,
+                                onValueChange = { quantityText = it.replace(',', '.') },
+                                label = { Text("Cantidad utilizada") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                colors = biodontosTextFieldColors(),
+                                modifier = Modifier.fillMaxWidth()
+                            )
                             Spacer(modifier = Modifier.height(6.dp))
                             Button(
-                                onClick = { onEvent(ClinicalAdmissionEvent.AddMaterialUsed(1.0)) },
+                                enabled = !selectedExpired,
+                                onClick = { onEvent(ClinicalAdmissionEvent.AddMaterialUsed(quantityText.toDoubleOrNull() ?: 0.0)) },
                                 shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Zafiro),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
@@ -1415,7 +1434,7 @@ private fun Step6EvolutionMaterialsContent(
                     ) {
                         Column {
                             Text(text = used.materialName, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Text(text = "INVIMA: ${used.invimaSnapshot} | Lote: ${used.lotNumberSnapshot}", fontSize = 10.sp, color = BiodontosGreyText)
+                            Text(text = "INVIMA: ${used.invimaSnapshot} | Lote: ${used.lotNumberSnapshot} | Vence: ${used.expirationDateSnapshot} | Cant.: ${used.quantityUsed}", fontSize = 10.sp, color = BiodontosGreyText)
                         }
                         IconButton(onClick = { onEvent(ClinicalAdmissionEvent.RemoveMaterialUsed(used.materialId)) }) {
                             Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Carmesi, modifier = Modifier.size(16.dp))
