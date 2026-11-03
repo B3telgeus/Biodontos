@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.odontogram
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -33,7 +32,6 @@ import com.example.biodontos.domain.model.Tooth
 import com.example.biodontos.domain.model.ToothCondition
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@VisibleForTesting
 @Composable
 fun OdontogramScreen(
     state: OdontogramState,
@@ -148,9 +146,9 @@ fun OdontogramScreen(
                             onSurfaceClick = onSurfaceClick
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
-                    
+
                     // Mandíbula Inferior
                     Text(
                         "Mandíbula Inferior (Cuadrantes 4 y 3 / 8 y 7)",
@@ -175,7 +173,7 @@ fun OdontogramScreen(
                     }
                 }
             }
-            
+
             val selectedTooth = state.selectedTooth
             val selectedSurface = state.selectedSurface
             if (state.showSelectionDialog && selectedTooth != null && selectedSurface != null) {
@@ -189,7 +187,7 @@ fun OdontogramScreen(
                     onDismiss = onDismissDialog
                 )
             }
-            
+
             state.error?.let {
                 Snackbar(
                     modifier = Modifier
@@ -258,9 +256,9 @@ fun ToothSelectionDialog(
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Text("Seleccionar Condición", style = MaterialTheme.typography.labelMedium)
-                
+
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -276,7 +274,7 @@ fun ToothSelectionDialog(
                         }
                     }
                 }
-                
+
                 OutlinedTextField(
                     value = comment,
                     onValueChange = onCommentChange,
@@ -284,11 +282,11 @@ fun ToothSelectionDialog(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isSaving
                 )
-                
+
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                 }
-                
+
                 TextButton(onClick = onDismiss, enabled = !isSaving) {
                     Text("Cancelar")
                 }

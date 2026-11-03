@@ -883,17 +883,20 @@ class ClinicalAdmissionViewModel(
                     scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${targetTime.take(5)}."
                 } else {
                     // Intento de recuperación probando las siguientes franjas horarias
-                    for (candidate in candidateTimes) {
-                        if (candidate == targetTime) continue
-                        val fallbackAppt = appointmentToTry.copy(
-                            startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T$candidate")
-                        )
-                        val fallbackResult = appointmentRepository.createAppointment(fallbackAppt)
-                        if (fallbackResult.isSuccess) {
-                            appointmentCreated = true
-                            scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${candidate.take(5)}."
-                            break
+                    val fallbackTime = candidateTimes.firstNotNullOfOrNull { candidate ->
+                        if (candidate == targetTime) {
+                            null
+                        } else {
+                            val fallbackAppt = appointmentToTry.copy(
+                                startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T$candidate")
+                            )
+                            val fallbackResult = appointmentRepository.createAppointment(fallbackAppt)
+                            candidate.takeIf { fallbackResult.isSuccess }
                         }
+                    }
+                    if (fallbackTime != null) {
+                        appointmentCreated = true
+                        scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${fallbackTime.take(5)}."
                     }
                 }
 

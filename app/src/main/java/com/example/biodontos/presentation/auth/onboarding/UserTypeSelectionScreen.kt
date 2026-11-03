@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.auth.onboarding
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,7 +23,6 @@ import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.DentalTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
-@VisibleForTesting
 @Composable
 fun UserTypeSelectionScreen(
     onDoctorClick: () -> Unit,

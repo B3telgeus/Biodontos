@@ -2,7 +2,6 @@ package com.example.biodontos.presentation.doctor.home
 
 import android.graphics.BitmapFactory
 import android.util.Base64
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -126,7 +125,6 @@ fun DoctorHomeRoute(
     )
 }
 
-@VisibleForTesting
 @Composable
 fun DoctorHomeScreen(
     state: DoctorHomeUiState,

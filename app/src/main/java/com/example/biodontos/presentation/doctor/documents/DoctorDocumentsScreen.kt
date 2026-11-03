@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.doctor.documents
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -123,7 +122,6 @@ fun DoctorDocumentsScreen(
     )
 }
 
-@VisibleForTesting
 @Composable
 fun DoctorDocumentsContent(
     state: DoctorDocumentsState,

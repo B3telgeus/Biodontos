@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.doctor.appointments
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -64,6 +63,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -130,7 +130,6 @@ fun DoctorAppointmentsRoute(
     )
 }
 
-@VisibleForTesting
 @Composable
 fun DoctorAppointmentsScreen(
     state: DoctorAppointmentsUiState,
@@ -1712,7 +1711,7 @@ private fun RescheduleAppointmentDialog(
     onConfirm: (newStartTime: LocalDateTime) -> Unit
 ) {
     var selectedStartTime by remember { mutableStateOf<LocalDateTime?>(null) }
-    var weekOffset by remember { mutableStateOf(0) }
+    var weekOffset by remember { mutableIntStateOf(0) }
     val currentMonday = remember(today, weekOffset) {
         today.plusWeeks(weekOffset.toLong()).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     }

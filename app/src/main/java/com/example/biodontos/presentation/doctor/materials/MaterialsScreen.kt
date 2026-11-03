@@ -1,7 +1,6 @@
 package com.example.biodontos.presentation.doctor.materials
 
 import android.widget.Toast
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -125,7 +124,6 @@ fun MaterialsScreen(
     )
 }
 
-@VisibleForTesting
 @Composable
 fun MaterialsContent(
     state: MaterialsUiState,

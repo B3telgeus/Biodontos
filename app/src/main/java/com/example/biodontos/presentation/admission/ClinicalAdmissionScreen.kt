@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.admission
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,6 +37,7 @@ import com.example.biodontos.presentation.components.SignaturePad
 import com.example.biodontos.presentation.odontogram.InteractiveTooth
 import com.example.biodontos.presentation.odontogram.color
 import com.example.biodontos.presentation.periodontogram.InteractivePeriodontogram
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +62,6 @@ fun ClinicalAdmissionScreen(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@VisibleForTesting
 @Composable
 fun ClinicalAdmissionContent(
     state: ClinicalAdmissionState,
@@ -364,7 +363,6 @@ private fun Step1IdentificationContent(
             )
 
             // DNI
-            // TODO: Validacion de DNI completada con éxito
             OutlinedTextField(
                 value = state.dniCedula,
                 onValueChange = { input ->
@@ -820,7 +818,7 @@ private fun Step2AnamnesisContent(
                 color = BiodontosGreyText
             )
 
-            Divider(color = SlateLight)
+            HorizontalDivider(color = SlateLight)
 
             val questions = listOf(
                 "tratamientoMedicoActual" to "¿Está bajo tratamiento médico actual?" to state.tratamientoMedicoActual,
@@ -1175,7 +1173,7 @@ private fun Step5TreatmentConsentContent(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Divider(color = SlateLight)
+            HorizontalDivider(color = SlateLight)
 
             // Texto de Consentimiento Legal
             Surface(
@@ -1323,7 +1321,7 @@ private fun Step6EvolutionMaterialsContent(
                         color = if (state.evolutionBalance > 0.0) Carmesi else Esmeralda
                     )
                     Text(
-                        text = "$ ${String.format("%,.2f", state.evolutionBalance)}",
+                        text = "$ ${String.format(Locale.getDefault(), "%,.2f", state.evolutionBalance)}",
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 16.sp,
                         color = if (state.evolutionBalance > 0.0) Carmesi else Esmeralda
@@ -1331,7 +1329,7 @@ private fun Step6EvolutionMaterialsContent(
                 }
             }
 
-            Divider(color = SlateLight)
+            HorizontalDivider(color = SlateLight)
 
             // Trazabilidad de Materiales INVIMA
             Text(

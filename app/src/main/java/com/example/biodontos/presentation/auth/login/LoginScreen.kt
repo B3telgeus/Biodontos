@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.auth.login
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -33,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.example.biodontos.core.designsystem.*
 
-@VisibleForTesting
 @Composable
 fun LoginScreen(
     state: LoginState,

@@ -2,7 +2,6 @@ package com.example.biodontos.presentation.patientportal.appointments
 
 import android.content.Intent
 import android.provider.CalendarContract
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

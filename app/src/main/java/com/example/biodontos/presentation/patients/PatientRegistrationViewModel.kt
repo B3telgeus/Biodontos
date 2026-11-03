@@ -42,16 +42,16 @@ class PatientRegistrationViewModel(
         } else null
         _state.update { it.copy(lastName = value, lastNameError = error) }
     }
-    fun onConsentChange(value: Boolean) { 
-        _state.update { it.copy(consentSigned = value) } 
+    fun onConsentChange(value: Boolean) {
+        _state.update { it.copy(consentSigned = value) }
     }
-    fun onAllergiesChange(value: Boolean) { 
-        _state.update { 
+    fun onAllergiesChange(value: Boolean) {
+        _state.update {
             it.copy(
                 hasCriticalAllergies = value,
                 allergiesDescription = if (!value) "Ninguna" else it.allergiesDescription
-            ) 
-        } 
+            )
+        }
     }
 
     fun onAllergiesDescriptionChange(value: String) {
@@ -64,7 +64,7 @@ class PatientRegistrationViewModel(
 
     fun savePatient() {
         val currentState = _state.value
-        
+
         var hasError = false
         if (currentState.dniCedula.isBlank()) {
             _state.update { it.copy(dniError = "El DNI es obligatorio") }
@@ -104,7 +104,7 @@ class PatientRegistrationViewModel(
                     _events.send(PatientRegistrationEvent.SavedSuccessfully)
                 }
                 .onFailure { error ->
-                    _state.update { 
+                    _state.update {
                         it.copy(
                             isLoading = false,
                             error = error.message ?: "Error al guardar"

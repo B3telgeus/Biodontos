@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.patientportal.doctors
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -126,7 +125,6 @@ fun DoctorSearchRoute(
     )
 }
 
-@VisibleForTesting
 @Composable
 fun DoctorSearchScreen(
     state: DoctorSearchUiState,

@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.patients
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -67,7 +66,6 @@ import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.domain.model.Patient
 
 @OptIn(ExperimentalMaterial3Api::class)
-@VisibleForTesting
 @Composable
 fun PatientListScreen(
     state: PatientListState,
