@@ -52,9 +52,6 @@ $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 # Ejecutar suite de pruebas unitarias JVM
 ./gradlew testDebugUnitTest
 
-# Verificar pureza de la capa de dominio (0 imports de Android en domain)
-powershell -ExecutionPolicy Bypass -File .agents/skills/quality-detekt-verify/scripts/verify-domain-purity.ps1
-
 # Generar APK de depuración
 ./gradlew assembleDebug
 ```

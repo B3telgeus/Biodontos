@@ -22,3 +22,7 @@ local.properties
 .kotlin
 .kotlin/
 .idea/deviceManager.xml
+
+.agents/
+AGENTS.md
+GEMINI.md
