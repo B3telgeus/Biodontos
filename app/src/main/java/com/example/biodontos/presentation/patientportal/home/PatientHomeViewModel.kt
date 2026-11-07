@@ -144,6 +144,12 @@ class PatientHomeViewModel(
 
             val patientDoctors = if (lastDoctor != null) listOf(lastDoctor) else emptyList()
 
+            val partialErrorMessage = when {
+                appointmentsResult.isFailure -> "No fue posible actualizar tus citas programadas. Comprueba tu conexión."
+                billingResult.isFailure -> "No fue posible actualizar tu estado de cuenta. Comprueba tu conexión."
+                else -> null
+            }
+
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -154,7 +160,7 @@ class PatientHomeViewModel(
                     completedAppointmentsCount = completedCount,
                     pendingBalance = pendingBalance,
                     doctors = patientDoctors,
-                    errorMessage = null
+                    errorMessage = partialErrorMessage
                 )
             }
         }

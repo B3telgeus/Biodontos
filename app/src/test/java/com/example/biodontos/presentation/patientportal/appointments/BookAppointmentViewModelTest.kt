@@ -15,6 +15,7 @@ import com.example.biodontos.domain.usecase.appointments.GetAvailableSlotsUseCas
 import com.example.biodontos.domain.usecase.appointments.RescheduleAppointmentUseCase
 import com.example.biodontos.domain.usecase.patient.GetCurrentPatientUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -299,5 +301,82 @@ class BookAppointmentViewModelTest {
             assertEquals("El horario seleccionado ya no está disponible (mínimo 2 horas de anticipación)", (toast as BookAppointmentUiEffect.ShowToast).message)
         }
     }
+
+    @Test
+    fun `when doctorRepository getDoctorById fails, uiState populates errorMessage and stops loading`() = runTest {
+        coEvery { doctorRepository.getDoctorById("doc-1") } returns Result.failure(RuntimeException("Doctor not found in clinic"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertNull(state.doctor)
+        assertEquals("No se pudo cargar la información del especialista", state.errorMessage)
+    }
+
+    @Test
+    fun `customReason when provided propagates to bookAppointmentUseCase instead of selectedReason`() = runTest {
+        val testAppointment = Appointment(
+            id = "appt-custom",
+            patientId = "patient-1",
+            doctorId = "doc-1",
+            startTime = testSlot.start,
+            endTime = testSlot.end,
+            reason = "Dolor pulsátil en pieza 46"
+        )
+        coEvery {
+            bookAppointmentUseCase(
+                patientId = "patient-1",
+                doctorId = "doc-1",
+                startTime = testSlot.start,
+                endTime = testSlot.end,
+                reason = "Dolor pulsátil en pieza 46"
+            )
+        } returns Result.success(testAppointment)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEvent(BookAppointmentUiEvent.SelectSlot(testSlot))
+        viewModel.onEvent(BookAppointmentUiEvent.SelectReason("Urgencia / Dolor"))
+        viewModel.onEvent(BookAppointmentUiEvent.CustomReasonChanged("  Dolor pulsátil en pieza 46  "))
+
+        viewModel.effects.test {
+            viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
+            awaitItem() // toast
+            val navigate = awaitItem()
+            val confirmation = (navigate as BookAppointmentUiEffect.NavigateToConfirmation).confirmation
+            assertEquals("Dolor pulsátil en pieza 46", confirmation.reason)
+        }
+
+        coVerify {
+            bookAppointmentUseCase(
+                patientId = "patient-1",
+                doctorId = "doc-1",
+                startTime = testSlot.start,
+                endTime = testSlot.end,
+                reason = "Dolor pulsátil en pieza 46"
+            )
+        }
+    }
+
+    @Test
+    fun `reschedule confirmation flow verifies dialog dismissal does not execute reschedule`() = runTest {
+        val viewModel = createViewModel(rescheduleId = "appt-to-reschedule")
+        advanceUntilIdle()
+
+        viewModel.onEvent(BookAppointmentUiEvent.SelectSlot(testSlot))
+        viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
+        assertTrue(viewModel.uiState.value.showRescheduleConfirmDialog)
+
+        viewModel.onEvent(BookAppointmentUiEvent.DismissRescheduleDialog)
+        assertFalse(viewModel.uiState.value.showRescheduleConfirmDialog)
+
+        coVerify(exactly = 0) {
+            rescheduleAppointmentUseCase(any(), any(), any())
+        }
+    }
 }
+
 

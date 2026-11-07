@@ -370,4 +370,40 @@ class MyAppointmentsViewModelTest {
         advanceUntilIdle()
         assertNull(viewModel.uiState.value.appointmentToCancel)
     }
+
+    @Test
+    fun `confirm cancel with unmapped domain error emits reception fallback toast message`() = runTest {
+        coEvery { cancelAppointmentUseCase("appt-future") } returns AppointmentError.SlotUnavailable.left()
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEvent(MyAppointmentsUiEvent.RequestCancelAppointment(upcomingAppt))
+
+        viewModel.effects.test {
+            viewModel.onEvent(MyAppointmentsUiEvent.ConfirmCancelAppointment)
+            val toast = awaitItem()
+            assertTrue(toast is MyAppointmentsUiEffect.ShowToast)
+            assertEquals("No fue posible cancelar la cita. Comunícate con recepción.", (toast as MyAppointmentsUiEffect.ShowToast).message)
+        }
+
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.appointmentToCancel)
+    }
+
+    @Test
+    fun `when doctorRepository getDoctors fails, appointments still load cleanly with empty doctorsMap fallback`() = runTest {
+        coEvery { doctorRepository.getDoctors() } returns Result.failure(RuntimeException("Doctor catalog unavailable"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertNull(state.errorMessage)
+        assertEquals(1, state.upcomingAppointments.size)
+        assertEquals("appt-future", state.upcomingAppointments[0].id)
+        assertTrue(state.doctorsMap.isEmpty())
+    }
 }
+

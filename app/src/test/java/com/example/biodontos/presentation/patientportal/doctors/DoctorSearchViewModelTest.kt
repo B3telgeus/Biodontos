@@ -6,6 +6,7 @@ import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.DoctorId
 import com.example.biodontos.domain.usecase.doctor.SearchDoctorsUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
@@ -148,5 +149,51 @@ class DoctorSearchViewModelTest {
         assertEquals(null, state.errorMessage)
         assertEquals(2, state.doctors.size)
     }
+
+    @Test
+    fun `search query with empty or blank string triggers debounced reload and returns full doctor list`() = runTest {
+        coEvery { searchDoctorsUseCase(match { it.isBlank() }, any(), any(), any()) } returns Result.success(testDoctors)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEvent(DoctorSearchUiEvent.QueryChanged("   "))
+        assertEquals("   ", viewModel.uiState.value.searchQuery)
+
+        advanceTimeBy(350L)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals(2, state.doctors.size)
+        coVerify {
+            searchDoctorsUseCase(query = "   ", specialty = null)
+        }
+    }
+
+    @Test
+    fun `search query with accent-insensitive string invokes usecase with typed query and updates results`() = runTest {
+        val accentedDoctor = testDoctors.filter { it.firstName == "María" }
+        coEvery { searchDoctorsUseCase("María", any(), any(), any()) } returns Result.success(accentedDoctor)
+        coEvery { searchDoctorsUseCase("maria", any(), any(), any()) } returns Result.success(accentedDoctor)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // 1. Con tilde
+        viewModel.onEvent(DoctorSearchUiEvent.QueryChanged("María"))
+        advanceTimeBy(350L)
+        advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.doctors.size)
+        assertEquals("María", viewModel.uiState.value.doctors[0].firstName)
+
+        // 2. Sin tilde
+        viewModel.onEvent(DoctorSearchUiEvent.QueryChanged("maria"))
+        advanceTimeBy(350L)
+        advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.doctors.size)
+        assertEquals("María", viewModel.uiState.value.doctors[0].firstName)
+    }
 }
+
 

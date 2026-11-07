@@ -422,5 +422,51 @@ class PatientHomeViewModelTest {
         assertEquals("Morales", doctor.lastName)
         assertEquals("Sede Norte Cons 301", doctor.clinicAddress)
     }
+
+    @Test
+    fun `loadDashboard handles partial failure when appointments fail but billing succeeds`() = runTest {
+        coEvery { appointmentRepository.getAppointmentsByPatientId(any()) } returns Result.failure(RuntimeException("Network error on appointments"))
+        val billingSummary = PatientPaymentSummary(
+            totalPending = CopAmount(450000),
+            totalPaid = CopAmount(100000),
+            balances = emptyList(),
+            recentPayments = emptyList()
+        )
+        coEvery { billingRepository.getPaymentSummaryByPatientId(any()) } returns Result.success(billingSummary)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertNotNull(state.errorMessage)
+        assertEquals("No fue posible actualizar tus citas programadas. Comprueba tu conexión.", state.errorMessage)
+        assertEquals(450000L, state.pendingBalance.pesos)
+    }
+
+    @Test
+    fun `loadDashboard handles partial failure when billing fails but appointments succeed`() = runTest {
+        val upcomingAppointment = Appointment(
+            id = "appt-future-1",
+            patientId = "patient-1",
+            doctorId = "doc-1",
+            startTime = LocalDateTime.now().plusDays(2),
+            status = AppointmentStatus.CONFIRMED,
+            reason = "Consulta general"
+        )
+        coEvery { appointmentRepository.getAppointmentsByPatientId(any()) } returns Result.success(listOf(upcomingAppointment))
+        coEvery { billingRepository.getPaymentSummaryByPatientId(any()) } returns Result.failure(RuntimeException("Billing service down"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertNotNull(state.errorMessage)
+        assertEquals("No fue posible actualizar tu estado de cuenta. Comprueba tu conexión.", state.errorMessage)
+        assertNotNull(state.nextAppointment)
+        assertEquals("Consulta general", state.nextAppointment?.reason)
+    }
 }
+
 

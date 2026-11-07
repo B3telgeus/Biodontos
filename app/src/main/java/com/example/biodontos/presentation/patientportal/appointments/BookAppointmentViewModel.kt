@@ -55,7 +55,7 @@ class BookAppointmentViewModel(
     fun onEvent(event: BookAppointmentUiEvent) {
         when (event) {
             is BookAppointmentUiEvent.SelectDate -> {
-                _uiState.update { it.copy(selectedDate = event.date, selectedSlot = null) }
+                _uiState.update { it.copy(selectedDate = event.date, selectedSlot = null, errorMessage = null) }
                 loadSlotsForDate(event.date)
             }
             is BookAppointmentUiEvent.SelectSlot -> {
@@ -82,6 +82,7 @@ class BookAppointmentViewModel(
                 loadDoctorAndSlots()
             }
             is BookAppointmentUiEvent.RetrySlots -> {
+                _uiState.update { it.copy(errorMessage = null) }
                 loadSlotsForDate(_uiState.value.selectedDate)
             }
         }
@@ -107,7 +108,7 @@ class BookAppointmentViewModel(
 
     private fun loadSlotsForDate(date: LocalDate) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isSlotsLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isSlotsLoading = true) }
             val slotsResult = getAvailableSlotsUseCase(DoctorId(doctorId), date)
             slotsResult.fold(
                 onSuccess = { slots ->
@@ -115,7 +116,7 @@ class BookAppointmentViewModel(
                         it.copy(
                             slots = slots,
                             isSlotsLoading = false,
-                            errorMessage = null
+                            errorMessage = if (it.doctor == null) it.errorMessage else null
                         )
                     }
                 },

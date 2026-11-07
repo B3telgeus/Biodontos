@@ -69,6 +69,7 @@ import com.example.biodontos.core.designsystem.components.AppointmentStatusChip
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.DateBadge
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
+import com.example.biodontos.presentation.patientportal.doctors.DoctorAvatar
 import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.CopAmount
@@ -693,11 +694,11 @@ private fun DoctorsCard(
                         .background(BiodontosInputBg),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = doctor.displayName,
-                        modifier = Modifier.size(64.dp),
-                        tint = BiodontosDark.copy(alpha = 0.5f)
+                    DoctorAvatar(
+                        photoUrl = doctor.photoUrl,
+                        firstName = doctor.firstName,
+                        lastName = doctor.lastName,
+                        size = 80.dp
                     )
                 }
 

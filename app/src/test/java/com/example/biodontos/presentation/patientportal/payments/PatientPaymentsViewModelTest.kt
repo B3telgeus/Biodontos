@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -262,4 +263,33 @@ class PatientPaymentsViewModelTest {
         assertEquals(0, state.filteredBalances.size)
         assertFalse(state.hasPendingBalance)
     }
+
+    @Test
+    fun `when viewing payment receipt with null optional fields, uiState safely holds payment without exception`() = runTest {
+        val barePayment = Payment(
+            id = "",
+            treatmentId = "tr-1",
+            amount = CopAmount(100_000),
+            paymentMethod = null,
+            createdAt = null,
+            voidInfo = null
+        )
+
+        val viewModel = PatientPaymentsViewModel(getCurrentPatientUseCase, getPaymentSummaryUseCase)
+        advanceUntilIdle()
+
+        viewModel.onEvent(PatientPaymentsUiEvent.ViewPaymentReceipt(barePayment))
+
+        val state = viewModel.uiState.value
+        val receipt = state.selectedPaymentForReceipt
+        assertNotNull(receipt)
+        assertEquals("", receipt?.id)
+        assertEquals("tr-1", receipt?.treatmentId)
+        assertEquals(CopAmount(100_000), receipt?.amount)
+        assertNull(receipt?.paymentMethod)
+        assertNull(receipt?.createdAt)
+        assertNull(receipt?.voidInfo)
+        assertFalse(receipt?.isVoided ?: true)
+    }
 }
+
