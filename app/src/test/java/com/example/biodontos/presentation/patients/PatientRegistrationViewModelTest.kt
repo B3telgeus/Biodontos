@@ -42,7 +42,7 @@ class PatientRegistrationViewModelTest {
             viewModel.onDniChange("123")
             viewModel.onFirstNameChange("John")
             viewModel.onLastNameChange("Doe")
-            
+
             viewModel.savePatient()
 
             val event = viewModel.events.first()

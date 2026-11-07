@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -20,6 +21,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,7 +55,6 @@ import com.example.biodontos.presentation.doctor.DoctorViewModelFactory
 import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsRoute
 import com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsViewModel
 import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsRoute
-import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsScreen
 import com.example.biodontos.presentation.doctor.documents.DoctorDocumentsViewModel
 import com.example.biodontos.presentation.doctor.home.DoctorHomeRoute
 import com.example.biodontos.presentation.doctor.home.DoctorHomeUiEvent
@@ -86,19 +89,43 @@ import com.example.biodontos.presentation.patientportal.shell.PatientNavItem
 import com.example.biodontos.presentation.patientportal.shell.PatientPortalShell
 import com.example.biodontos.presentation.patients.PatientListScreen
 import com.example.biodontos.presentation.patients.PatientListViewModel
-import com.example.biodontos.presentation.patients.PatientRegistrationEvent
-import com.example.biodontos.presentation.patients.PatientRegistrationScreen
+import com.example.biodontos.presentation.patients.PatientRegistrationRoute
 import com.example.biodontos.presentation.patients.PatientRegistrationViewModel
 import com.example.biodontos.presentation.patients.PatientsViewModelFactory
 
 private const val NAV_TRANSITION_DURATION_MS = 320
 private const val NAV_EXIT_FADE_DURATION_MS = 180
+private const val NAV_FADE_THROUGH_DURATION_MS = 200
+
+/**
+ * Pantallas raíz de los portales del doctor y del paciente. Moverse entre ellas es un cambio de
+ * pestaña, por lo que usan fade-through en lugar de desplazamiento horizontal.
+ */
+private fun NavDestination.isPortalTab(): Boolean =
+    hasRoute<DoctorHome>() ||
+        hasRoute<PatientList>() ||
+        hasRoute<DoctorAppointments>() ||
+        hasRoute<DoctorDocuments>() ||
+        hasRoute<PatientHome>() ||
+        hasRoute<MyAppointments>() ||
+        hasRoute<DoctorSearch>() ||
+        hasRoute<PatientPayments>()
+
+/**
+ * Pantallas de arranque sin contenido propio relevante (splash y gate de sesión): se desvanecen
+ * para que la primera pantalla real aparezca sin desplazamiento lateral.
+ */
+private fun NavDestination.isStartupLayer(): Boolean =
+    hasRoute<Splash>() || hasRoute<SessionGate>()
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isPortalTabSwitch(): Boolean =
+    initialState.destination.isPortalTab() && targetState.destination.isPortalTab()
 
 private val forwardEnterTransition: EnterTransition =
     slideInHorizontally(
         animationSpec = tween(
             durationMillis = NAV_TRANSITION_DURATION_MS,
-            easing = FastOutSlowInEasing
+            easing = FastOutSlowInEasing,
         ),
         initialOffsetX = { fullWidth -> fullWidth }
     ) + fadeIn(
@@ -138,15 +165,37 @@ private val backwardExitTransition: ExitTransition =
         animationSpec = tween(durationMillis = NAV_EXIT_FADE_DURATION_MS)
     )
 
+private val fadeThroughEnterTransition: EnterTransition =
+    fadeIn(animationSpec = tween(durationMillis = NAV_FADE_THROUGH_DURATION_MS))
+
+private val fadeThroughExitTransition: ExitTransition =
+    fadeOut(animationSpec = tween(durationMillis = NAV_FADE_THROUGH_DURATION_MS))
+
 @Composable
 fun BiodontosNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
         startDestination = Splash,
-        enterTransition = { forwardEnterTransition },
-        exitTransition = { forwardExitTransition },
-        popEnterTransition = { backwardEnterTransition },
-        popExitTransition = { backwardExitTransition }
+        enterTransition = {
+            when {
+                initialState.destination.isStartupLayer() -> fadeThroughEnterTransition
+                isPortalTabSwitch() -> fadeThroughEnterTransition
+                else -> forwardEnterTransition
+            }
+        },
+        exitTransition = {
+            when {
+                initialState.destination.isStartupLayer() -> fadeThroughExitTransition
+                isPortalTabSwitch() -> fadeThroughExitTransition
+                else -> forwardExitTransition
+            }
+        },
+        popEnterTransition = {
+            if (isPortalTabSwitch()) fadeThroughEnterTransition else backwardEnterTransition
+        },
+        popExitTransition = {
+            if (isPortalTabSwitch()) fadeThroughExitTransition else backwardExitTransition
+        }
     ) {
         // --- SPLASH SCREEN (INICIO CON AUTO-LOGIN) ---
         composable<Splash> {
@@ -764,27 +813,10 @@ onFilterSelected = viewModel::onFilterSelected,
         // --- REGISTRO DE PACIENTE ---
         composable<PatientRegistration> {
             val viewModel: PatientRegistrationViewModel = viewModel(factory = PatientsViewModelFactory.RegistrationFactory)
-            val state by viewModel.state.collectAsStateWithLifecycle()
 
-            LaunchedEffect(Unit) {
-                viewModel.events.collect { event ->
-                    when (event) {
-                        PatientRegistrationEvent.SavedSuccessfully -> navController.popBackStack()
-                    }
-                }
-            }
-
-            PatientRegistrationScreen(
-                state = state,
-                onDniChange = viewModel::onDniChange,
-                onFirstNameChange = viewModel::onFirstNameChange,
-                onLastNameChange = viewModel::onLastNameChange,
-                onPhoneChange = viewModel::onPhoneChange,
-                onConsentChange = viewModel::onConsentChange,
-                onAllergiesChange = viewModel::onAllergiesChange,
-                onAllergiesDescriptionChange = viewModel::onAllergiesDescriptionChange,
-                onSaveClick = viewModel::savePatient,
-                onBackClick = { navController.popBackStack() }
+            PatientRegistrationRoute(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

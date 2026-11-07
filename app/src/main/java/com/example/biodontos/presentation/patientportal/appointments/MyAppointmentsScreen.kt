@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.patientportal.appointments
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -99,7 +98,6 @@ fun MyAppointmentsRoute(
     )
 }
 
-@VisibleForTesting
 @Composable
 fun MyAppointmentsScreen(
     state: MyAppointmentsUiState,

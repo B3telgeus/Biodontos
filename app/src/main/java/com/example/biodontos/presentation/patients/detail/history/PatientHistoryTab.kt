@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.patients.detail.history
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -96,7 +95,6 @@ private val DATE_TIME_DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yy
 private val SHORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy", SPANISH_LOCALE)
 
 @OptIn(ExperimentalFoundationApi::class)
-@VisibleForTesting
 @Composable
 fun PatientHistoryTab(
     historyState: PatientHistoryUiState,

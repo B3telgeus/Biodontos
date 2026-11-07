@@ -29,12 +29,12 @@ class ClinicalAdmissionViewModel(
     private val informedConsentRepository: InformedConsentRepository,
     private val appointmentRepository: AppointmentRepository,
     private val guardianRepository: GuardianRepository,
-    private val initialPatientId: String? = null,
+    initialPatientId: String? = null,
     private val getCurrentDoctorUseCase: GetCurrentDoctorUseCase? = null,
     private val doctorRepository: DoctorRepository? = null,
     private val getMaterialsUseCase: GetMaterialsUseCase = GetMaterialsUseCase(materialRepository),
     private val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase =
-        BuildEvolutionMaterialUsageUseCase(SystemClinicClock())
+        BuildEvolutionMaterialUsageUseCase(SystemClinicClock()),
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ClinicalAdmissionState())
@@ -186,7 +186,7 @@ class ClinicalAdmissionViewModel(
                             cirugias = anamnesis.cirugias,
                             enfermedadesOrales = anamnesis.enfermedadesOrales,
                             otrasAlteraciones = anamnesis.otrasAlteraciones,
-                            anamnesisObservaciones = anamnesis.observaciones ?: "",
+                            anamnesisObservaciones = anamnesis.observaciones,
                             antecedentesFamiliares = anamnesis.antecedentesFamiliares ?: "",
                             medicamentosActuales = anamnesis.medicamentosActuales ?: ""
                         )
@@ -196,7 +196,7 @@ class ClinicalAdmissionViewModel(
 
             // 5. Odontograma
             odontogramRepository.getOdontogram(pid).onSuccess { teethList ->
-                val surfacesMap = teethList.associate { it.number to it.surfaceStates }
+                val surfacesMap = teethList.associateBy({ it.number }, { it.surfaceStates })
                 if (surfacesMap.isNotEmpty()) {
                     _state.update { it.copy(teethSurfaces = surfacesMap) }
                 }
@@ -208,7 +208,7 @@ class ClinicalAdmissionViewModel(
                     _state.update {
                         it.copy(
                             treatmentPlanDescription = consent.treatmentSummary,
-                            consentSigned = consent.status == "SIGNED" || !consent.patientSignatureUrl.isNullOrBlank(),
+                            consentSigned = (consent.status == "SIGNED") || !consent.patientSignatureUrl.isNullOrBlank(),
                             consentPatientSignature = consent.patientSignatureUrl ?: ""
                         )
                     }
@@ -240,12 +240,17 @@ class ClinicalAdmissionViewModel(
         when (event) {
             is ClinicalAdmissionEvent.NextStep -> advanceStep()
             is ClinicalAdmissionEvent.PreviousStep -> {
+                if (_state.value.isLoading) return
                 _state.update { it.copy(currentStep = (it.currentStep - 1).coerceAtLeast(1)) }
             }
             is ClinicalAdmissionEvent.JumpToStep -> {
+                if (_state.value.isLoading) return
                 if (event.step < _state.value.currentStep || _state.value.patientId.isNotBlank()) {
                     _state.update { it.copy(currentStep = event.step.coerceIn(1, 7)) }
                 }
+            }
+            is ClinicalAdmissionEvent.ClearMessages -> {
+                _state.update { it.copy(errorMessage = null, successMessage = null) }
             }
 
             // Paso 1: Identificación
@@ -862,9 +867,7 @@ class ClinicalAdmissionViewModel(
                         val iso = "${s.nextAppointmentDate}T$candidate"
                         busySlots.none { busy -> busy.startsWith(iso.take(16)) }
                     }
-                    if (availableTime != null) {
-                        targetTime = availableTime
-                    }
+                    availableTime?.let { targetTime = it }
                 }
 
                 var appointmentCreated = false
@@ -883,17 +886,20 @@ class ClinicalAdmissionViewModel(
                     scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${targetTime.take(5)}."
                 } else {
                     // Intento de recuperación probando las siguientes franjas horarias
-                    for (candidate in candidateTimes) {
-                        if (candidate == targetTime) continue
-                        val fallbackAppt = appointmentToTry.copy(
-                            startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T$candidate")
-                        )
-                        val fallbackResult = appointmentRepository.createAppointment(fallbackAppt)
-                        if (fallbackResult.isSuccess) {
-                            appointmentCreated = true
-                            scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${candidate.take(5)}."
-                            break
+                    val fallbackTime = candidateTimes.firstNotNullOfOrNull { candidate ->
+                        if (candidate == targetTime) {
+                            null
+                        } else {
+                            val fallbackAppt = appointmentToTry.copy(
+                                startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T$candidate")
+                            )
+                            val fallbackResult = appointmentRepository.createAppointment(fallbackAppt)
+                            candidate.takeIf { fallbackResult.isSuccess }
                         }
+                    }
+                    if (fallbackTime != null) {
+                        appointmentCreated = true
+                        scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${fallbackTime.take(5)}."
                     }
                 }
 

@@ -2,6 +2,7 @@ package com.example.biodontos.presentation.patients
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.biodontos.core.util.toUserFriendlyMessage
 import com.example.biodontos.domain.model.Patient
 import com.example.biodontos.domain.usecase.patients.SavePatientUseCase
 import kotlinx.coroutines.channels.Channel
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PatientRegistrationViewModel(
-    private val savePatientUseCase: SavePatientUseCase
+    private val savePatientUseCase: SavePatientUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PatientRegistrationState())
@@ -42,16 +43,16 @@ class PatientRegistrationViewModel(
         } else null
         _state.update { it.copy(lastName = value, lastNameError = error) }
     }
-    fun onConsentChange(value: Boolean) { 
-        _state.update { it.copy(consentSigned = value) } 
+    fun onConsentChange(value: Boolean) {
+        _state.update { it.copy(consentSigned = value) }
     }
-    fun onAllergiesChange(value: Boolean) { 
-        _state.update { 
+    fun onAllergiesChange(value: Boolean) {
+        _state.update {
             it.copy(
                 hasCriticalAllergies = value,
                 allergiesDescription = if (!value) "Ninguna" else it.allergiesDescription
-            ) 
-        } 
+            )
+        }
     }
 
     fun onAllergiesDescriptionChange(value: String) {
@@ -64,7 +65,8 @@ class PatientRegistrationViewModel(
 
     fun savePatient() {
         val currentState = _state.value
-        
+        if (currentState.isLoading) return
+
         var hasError = false
         if (currentState.dniCedula.isBlank()) {
             _state.update { it.copy(dniError = "El DNI es obligatorio") }
@@ -100,16 +102,18 @@ class PatientRegistrationViewModel(
             )
             savePatientUseCase(patient)
                 .onSuccess {
-                    _state.update { it.copy(isLoading = false, isSaved = true) }
+                    _state.update { it.copy(isLoading = false, isSaved = true, error = null) }
                     _events.send(PatientRegistrationEvent.SavedSuccessfully)
                 }
                 .onFailure { error ->
-                    _state.update { 
+                    val message = error.toUserFriendlyMessage("No se pudo guardar el paciente")
+                    _state.update {
                         it.copy(
                             isLoading = false,
-                            error = error.message ?: "Error al guardar"
+                            error = message
                         )
                     }
+                    _events.send(PatientRegistrationEvent.ShowError(message))
                 }
         }
     }

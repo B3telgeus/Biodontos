@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.auth.patient
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -32,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import com.example.biodontos.core.designsystem.*
 
 @OptIn(ExperimentalMaterial3Api::class)
-@VisibleForTesting
 @Composable
 fun PatientSignUpScreen(
     state: PatientSignUpState,

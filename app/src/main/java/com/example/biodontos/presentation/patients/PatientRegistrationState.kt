@@ -16,9 +16,10 @@ data class PatientRegistrationState(
     val dniError: String? = null,
     val firstNameError: String? = null,
     val lastNameError: String? = null,
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
 )
 
 sealed class PatientRegistrationEvent {
     object SavedSuccessfully : PatientRegistrationEvent()
+    data class ShowError(val message: String) : PatientRegistrationEvent()
 }

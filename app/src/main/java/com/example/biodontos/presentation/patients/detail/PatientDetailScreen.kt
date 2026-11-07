@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.patients.detail
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -112,7 +111,6 @@ import com.example.biodontos.presentation.patients.detail.history.VoidActivityDi
 import java.time.YearMonth
 
 @OptIn(ExperimentalMaterial3Api::class)
-@VisibleForTesting
 @Composable
 fun PatientDetailScreen(
     state: PatientDetailState,

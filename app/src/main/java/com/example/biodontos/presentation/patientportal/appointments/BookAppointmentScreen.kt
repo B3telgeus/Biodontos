@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.patientportal.appointments
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -105,7 +104,6 @@ fun BookAppointmentRoute(
 }
 
 @OptIn(ExperimentalLayoutApi::class)
-@VisibleForTesting
 @Composable
 fun BookAppointmentScreen(
     state: BookAppointmentUiState,

@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.auth.splash
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -58,7 +57,6 @@ fun SplashScreen(
     SplashContent(startAnimation = startAnimation)
 }
 
-@VisibleForTesting
 @Composable
 fun SplashContent(
     startAnimation: Boolean = true,

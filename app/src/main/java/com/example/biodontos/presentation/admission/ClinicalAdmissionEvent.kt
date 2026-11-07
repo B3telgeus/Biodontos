@@ -10,6 +10,7 @@ sealed interface ClinicalAdmissionEvent {
     data object NextStep : ClinicalAdmissionEvent
     data object PreviousStep : ClinicalAdmissionEvent
     data class JumpToStep(val step: Int) : ClinicalAdmissionEvent
+    data object ClearMessages : ClinicalAdmissionEvent
 
     // Paso 1
     data class UpdateDni(val value: String) : ClinicalAdmissionEvent
@@ -36,7 +37,7 @@ sealed interface ClinicalAdmissionEvent {
         val lastName: String,
         val phone: String,
         val address: String,
-        val locality: String = ""
+        val locality: String = "",
     ) : ClinicalAdmissionEvent
     data class UpdateAntecedents(
         val lastVisit: String,

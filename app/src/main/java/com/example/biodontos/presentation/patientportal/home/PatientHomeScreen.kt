@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.patientportal.home
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -113,7 +112,6 @@ fun PatientHomeRoute(
     )
 }
 
-@VisibleForTesting
 @Composable
 fun PatientHomeScreen(
     state: PatientHomeUiState,

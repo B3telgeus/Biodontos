@@ -1,6 +1,5 @@
 package com.example.biodontos.presentation.patientportal.doctors
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,7 +88,6 @@ fun DoctorDetailRoute(
     )
 }
 
-@VisibleForTesting
 @Composable
 fun DoctorDetailScreen(
     state: DoctorDetailUiState,
