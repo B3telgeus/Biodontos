@@ -8,22 +8,39 @@ Incluye dos portales integrados:
 
 ---
 
-## 📲 Descarga e Instalación del APK
+## 📲 Descarga e Instalación Paso a Paso del APK
 
-Puedes descargar e instalar la última versión del APK directamente desde el portal oficial de despliegue:
+Puedes descargar e instalar la última versión del APK directamente desde el portal oficial de despliegue (**Biodontos APK Vault**):
 
 👉 **[Descargar APK de Biodontos — https://biodontosdeploy.vercel.app/](https://biodontosdeploy.vercel.app/)**
 
-### Recomendaciones para instalar el APK en dispositivos Android
+![Portal de descarga Biodontos APK Vault](docs/images/apk-vault.png)
 
-Al instalar el archivo `.apk` directamente en tu celular o tablet, ten en cuenta estas **3 recomendaciones prácticas**:
+---
 
-1. **Requisitos del celular:**
+### 💻 Modo A: Instalación en Computador (Emulador Android Studio — Recomendado para Evaluación)
+
+![Modo A: Instalación en Emulador Android Studio](docs/images/instalacion-modo-a-emulador.png)
+
+1. **Descargar el paquete compilado (`.APK`):** Presiona el botón **"DESCARGAR BIODONTOS-DEBUG.APK"** en el portal para guardar el instalador en tu computador.
+2. **Abrir un Emulador en Android Studio (`Device Manager`):** Inicia **Android Studio**, abre el panel **Virtual Device Manager** y presiona **Play (▶)** en cualquier teléfono virtual configurado con **Android 8.0 (API 26) o superior**.
+3. **Arrastrar y Soltar (*Drag & Drop*) sobre la pantalla del Emulador:** Arrastra el archivo `biodontos-debug.apk` desde tu carpeta de Descargas y suéltalo encima de la ventana del teléfono virtual (o instala por terminal con `adb install -r biodontos-debug.apk`).
+
+---
+
+### 📱 Modo B: Instalación en Teléfono o Tablet Android Físico (Vía Código QR o Enlace Directo)
+
+![Modo B: Instalación en Teléfono o Tablet Android Físico](docs/images/instalacion-modo-b-movil.png)
+
+Al instalar el archivo `.apk` directamente en tu celular o tablet, sigue estos **3 pasos y recomendaciones prácticas**:
+
+1. **Escanear el QR o abrir el enlace (Requisitos del celular):**
+   * Apunta la cámara de tu celular al código QR del portal o entra a **[https://biodontosdeploy.vercel.app/](https://biodontosdeploy.vercel.app/)** para iniciar la descarga directa.
    * Funciona en cualquier teléfono o tablet con **Android 8.0 o superior** (`minSdk = 26`, compatible con más del 99% de los dispositivos actuales) y conexión a internet (Wi-Fi o datos móviles).
-2. **Permiso de "Fuentes desconocidas":**
-   * Como la aplicación se descarga de forma directa desde la web y no desde Google Play Store, la primera vez que abras el archivo `.apk` el sistema te pedirá autorizar **"Confiar en esta fuente" / "Instalar apps desconocidas"** para tu navegador o gestor de archivos.
-3. **Aviso de Google Play Protect:**
-   * Al tratarse de un APK de distribución directa (`debug`), puede aparecer una ventana de Google Play Protect indicando que *"no reconoce al desarrollador"*. Simplemente toca en **"Más detalles" → "Instalar de todas formas"**.
+2. **Autorizar Orígenes Desconocidos:**
+   * Al abrir el archivo descargado, activa la casilla **"Confiar en esta fuente" / "Instalar apps desconocidas"** si tu navegador o gestor de archivos solicita permiso para instalar paquetes.
+3. **Confirmar instalación ante Google Play Protect:**
+   * Por tratarse de un APK académico de distribución directa (`debug`), si aparece el aviso de Google Play Protect indicando que *"no reconoce al desarrollador"*, toca en **"Más detalles" → "Instalar de todas formas"**.
 
 > 💡 **Nota sobre actualizaciones:** Si tenías instalada una versión previa del APK compilada en otro equipo (con una firma de depuración distinta) y Android muestra el mensaje *"No se instaló la app (conflicto de paquete)"*, **desinstala primero la versión anterior** del teléfono antes de instalar el nuevo APK.
 
