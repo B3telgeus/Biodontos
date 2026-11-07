@@ -13,13 +13,18 @@ data class Doctor(
     val email: String = "",
     val phone: String? = null,
     val bio: String? = null,
-    val photoUrl: String? = null
+    val photoUrl: String? = null,
+    val clinicAddress: String? = null,
+    val services: String? = null
 ) {
     val displayName: String
         get() = "Dr. $firstName $lastName".trim()
 
     val fullName: String
         get() = "Dr(a). $firstName $lastName".trim()
+
+    val servicesList: List<String>
+        get() = services?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
 }
 
 data class WeeklyAvailability(

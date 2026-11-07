@@ -14,6 +14,8 @@ data class DoctorProfileState(
     val phone: String = "",
     val bio: String = "",
     val photoUrl: String? = null,
+    val clinicAddress: String = "",
+    val services: String = "",
     val email: String = "",
     // Security Form Fields
     val newPassword: String = "",
@@ -39,6 +41,8 @@ sealed interface DoctorProfileEvent {
     data class UpdatePhone(val value: String) : DoctorProfileEvent
     data class UpdateBio(val value: String) : DoctorProfileEvent
     data class UpdatePhotoUrl(val photoUrl: String) : DoctorProfileEvent
+    data class UpdateClinicAddress(val value: String) : DoctorProfileEvent
+    data class UpdateServices(val value: String) : DoctorProfileEvent
     data object SaveProfile : DoctorProfileEvent
     data class UpdateNewPassword(val value: String) : DoctorProfileEvent
     data class UpdateConfirmPassword(val value: String) : DoctorProfileEvent

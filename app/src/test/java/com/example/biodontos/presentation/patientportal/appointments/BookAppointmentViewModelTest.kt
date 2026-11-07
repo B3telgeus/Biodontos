@@ -164,7 +164,43 @@ class BookAppointmentViewModelTest {
             assertEquals("Ortodoncia", confirmation.specialty)
             assertEquals(testSlot.start.toString(), confirmation.startIso)
             assertEquals("Control de rutina", confirmation.reason)
+            assertEquals("Sede Principal - Consultorio 102", confirmation.roomOrLocation)
             assertFalse(confirmation.isRescheduled)
+        }
+    }
+
+    @Test
+    fun `confirm booking with doctor clinicAddress uses doctor address in confirmation`() = runTest {
+        val doctorWithAddress = testDoctor.copy(clinicAddress = "Carrera 7 # 120-20, Consultorio 505")
+        val testAppointment = Appointment(
+            id = "appt-100",
+            patientId = "patient-1",
+            doctorId = "doc-1",
+            startTime = testSlot.start,
+            endTime = testSlot.end
+        )
+        coEvery { doctorRepository.getDoctorById("doc-1") } returns Result.success(doctorWithAddress)
+        coEvery {
+            bookAppointmentUseCase(
+                patientId = "patient-1",
+                doctorId = "doc-1",
+                startTime = testSlot.start,
+                endTime = testSlot.end,
+                reason = "Control de rutina"
+            )
+        } returns Result.success(testAppointment)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEvent(BookAppointmentUiEvent.SelectSlot(testSlot))
+
+        viewModel.effects.test {
+            viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
+            awaitItem() // toast
+            val navigate = awaitItem()
+            val confirmation = (navigate as BookAppointmentUiEffect.NavigateToConfirmation).confirmation
+            assertEquals("Carrera 7 # 120-20, Consultorio 505", confirmation.roomOrLocation)
         }
     }
 

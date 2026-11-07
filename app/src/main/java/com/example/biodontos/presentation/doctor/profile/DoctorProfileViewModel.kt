@@ -47,6 +47,8 @@ class DoctorProfileViewModel(
             is DoctorProfileEvent.UpdatePhone -> _state.update { it.copy(phone = event.value, errorMessage = null) }
             is DoctorProfileEvent.UpdateBio -> _state.update { it.copy(bio = event.value, errorMessage = null) }
             is DoctorProfileEvent.UpdatePhotoUrl -> updatePhoto(event.photoUrl)
+            is DoctorProfileEvent.UpdateClinicAddress -> _state.update { it.copy(clinicAddress = event.value, errorMessage = null) }
+            is DoctorProfileEvent.UpdateServices -> _state.update { it.copy(services = event.value, errorMessage = null) }
             DoctorProfileEvent.SaveProfile -> saveProfile()
             is DoctorProfileEvent.UpdateNewPassword -> _state.update { it.copy(newPassword = event.value, errorMessage = null) }
             is DoctorProfileEvent.UpdateConfirmPassword -> _state.update { it.copy(confirmPassword = event.value, errorMessage = null) }
@@ -90,6 +92,8 @@ class DoctorProfileViewModel(
                     phone = doctor.phone.orEmpty(),
                     bio = doctor.bio.orEmpty(),
                     photoUrl = doctor.photoUrl,
+                    clinicAddress = doctor.clinicAddress.orEmpty(),
+                    services = doctor.services.orEmpty(),
                     email = doctor.email,
                     isLoading = false
                 )
@@ -159,7 +163,9 @@ class DoctorProfileViewModel(
             specialty = currentState.specialty.trim(),
             licenseNumber = currentState.licenseNumber.trim(),
             phone = currentState.phone.trim().ifEmpty { null },
-            bio = currentState.bio.trim().ifEmpty { null }
+            bio = currentState.bio.trim().ifEmpty { null },
+            clinicAddress = currentState.clinicAddress.trim().ifEmpty { null },
+            services = currentState.services.trim().ifEmpty { null }
         )
 
         viewModelScope.launch {
@@ -169,6 +175,15 @@ class DoctorProfileViewModel(
                 _state.update {
                     it.copy(
                         doctor = savedDoctor,
+                        firstName = savedDoctor.firstName,
+                        lastName = savedDoctor.lastName,
+                        specialty = savedDoctor.specialty,
+                        licenseNumber = savedDoctor.licenseNumber,
+                        phone = savedDoctor.phone.orEmpty(),
+                        bio = savedDoctor.bio ?: it.bio,
+                        photoUrl = savedDoctor.photoUrl ?: it.photoUrl,
+                        clinicAddress = savedDoctor.clinicAddress ?: it.clinicAddress,
+                        services = savedDoctor.services ?: it.services,
                         isSavingProfile = false,
                         successMessage = "Perfil profesional actualizado con éxito"
                     )

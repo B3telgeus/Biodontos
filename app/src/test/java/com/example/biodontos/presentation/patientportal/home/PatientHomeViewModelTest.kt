@@ -92,6 +92,7 @@ class PatientHomeViewModelTest {
         val upcomingAppointment = Appointment(
             id = "appt-1",
             patientId = "patient-1",
+            doctorId = "doc-1",
             startTime = LocalDateTime.now().plusDays(2),
             status = AppointmentStatus.CONFIRMED,
             reason = "Control de ortodoncia"
@@ -127,6 +128,59 @@ class PatientHomeViewModelTest {
         assertEquals("Control de ortodoncia", state.nextAppointment?.reason)
         assertEquals(500000L, state.pendingBalance.pesos)
         assertEquals(1, state.doctors.size)
+        assertEquals("doc-1", state.doctors.first().id.value)
+    }
+
+    @Test
+    fun `loadDashboard exposes empty doctors list when patient has no appointments with doctors`() = runTest {
+        coEvery { appointmentRepository.getAppointmentsByPatientId("patient-1") } returns Result.success(emptyList())
+
+        val testDoctor = Doctor(
+            id = DoctorId("doc-1"),
+            firstName = "Pepita",
+            lastName = "Pérez",
+            specialty = "Ortodoncia"
+        )
+        coEvery { doctorRepository.getDoctors() } returns Result.success(listOf(testDoctor))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(0, state.doctors.size)
+    }
+
+    @Test
+    fun `loadDashboard exposes only the most recent booked doctor when patient has multiple appointments`() = runTest {
+        val olderAppointment = Appointment(
+            id = "appt-old",
+            patientId = "patient-1",
+            doctorId = "doc-1",
+            startTime = LocalDateTime.now().minusDays(10),
+            status = AppointmentStatus.COMPLETED
+        )
+        val newerAppointment = Appointment(
+            id = "appt-new",
+            patientId = "patient-1",
+            doctorId = "doc-2",
+            startTime = LocalDateTime.now().plusDays(3),
+            status = AppointmentStatus.CONFIRMED
+        )
+        coEvery { appointmentRepository.getAppointmentsByPatientId("patient-1") } returns Result.success(
+            listOf(olderAppointment, newerAppointment)
+        )
+
+        val doc1 = Doctor(id = DoctorId("doc-1"), firstName = "Carlos", lastName = "Pérez", specialty = "General")
+        val doc2 = Doctor(id = DoctorId("doc-2"), firstName = "Ana", lastName = "Gómez", specialty = "Endodoncia")
+        coEvery { doctorRepository.getDoctors() } returns Result.success(listOf(doc1, doc2))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.doctors.size)
+        assertEquals("doc-2", state.doctors.first().id.value)
+        assertEquals("Ana", state.doctors.first().firstName)
     }
 
     @Test
@@ -268,4 +322,105 @@ class PatientHomeViewModelTest {
         assertEquals("user-pat-1", state.patientId)
         assertEquals("Pepito", state.patientName)
     }
+
+    @Test
+    fun `loadDashboard recovers doctor from appointment doctorName when not present in doctorsList`() = runTest {
+        val appointment = Appointment(
+            id = "appt-ext",
+            patientId = "patient-1",
+            doctorId = "doc-external",
+            doctorName = "Dr. Fernando Ruiz",
+            startTime = LocalDateTime.now().minusDays(1),
+            status = AppointmentStatus.COMPLETED
+        )
+        coEvery { appointmentRepository.getAppointmentsByPatientId("patient-1") } returns Result.success(listOf(appointment))
+        coEvery { doctorRepository.getDoctors() } returns Result.success(emptyList())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.doctors.size)
+        assertEquals("doc-external", state.doctors.first().id.value)
+        assertEquals("Fernando", state.doctors.first().firstName)
+        assertEquals("Ruiz", state.doctors.first().lastName)
+    }
+
+    @Test
+    fun `loadDashboard recovers fallback doctor when appointment doctorName is null and doctor not present in doctorsList`() = runTest {
+        val appointment = Appointment(
+            id = "appt-anon",
+            patientId = "patient-1",
+            doctorId = "doc-anon",
+            doctorName = null,
+            startTime = LocalDateTime.now().minusDays(2),
+            status = AppointmentStatus.COMPLETED
+        )
+        coEvery { appointmentRepository.getAppointmentsByPatientId("patient-1") } returns Result.success(listOf(appointment))
+        coEvery { doctorRepository.getDoctors() } returns Result.success(emptyList())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.doctors.size)
+        assertEquals("doc-anon", state.doctors.first().id.value)
+        assertEquals("Doctor", state.doctors.first().firstName)
+        assertEquals("Especialista", state.doctors.first().lastName)
+    }
+
+    @Test
+    fun `loadDashboard cleans honorific titles like Dr dot Dra and Doctor without leaving empty names`() = runTest {
+        val appointment = Appointment(
+            id = "appt-title-only",
+            patientId = "patient-1",
+            doctorId = "doc-title",
+            doctorName = "Dr.",
+            startTime = LocalDateTime.now().minusDays(1),
+            status = AppointmentStatus.COMPLETED
+        )
+        coEvery { appointmentRepository.getAppointmentsByPatientId("patient-1") } returns Result.success(listOf(appointment))
+        coEvery { doctorRepository.getDoctors() } returns Result.success(emptyList())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.doctors.size)
+        val doctor = state.doctors.first()
+        assertEquals("Doctor", doctor.firstName)
+        assertEquals("Especialista", doctor.lastName)
+        assertEquals("Dr. Doctor Especialista", doctor.displayName)
+    }
+
+    @Test
+    fun `loadDashboard trims doctorId and correctly matches doctor in directory`() = runTest {
+        val appointment = Appointment(
+            id = "appt-spaced",
+            patientId = "patient-1",
+            doctorId = "  doc-padded  ",
+            startTime = LocalDateTime.now().minusDays(1),
+            status = AppointmentStatus.CONFIRMED
+        )
+        val dirDoctor = Doctor(
+            id = DoctorId("doc-padded"),
+            firstName = "Valentina",
+            lastName = "Morales",
+            specialty = "Periodoncia",
+            clinicAddress = "Sede Norte Cons 301"
+        )
+        coEvery { appointmentRepository.getAppointmentsByPatientId("patient-1") } returns Result.success(listOf(appointment))
+        coEvery { doctorRepository.getDoctors() } returns Result.success(listOf(dirDoctor))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.doctors.size)
+        val doctor = state.doctors.first()
+        assertEquals("Valentina", doctor.firstName)
+        assertEquals("Morales", doctor.lastName)
+        assertEquals("Sede Norte Cons 301", doctor.clinicAddress)
+    }
 }
+

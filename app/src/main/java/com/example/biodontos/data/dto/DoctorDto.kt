@@ -16,7 +16,9 @@ data class DoctorDto(
     @SerialName("license_number") val licenseNumber: String = "",
     val specialty: String = "Odontología General",
     val bio: String? = null,
-    @SerialName("photo_url") val photoUrl: String? = null
+    @SerialName("photo_url") val photoUrl: String? = null,
+    @SerialName("clinic_address") val clinicAddress: String? = null,
+    val services: String? = null
 )
 
 fun DoctorDto.toDomain(): Doctor = Doctor(
@@ -29,7 +31,9 @@ fun DoctorDto.toDomain(): Doctor = Doctor(
     email = email,
     phone = phone,
     bio = bio,
-    photoUrl = photoUrl
+    photoUrl = photoUrl,
+    clinicAddress = clinicAddress,
+    services = services
 )
 
 fun Doctor.toDto(): DoctorDto = DoctorDto(
@@ -42,5 +46,7 @@ fun Doctor.toDto(): DoctorDto = DoctorDto(
     email = email,
     phone = phone,
     bio = bio,
-    photoUrl = photoUrl
+    photoUrl = photoUrl,
+    clinicAddress = clinicAddress,
+    services = services
 )

@@ -4,31 +4,20 @@ import com.example.biodontos.data.dto.DoctorDto
 import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.DoctorId
 
-fun DoctorDto.toDomain(): Doctor = com.example.biodontos.data.dto.DoctorDto(
-    id = id,
+fun DoctorDto.toDomain(): Doctor = Doctor(
+    id = DoctorId(id?.ifEmpty { null } ?: userId ?: ""),
     userId = userId,
     firstName = firstName,
     lastName = lastName,
+    specialty = specialty,
+    licenseNumber = licenseNumber,
     email = email,
     phone = phone,
-    licenseNumber = licenseNumber,
-    specialty = specialty,
     bio = bio,
-    photoUrl = photoUrl
-).let {
-    Doctor(
-        id = DoctorId(it.id?.ifEmpty { null } ?: it.userId ?: ""),
-        userId = it.userId,
-        firstName = it.firstName,
-        lastName = it.lastName,
-        specialty = it.specialty,
-        licenseNumber = it.licenseNumber,
-        email = it.email,
-        phone = it.phone,
-        bio = it.bio,
-        photoUrl = it.photoUrl
-    )
-}
+    photoUrl = photoUrl,
+    clinicAddress = clinicAddress,
+    services = services
+)
 
 fun Doctor.toDto(): DoctorDto = DoctorDto(
     id = id.value.ifEmpty { null },
@@ -40,5 +29,7 @@ fun Doctor.toDto(): DoctorDto = DoctorDto(
     email = email,
     phone = phone,
     bio = bio,
-    photoUrl = photoUrl
+    photoUrl = photoUrl,
+    clinicAddress = clinicAddress,
+    services = services
 )

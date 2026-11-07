@@ -249,6 +249,8 @@ fun DoctorProfileContent(
                             lastName = state.lastName,
                             specialty = state.specialty,
                             licenseNumber = state.licenseNumber,
+                            clinicAddress = state.clinicAddress,
+                            services = state.services,
                             isSavingPhoto = state.isSavingProfile,
                             onPickPhotoClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -325,6 +327,7 @@ fun DoctorProfileContent(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DoctorAvatarHeaderSection(
     photoUrl: String?,
@@ -332,6 +335,8 @@ fun DoctorAvatarHeaderSection(
     lastName: String,
     specialty: String,
     licenseNumber: String,
+    clinicAddress: String = "",
+    services: String = "",
     isSavingPhoto: Boolean,
     onPickPhotoClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -444,6 +449,71 @@ fun DoctorAvatarHeaderSection(
                     ),
                     textAlign = TextAlign.Center
                 )
+            }
+
+            if (clinicAddress.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "Dirección del consultorio",
+                        tint = BiodontosDark,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = clinicAddress,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = BiodontosDark,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                }
+            }
+
+            val servicesList = services.split(",").map { it.trim() }.filter { it.isNotBlank() }
+            if (servicesList.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                ) {
+                    servicesList.take(3).forEach { service ->
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = BiodontosInputBg,
+                            border = BorderStroke(1.dp, BiodontosBorder.copy(alpha = 0.5f))
+                        ) {
+                            Text(
+                                text = service,
+                                fontSize = 11.sp,
+                                color = BiodontosDark,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    if (servicesList.size > 3) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = BiodontosInputBg
+                        ) {
+                            Text(
+                                text = "+${servicesList.size - 3}",
+                                fontSize = 11.sp,
+                                color = BiodontosGreyText,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -574,6 +644,30 @@ fun DoctorProfessionalInfoCard(
                 placeholder = { Text("Resumen de experiencia, enfoque clínico y certificaciones...") },
                 minLines = 3,
                 maxLines = 5,
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            OutlinedTextField(
+                value = state.clinicAddress,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdateClinicAddress(it)) },
+                label = { Text("Dirección del Consultorio") },
+                placeholder = { Text("Ej. Calle 100 # 15-20, Consultorio 402, Bogotá") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors()
+            )
+
+            OutlinedTextField(
+                value = state.services,
+                onValueChange = { onEvent(DoctorProfileEvent.UpdateServices(it)) },
+                label = { Text("Servicios que Ofrece") },
+                placeholder = { Text("Ej. Ortodoncia invisible, Diseño de sonrisa, Implantes, Blanqueamiento") },
+                minLines = 2,
+                maxLines = 4,
+                supportingText = {
+                    Text("Ingresa los procedimientos separados por comas", fontSize = 11.sp, color = BiodontosGreyText)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors()
             )

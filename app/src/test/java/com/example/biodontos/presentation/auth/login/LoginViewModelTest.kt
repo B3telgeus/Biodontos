@@ -60,4 +60,36 @@ class LoginViewModelTest {
         assertNotNull(state.error)
         assertEquals("Credenciales inválidas", state.error)
     }
+
+    @Test
+    fun loginWithInvalidEmailSetsEmailErrorWithoutCallingUseCase() = runTest {
+        viewModel.onEmailChange("invalid-email")
+        viewModel.onPasswordChange("secret123")
+        viewModel.login()
+
+        val state = viewModel.state.value
+        assertEquals("Ingresa un correo electrónico válido", state.emailError)
+        assertEquals(false, state.isLoading)
+    }
+
+    @Test
+    fun loginWithBlankPasswordSetsPasswordErrorWithoutCallingUseCase() = runTest {
+        viewModel.onEmailChange("valido@biodontos.com")
+        viewModel.onPasswordChange("")
+        viewModel.login()
+
+        val state = viewModel.state.value
+        assertEquals("Ingresa tu contraseña", state.passwordError)
+        assertEquals(false, state.isLoading)
+    }
+
+    @Test
+    fun togglePasswordVisibilityTogglesState() {
+        assertEquals(false, viewModel.state.value.isPasswordVisible)
+        viewModel.togglePasswordVisibility()
+        assertEquals(true, viewModel.state.value.isPasswordVisible)
+        viewModel.togglePasswordVisibility()
+        assertEquals(false, viewModel.state.value.isPasswordVisible)
+    }
 }
+

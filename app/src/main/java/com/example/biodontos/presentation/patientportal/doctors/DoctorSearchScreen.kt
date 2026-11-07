@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -374,6 +375,28 @@ private fun DoctorItemCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    doctor.clinicAddress?.takeIf { it.isNotBlank() }?.let { address ->
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Dirección",
+                                tint = BiodontosDark,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = address,
+                                fontSize = 12.sp,
+                                color = BiodontosGreyText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                        }
+                    }
                 }
             }
 

@@ -51,7 +51,9 @@ class DoctorProfileViewModelTest {
         licenseNumber = "OD-20381",
         phone = "3001234567",
         bio = "Especialista en ortodoncia con 10 años de experiencia.",
-        photoUrl = "data:image/jpeg;base64,samplephoto"
+        photoUrl = "data:image/jpeg;base64,samplephoto",
+        clinicAddress = "Cra 15 # 93-60, Cons 501, Bogotá",
+        services = "Ortodoncia, Diseño de sonrisa"
     )
 
     @Before
@@ -85,6 +87,8 @@ class DoctorProfileViewModelTest {
         assertEquals("3001234567", state.phone)
         assertEquals("Especialista en ortodoncia con 10 años de experiencia.", state.bio)
         assertEquals("data:image/jpeg;base64,samplephoto", state.photoUrl)
+        assertEquals("Cra 15 # 93-60, Cons 501, Bogotá", state.clinicAddress)
+        assertEquals("Ortodoncia, Diseño de sonrisa", state.services)
         assertEquals("dr.carlos@biodontos.com", state.email)
         assertFalse(state.isLoading)
         assertNull(state.errorMessage)
@@ -97,19 +101,26 @@ class DoctorProfileViewModelTest {
 
         val updatedDoctor = dummyDoctor.copy(
             firstName = "Carlos Alberto",
-            specialty = "Ortodoncia Avanzada"
+            specialty = "Ortodoncia Avanzada",
+            clinicAddress = "Calle 100 # 19-61, Cons 802",
+            services = "Ortodoncia invisible, Blanqueamiento"
         )
         coEvery { updateDoctorProfileUseCase(any()) } returns Result.success(updatedDoctor)
 
         viewModel.onEvent(DoctorProfileEvent.UpdateFirstName("Carlos Alberto"))
         viewModel.onEvent(DoctorProfileEvent.UpdateSpecialty("Ortodoncia Avanzada"))
+        viewModel.onEvent(DoctorProfileEvent.UpdateClinicAddress("Calle 100 # 19-61, Cons 802"))
+        viewModel.onEvent(DoctorProfileEvent.UpdateServices("Ortodoncia invisible, Blanqueamiento"))
         viewModel.onEvent(DoctorProfileEvent.SaveProfile)
         advanceUntilIdle()
 
         coVerify {
             updateDoctorProfileUseCase(
                 match {
-                    it.firstName == "Carlos Alberto" && it.specialty == "Ortodoncia Avanzada"
+                    it.firstName == "Carlos Alberto" &&
+                        it.specialty == "Ortodoncia Avanzada" &&
+                        it.clinicAddress == "Calle 100 # 19-61, Cons 802" &&
+                        it.services == "Ortodoncia invisible, Blanqueamiento"
                 }
             )
         }
@@ -228,5 +239,28 @@ class DoctorProfileViewModelTest {
         coVerify { logoutUseCase() }
         val effect = viewModel.effects.first()
         assertEquals(DoctorProfileEffect.NavigateToLogin, effect)
+    }
+
+    @Test
+    fun `saveProfile preserves entered clinicAddress and services if repository returns nulls in fallback mode`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // In fallback mode, the repository saves basic info and returns a doctor with null bio, photo, address, services
+        val fallbackDoctor = dummyDoctor.copy(
+            clinicAddress = null,
+            services = null
+        )
+        coEvery { updateDoctorProfileUseCase(any()) } returns Result.success(fallbackDoctor)
+
+        viewModel.onEvent(DoctorProfileEvent.UpdateClinicAddress("Sede Chicó, Cons 401"))
+        viewModel.onEvent(DoctorProfileEvent.UpdateServices("Ortodoncia, Implantes"))
+        viewModel.onEvent(DoctorProfileEvent.SaveProfile)
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals("Sede Chicó, Cons 401", state.clinicAddress)
+        assertEquals("Ortodoncia, Implantes", state.services)
+        assertFalse(state.isSavingProfile)
     }
 }

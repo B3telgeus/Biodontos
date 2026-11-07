@@ -195,7 +195,7 @@ class BookAppointmentViewModel(
                         doctorName = state.doctor?.displayName ?: "Especialista Biodontos",
                         specialty = state.doctor?.specialty ?: "Odontología",
                         startIso = slot.start.toString(),
-                        roomOrLocation = "Sede Principal - Consultorio 102",
+                        roomOrLocation = state.doctor?.clinicAddress?.takeIf { it.isNotBlank() } ?: "Sede Principal - Consultorio 102",
                         reason = effectiveReason,
                         instructions = "Presentarse 10 minutos antes. Traer documento de identidad y cepillo dental.",
                         isRescheduled = false
@@ -252,7 +252,7 @@ class BookAppointmentViewModel(
                         doctorName = state.doctor?.displayName ?: "Especialista Biodontos",
                         specialty = state.doctor?.specialty ?: "Odontología",
                         startIso = slot.start.toString(),
-                        roomOrLocation = "Sede Principal - Consultorio 102",
+                        roomOrLocation = state.doctor?.clinicAddress?.takeIf { it.isNotBlank() } ?: "Sede Principal - Consultorio 102",
                         reason = effectiveReason,
                         instructions = "Presentarse 10 minutos antes. Traer documento de identidad y cepillo dental.",
                         isRescheduled = true

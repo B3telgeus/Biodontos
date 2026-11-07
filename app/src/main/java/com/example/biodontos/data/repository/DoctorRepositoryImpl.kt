@@ -156,81 +156,65 @@ class DoctorRepositoryImpl : DoctorRepository {
     }
 
     override suspend fun updateDoctorProfile(doctor: Doctor): Result<Doctor> {
-        val docId = doctor.id.value
-        val userId = doctor.userId
-
         return try {
-            SupabaseClient.client.from("doctors").update(
-                {
-                    set("first_name", doctor.firstName.trim())
-                    set("last_name", doctor.lastName.trim())
-                    set("specialty", doctor.specialty.trim())
-                    set("license_number", doctor.licenseNumber.trim())
-                    set("phone", doctor.phone?.trim()?.ifEmpty { null })
-                    set("bio", doctor.bio?.trim()?.ifEmpty { null })
-                    set("photo_url", doctor.photoUrl?.trim()?.ifEmpty { null })
-                }
-            ) {
-                filter {
-                    if (!userId.isNullOrBlank()) {
-                        or {
-                            eq("id", docId)
-                            eq("user_id", userId)
-                        }
-                    } else {
-                        or {
-                            eq("id", docId)
-                            eq("user_id", docId)
-                        }
-                    }
-                }
-            }
+            executeDoctorUpdate(doctor, includeOptionalFields = true)
             Result.success(doctor)
         } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            val msg = e.message?.lowercase().orEmpty()
-            val isMissingColumnError = msg.contains("bio") ||
-                msg.contains("photo_url") ||
-                msg.contains("column") ||
-                msg.contains("42703") ||
-                msg.contains("schema cache") ||
-                msg.contains("pgrst204")
+            handleUpdateProfileError(doctor, e)
+        }
+    }
 
-            if (isMissingColumnError) {
-                // Fallback defensivo: Si la columna 'bio' o 'photo_url' no existe aún en la tabla 'doctors' de Supabase,
-                // reintentar guardando los campos esenciales para no bloquear la actualización del perfil del doctor.
-                try {
-                    SupabaseClient.client.from("doctors").update(
-                        {
-                            set("first_name", doctor.firstName.trim())
-                            set("last_name", doctor.lastName.trim())
-                            set("specialty", doctor.specialty.trim())
-                            set("license_number", doctor.licenseNumber.trim())
-                            set("phone", doctor.phone?.trim()?.ifEmpty { null })
-                        }
-                    ) {
-                        filter {
-                            if (!userId.isNullOrBlank()) {
-                                or {
-                                    eq("id", docId)
-                                    eq("user_id", userId)
-                                }
-                            } else {
-                                or {
-                                    eq("id", docId)
-                                    eq("user_id", docId)
-                                }
-                            }
-                        }
-                    }
-                    Result.success(doctor.copy(bio = null, photoUrl = null))
-                } catch (fallbackEx: Exception) {
-                    if (fallbackEx is CancellationException) throw fallbackEx
-                    Result.failure(fallbackEx)
+    private suspend fun executeDoctorUpdate(doctor: Doctor, includeOptionalFields: Boolean) {
+        val docId = doctor.id.value
+        val targetUserId = doctor.userId.takeUnless { it.isNullOrBlank() } ?: docId
+
+        SupabaseClient.client.from("doctors").update(
+            {
+                set("first_name", doctor.firstName.trim())
+                set("last_name", doctor.lastName.trim())
+                set("specialty", doctor.specialty.trim())
+                set("license_number", doctor.licenseNumber.trim())
+                set("phone", doctor.phone?.trim()?.ifEmpty { null })
+                if (includeOptionalFields) {
+                    set("bio", doctor.bio?.trim()?.ifEmpty { null })
+                    set("photo_url", doctor.photoUrl?.trim()?.ifEmpty { null })
+                    set("clinic_address", doctor.clinicAddress?.trim()?.ifEmpty { null })
+                    set("services", doctor.services?.trim()?.ifEmpty { null })
                 }
-            } else {
-                Result.failure(e)
+            }
+        ) {
+            filter {
+                or {
+                    eq("id", docId)
+                    eq("user_id", targetUserId)
+                }
             }
         }
+    }
+
+    private suspend fun handleUpdateProfileError(doctor: Doctor, e: Exception): Result<Doctor> {
+        if (e is CancellationException) throw e
+        if (!isMissingColumnError(e)) {
+            return Result.failure(e)
+        }
+        return try {
+            executeDoctorUpdate(doctor, includeOptionalFields = false)
+            Result.success(doctor.copy(bio = null, photoUrl = null, clinicAddress = null, services = null))
+        } catch (fallbackEx: Exception) {
+            if (fallbackEx is CancellationException) throw fallbackEx
+            Result.failure(fallbackEx)
+        }
+    }
+
+    private fun isMissingColumnError(e: Exception): Boolean {
+        val msg = e.message?.lowercase().orEmpty()
+        return msg.contains("bio") ||
+            msg.contains("photo_url") ||
+            msg.contains("clinic_address") ||
+            msg.contains("services") ||
+            msg.contains("column") ||
+            msg.contains("42703") ||
+            msg.contains("schema cache") ||
+            msg.contains("pgrst204")
     }
 }

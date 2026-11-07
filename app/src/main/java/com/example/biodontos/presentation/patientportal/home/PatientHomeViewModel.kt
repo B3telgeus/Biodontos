@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.CopAmount
+import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.DoctorId
 import com.example.biodontos.domain.model.UserRole
 import com.example.biodontos.domain.repository.AppointmentRepository
 import com.example.biodontos.domain.repository.AuthRepository
@@ -111,6 +113,37 @@ class PatientHomeViewModel(
 
             val doctorsList = doctorsResult.getOrDefault(emptyList())
 
+            // Determinar el último doctor con el que el paciente agendó una cita
+            val lastAppointmentWithDoctor = allAppointments
+                .filter { it.doctorId?.isNotBlank() == true }
+                .maxByOrNull { it.startTime }
+
+            val bookedDoctorId = lastAppointmentWithDoctor?.doctorId?.trim()
+            val lastDoctor = if (!bookedDoctorId.isNullOrBlank()) {
+                val matched = doctorsList.find { it.id.value == bookedDoctorId || it.userId == bookedDoctorId }
+                matched ?: lastAppointmentWithDoctor.doctorName?.takeIf { it.isNotBlank() }?.let { rawName ->
+                    val cleanName = rawName
+                        .replace(Regex("""^(Dr\(a\)|Dra?|Doctor\(a\)|Doctora?)\.?\s*""", RegexOption.IGNORE_CASE), "")
+                        .trim()
+                    val parts = cleanName.split(Regex("""\s+""")).filter { it.isNotBlank() }
+                    Doctor(
+                        id = DoctorId(bookedDoctorId),
+                        firstName = parts.firstOrNull() ?: "Doctor",
+                        lastName = parts.drop(1).joinToString(" ").ifBlank { "Especialista" },
+                        specialty = "Especialista Odontológico"
+                    )
+                } ?: Doctor(
+                    id = DoctorId(bookedDoctorId),
+                    firstName = "Doctor",
+                    lastName = "Especialista",
+                    specialty = "Especialista Odontológico"
+                )
+            } else {
+                null
+            }
+
+            val patientDoctors = if (lastDoctor != null) listOf(lastDoctor) else emptyList()
+
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -120,7 +153,7 @@ class PatientHomeViewModel(
                     upcomingAppointments = followingAppts,
                     completedAppointmentsCount = completedCount,
                     pendingBalance = pendingBalance,
-                    doctors = doctorsList,
+                    doctors = patientDoctors,
                     errorMessage = null
                 )
             }

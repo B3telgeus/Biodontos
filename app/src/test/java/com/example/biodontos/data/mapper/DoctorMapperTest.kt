@@ -18,7 +18,9 @@ class DoctorMapperTest {
             specialty = "Ortodoncia & Estética",
             email = "carlos.mendoza@biodontos.com",
             phone = "3101234567",
-            licenseNumber = "OD-20381"
+            licenseNumber = "OD-20381",
+            clinicAddress = "Calle 100 # 15-20, Bogotá",
+            services = "Ortodoncia, Diseño de Sonrisa, Implantes"
         )
 
         val domain = dto.toDomain()
@@ -31,6 +33,9 @@ class DoctorMapperTest {
         assertEquals("carlos.mendoza@biodontos.com", domain.email)
         assertEquals("3101234567", domain.phone)
         assertEquals("OD-20381", domain.licenseNumber)
+        assertEquals("Calle 100 # 15-20, Bogotá", domain.clinicAddress)
+        assertEquals("Ortodoncia, Diseño de Sonrisa, Implantes", domain.services)
+        assertEquals(listOf("Ortodoncia", "Diseño de Sonrisa", "Implantes"), domain.servicesList)
     }
 
     @Test
@@ -61,7 +66,9 @@ class DoctorMapperTest {
             specialty = "Ortodoncia & Estética",
             email = "carlos.mendoza@biodontos.com",
             phone = "3101234567",
-            licenseNumber = "OD-20381"
+            licenseNumber = "OD-20381",
+            clinicAddress = "Calle 100 # 15-20, Bogotá",
+            services = "Ortodoncia, Diseño de Sonrisa"
         )
 
         val dto = domain.toDto()
@@ -74,5 +81,28 @@ class DoctorMapperTest {
         assertEquals("carlos.mendoza@biodontos.com", dto.email)
         assertEquals("3101234567", dto.phone)
         assertEquals("OD-20381", dto.licenseNumber)
+        assertEquals("Calle 100 # 15-20, Bogotá", dto.clinicAddress)
+        assertEquals("Ortodoncia, Diseño de Sonrisa", dto.services)
+    }
+
+    @Test
+    fun `servicesList handles null or empty services string gracefully`() {
+        val doctorWithNull = Doctor(
+            id = DoctorId("doc-null"),
+            firstName = "Test",
+            lastName = "Doc",
+            specialty = "General",
+            services = null
+        )
+        assertEquals(emptyList<String>(), doctorWithNull.servicesList)
+
+        val doctorWithBlank = Doctor(
+            id = DoctorId("doc-blank"),
+            firstName = "Test",
+            lastName = "Doc",
+            specialty = "General",
+            services = "  , ,   "
+        )
+        assertEquals(emptyList<String>(), doctorWithBlank.servicesList)
     }
 }

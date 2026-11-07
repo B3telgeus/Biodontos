@@ -26,10 +26,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -611,16 +614,39 @@ private fun DoctorsCard(
             }
 
             if (doctor == null) {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
+                        .padding(vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = BiodontosGreyText.copy(alpha = 0.5f)
+                    )
                     Text(
-                        text = "No hay doctores disponibles",
+                        text = "Aún no tienes especialistas agendados",
+                        color = BiodontosDark,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "Consulta el directorio de doctores de Biodontos para agendar tu primera consulta.",
                         color = BiodontosGreyText,
-                        fontSize = 14.sp
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    BiodontosPillButton(
+                        text = "Ir a la lista de doctores",
+                        variant = PillButtonVariant.DARK,
+                        onClick = onSeeAllDoctors,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             } else {
@@ -635,6 +661,28 @@ private fun DoctorsCard(
                     fontSize = 13.sp,
                     color = BiodontosGreyText
                 )
+
+                doctor.clinicAddress?.takeIf { it.isNotBlank() }?.let { address ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Dirección",
+                            tint = BiodontosDark,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = address,
+                            fontSize = 12.sp,
+                            color = BiodontosGreyText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                    }
+                }
 
                 // Placeholder / avatar de doctor con estilo circular o redondeado
                 Box(
