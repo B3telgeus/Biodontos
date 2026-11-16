@@ -1,6 +1,7 @@
 package com.example.biodontos.presentation.auth.doctor
 
 import androidx.compose.runtime.Immutable
+import com.example.biodontos.domain.model.RegistrationOutcome
 import com.example.biodontos.domain.model.UserSession
 
 @Immutable
@@ -27,5 +28,8 @@ data class DoctorRegistrationState(
 )
 
 sealed interface DoctorRegistrationEvent {
-    data class RegisteredSuccess(val session: UserSession) : DoctorRegistrationEvent
+    data class RegisteredSuccess(
+        val session: UserSession? = null,
+        val outcome: RegistrationOutcome? = null
+    ) : DoctorRegistrationEvent
 }

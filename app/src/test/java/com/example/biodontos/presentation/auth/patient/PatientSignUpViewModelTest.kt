@@ -1,6 +1,7 @@
 package com.example.biodontos.presentation.auth.patient
 
 import com.example.biodontos.MainDispatcherRule
+import com.example.biodontos.domain.model.RegistrationOutcome
 import com.example.biodontos.domain.model.UserRole
 import com.example.biodontos.domain.model.UserSession
 import com.example.biodontos.domain.usecase.auth.RegisterPatientAuthUseCase
@@ -108,7 +109,7 @@ class PatientSignUpViewModelTest {
                 dniCedula = "12345678",
                 phone = null
             )
-        } returns Result.success(session)
+        } returns Result.success(RegistrationOutcome.Authenticated(session))
 
         // Step 1
         viewModel.onFirstNameChange("Juan")

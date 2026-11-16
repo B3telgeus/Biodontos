@@ -2,21 +2,28 @@ package com.example.biodontos.presentation.admission
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.biodontos.R
+import com.example.biodontos.core.ui.UiText
+import com.example.biodontos.core.util.SystemClinicClock
+import com.example.biodontos.core.util.toUserFriendlyMessage
+import com.example.biodontos.data.local.dao.AdmissionDraftDao
+import com.example.biodontos.data.local.entity.AdmissionDraftEntity
 import com.example.biodontos.domain.model.*
 import com.example.biodontos.domain.repository.*
-import com.example.biodontos.core.util.toUserFriendlyMessage
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import com.example.biodontos.domain.usecase.materials.BuildEvolutionMaterialUsageUseCase
 import com.example.biodontos.domain.usecase.materials.GetMaterialsUseCase
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class ClinicalAdmissionViewModel(
     private val patientRepository: PatientRepository,
@@ -35,10 +42,13 @@ class ClinicalAdmissionViewModel(
     private val getMaterialsUseCase: GetMaterialsUseCase = GetMaterialsUseCase(materialRepository),
     private val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase =
         BuildEvolutionMaterialUsageUseCase(SystemClinicClock()),
+    private val admissionDraftDao: AdmissionDraftDao? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ClinicalAdmissionState())
     val state: StateFlow<ClinicalAdmissionState> = _state.asStateFlow()
+
+    private val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
     init {
         loadMaterialsCatalog()
@@ -46,45 +56,109 @@ class ClinicalAdmissionViewModel(
         if (!initialPatientId.isNullOrBlank()) {
             loadExistingPatientData(initialPatientId)
         }
+        setupDraftAutoSave()
+    }
+
+    private fun setupDraftAutoSave() {
+        if (admissionDraftDao == null) return
+        viewModelScope.launch {
+            @OptIn(FlowPreview::class)
+            _state
+                .debounce(500L)
+                .collect { s ->
+                    val docId = s.doctorId.trim()
+                    val patId = s.patientId.trim()
+                    if (docId.isNotBlank() && patId.isNotBlank() && uuidRegex.matches(docId) && !s.isFinished) {
+                        try {
+                            admissionDraftDao.insertDraft(
+                                AdmissionDraftEntity(
+                                    doctorId = docId,
+                                    patientId = patId,
+                                    currentStep = s.currentStep,
+                                    draftJson = buildDraftJson(s)
+                                )
+                            )
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                        }
+                    }
+                }
+        }
+    }
+
+    private fun buildDraftJson(s: ClinicalAdmissionState): String {
+        return buildString {
+            append("{")
+            append("\"dni\":\"").append(s.dniCedula).append("\",")
+            append("\"firstName\":\"").append(s.firstName).append("\",")
+            append("\"firstLastName\":\"").append(s.firstLastName).append("\",")
+            append("\"step\":").append(s.currentStep)
+            append("}")
+        }
     }
 
     private fun loadCurrentDoctor() {
         viewModelScope.launch {
-            val fromUseCase = getCurrentDoctorUseCase?.invoke()?.getOrNull()
-            if (fromUseCase != null) {
-                _state.update {
-                    it.copy(
-                        doctorId = fromUseCase.id.value,
-                        doctorName = "${fromUseCase.firstName} ${fromUseCase.lastName}".trim(),
-                        doctorLicense = fromUseCase.licenseNumber
-                    )
-                }
-                return@launch
-            }
-
-            // Fallback dinámico: Si no hay doctor en la sesión actual, consultar los especialistas de la clínica
-            val repo = doctorRepository ?: return@launch
-            repo.getDoctors().onSuccess { doctors ->
-                val fallbackDoctor = doctors.firstOrNull()
-                if (fallbackDoctor != null) {
-                    _state.update {
-                        it.copy(
-                            doctorId = fallbackDoctor.id.value,
-                            doctorName = "${fallbackDoctor.firstName} ${fallbackDoctor.lastName}".trim(),
-                            doctorLicense = fallbackDoctor.licenseNumber
-                        )
+            val useCase = getCurrentDoctorUseCase ?: return@launch
+            useCase().fold(
+                onSuccess = { doctor ->
+                    if (doctor != null && uuidRegex.matches(doctor.id.value.trim())) {
+                        _state.update {
+                            it.copy(
+                                doctorId = doctor.id.value.trim(),
+                                doctorName = "${doctor.firstName} ${doctor.lastName}".trim(),
+                                doctorLicense = doctor.licenseNumber
+                            )
+                        }
                     }
-                }
-            }
+                },
+                onFailure = { /* Sesión de doctor expirada o nula */ }
+            )
         }
     }
 
-    private fun resolveDoctorUuid(candidateId: String): String {
-        val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-        return when {
-            candidateId.isNotBlank() && uuidRegex.matches(candidateId) -> candidateId
-            _state.value.doctorId.isNotBlank() && uuidRegex.matches(_state.value.doctorId) -> _state.value.doctorId
-            else -> DEFAULT_DOCTOR_UUID
+    private fun setError(uiText: UiText, legacyMessage: String? = null) {
+        val fallback = legacyMessage ?: when (uiText) {
+            is UiText.DynamicString -> uiText.value
+            is UiText.StringResource -> when (uiText.resId) {
+                R.string.admission_error_dni_required -> "El número de documento es obligatorio"
+                R.string.admission_error_name_required -> "El nombre y primer apellido son obligatorios"
+                R.string.admission_error_material_already_added -> "Este material ya fue anexado a la evolución."
+                R.string.admission_error_patient_id_required_for_consent -> "Debe registrar la identificación del paciente antes de emitir el consentimiento."
+                R.string.admission_error_invalid_doctor_session -> "Se requiere una sesión de doctor activa y válida para continuar."
+                R.string.admission_error_doctor_id_invalid -> "Identificador de doctor no válido. Verifique la sesión activa."
+                R.string.admission_error_saving_patient -> "Error al guardar paciente: ${uiText.args.firstOrNull() ?: ""}"
+                R.string.admission_error_saving_clinical_record -> "Error en historia: ${uiText.args.firstOrNull() ?: ""}"
+                R.string.admission_error_saving_anamnesis -> "Error en anamnesis: ${uiText.args.firstOrNull() ?: ""}"
+                R.string.admission_error_saving_odontogram -> "Error en odontograma: ${uiText.args.firstOrNull() ?: ""}"
+                R.string.admission_error_saving_periodontogram -> "Error en periodontograma: ${uiText.args.firstOrNull() ?: ""}"
+                R.string.admission_error_saving_consent -> "Error en consentimiento: ${uiText.args.firstOrNull() ?: ""}"
+                R.string.admission_error_saving_evolution -> "Error en evolución: ${uiText.args.firstOrNull() ?: ""}"
+                R.string.admission_error_saving_operative_consent -> "Error al guardar consentimiento de operatoria: ${uiText.args.firstOrNull() ?: ""}"
+                else -> "Error inesperado"
+            }
+        }
+        _state.update {
+            it.copy(
+                isLoading = false,
+                errorMessage = fallback,
+                errorUiText = uiText
+            )
+        }
+    }
+
+    private fun requireValidDoctorId(): String? {
+        val candidate = _state.value.doctorId.trim()
+        return if (candidate.isNotBlank() && uuidRegex.matches(candidate)) {
+            candidate
+        } else {
+            val (resId, msg) = if (candidate.isNotBlank()) {
+                R.string.admission_error_doctor_id_invalid to "Identificador de doctor no válido. Verifique la sesión activa."
+            } else {
+                R.string.admission_error_invalid_doctor_session to "Se requiere una sesión de doctor activa y válida para continuar."
+            }
+            setError(UiText.StringResource(resId), msg)
+            null
         }
     }
 
@@ -250,18 +324,25 @@ class ClinicalAdmissionViewModel(
                 }
             }
             is ClinicalAdmissionEvent.ClearMessages -> {
-                _state.update { it.copy(errorMessage = null, successMessage = null) }
+                _state.update {
+                    it.copy(
+                        errorMessage = null,
+                        errorUiText = null,
+                        successMessage = null,
+                        successUiText = null
+                    )
+                }
             }
 
             // Paso 1: Identificación
             is ClinicalAdmissionEvent.UpdateDni -> {
-                _state.update { it.copy(dniCedula = event.value, dniError = null) }
+                _state.update { it.copy(dniCedula = event.value, dniError = null, dniErrorUiText = null) }
             }
             is ClinicalAdmissionEvent.UpdateFirstName -> {
-                _state.update { it.copy(firstName = event.value, nameError = null) }
+                _state.update { it.copy(firstName = event.value, nameError = null, nameErrorUiText = null) }
             }
             is ClinicalAdmissionEvent.UpdateFirstLastName -> {
-                _state.update { it.copy(firstLastName = event.value, nameError = null) }
+                _state.update { it.copy(firstLastName = event.value, nameError = null, nameErrorUiText = null) }
             }
             is ClinicalAdmissionEvent.UpdateSecondLastName -> {
                 _state.update { it.copy(secondLastName = event.value) }
@@ -474,17 +555,18 @@ class ClinicalAdmissionViewModel(
             is ClinicalAdmissionEvent.AddMaterialUsed -> {
                 val mat = _state.value.selectedCatalogMaterial ?: return
                 if (_state.value.usedMaterials.any { it.materialId == mat.id.value }) {
-                    _state.update { it.copy(errorMessage = "Este material ya fue anexado a la evolución.") }
+                    val msg = "Este material ya fue anexado a la evolución."
+                    setError(UiText.StringResource(R.string.admission_error_material_already_added), msg)
                     return
                 }
                 viewModelScope.launch {
                     buildEvolutionMaterialUsageUseCase(mat, event.quantity).fold(
                         ifLeft = { error ->
-                            _state.update { it.copy(errorMessage = error.userMessage) }
+                            setError(UiText.DynamicString(error.userMessage), error.userMessage)
                         },
                         ifRight = { used ->
                             _state.update {
-                                it.copy(usedMaterials = it.usedMaterials + used, errorMessage = null)
+                                it.copy(usedMaterials = it.usedMaterials + used, errorMessage = null, errorUiText = null)
                             }
                         }
                     )
@@ -586,16 +668,28 @@ class ClinicalAdmissionViewModel(
     private fun persistStep1AndAdvance() {
         val s = _state.value
         if (s.dniCedula.isBlank()) {
-            _state.update { it.copy(dniError = "El número de documento es obligatorio") }
+            _state.update {
+                it.copy(
+                    dniError = "El número de documento es obligatorio",
+                    dniErrorUiText = UiText.StringResource(R.string.admission_error_dni_required)
+                )
+            }
             return
         }
         if (s.firstName.isBlank() || s.firstLastName.isBlank()) {
-            _state.update { it.copy(nameError = "El nombre y primer apellido son obligatorios") }
+            _state.update {
+                it.copy(
+                    nameError = "El nombre y primer apellido son obligatorios",
+                    nameErrorUiText = UiText.StringResource(R.string.admission_error_name_required)
+                )
+            }
             return
         }
 
+        val validDoctorId = requireValidDoctorId() ?: return
+
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
             val effectivePatientId = s.patientId.ifBlank { Patient.generateIdFromDni(s.dniCedula) }
 
             var resolvedGuardianId = s.guardianId
@@ -671,19 +765,22 @@ class ClinicalAdmissionViewModel(
                             }
                         }
                         .onFailure { err ->
-                            _state.update { it.copy(isLoading = false, errorMessage = "Error en historia: ${err.toUserFriendlyMessage()}") }
+                            val msg = "Error en historia: ${err.toUserFriendlyMessage()}"
+                            setError(UiText.StringResource(R.string.admission_error_saving_clinical_record, err.toUserFriendlyMessage()), msg)
                         }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error al guardar paciente: ${err.toUserFriendlyMessage()}") }
+                    val msg = "Error al guardar paciente: ${err.toUserFriendlyMessage()}"
+                    setError(UiText.StringResource(R.string.admission_error_saving_patient, err.toUserFriendlyMessage()), msg)
                 }
         }
     }
 
     private fun persistStep2AndAdvance() {
         val s = _state.value
+        val validDoctorId = requireValidDoctorId() ?: return
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
             val anamnesis = Anamnesis(
                 patientId = s.patientId,
                 tratamientoMedicoActual = s.tratamientoMedicoActual,
@@ -716,19 +813,27 @@ class ClinicalAdmissionViewModel(
                     _state.update { it.copy(isLoading = false, currentStep = 3) }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error en anamnesis: ${err.toUserFriendlyMessage()}") }
+                    val msg = "Error en anamnesis: ${err.toUserFriendlyMessage()}"
+                    setError(UiText.StringResource(R.string.admission_error_saving_anamnesis, err.toUserFriendlyMessage()), msg)
                 }
         }
     }
 
     private fun persistStep3AndAdvance() {
         val s = _state.value
+        val validDoctorId = requireValidDoctorId() ?: return
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
-            // Persistir superficies dentales en el repositorio de odontograma
+            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
             for ((toothNum, surfaces) in s.teethSurfaces) {
                 for ((surface, condition) in surfaces) {
-                    odontogramRepository.updateToothState(s.patientId, toothNum, surface, condition, "Admisión inicial")
+                    val result = odontogramRepository.updateToothState(s.patientId, toothNum, surface, condition, "Admisión inicial")
+                    if (result.isFailure) {
+                        val err = result.exceptionOrNull()
+                        val friendly = err.toUserFriendlyMessage()
+                        val msg = "Error en odontograma: $friendly"
+                        setError(UiText.StringResource(R.string.admission_error_saving_odontogram, friendly), msg)
+                        return@launch
+                    }
                 }
             }
             _state.update { it.copy(isLoading = false, currentStep = 4) }
@@ -737,11 +842,12 @@ class ClinicalAdmissionViewModel(
 
     private fun persistStep4AndAdvance() {
         val s = _state.value
+        val validDoctorId = requireValidDoctorId() ?: return
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
             val exam = PeriodontalExamination(
                 recordId = s.clinicalRecordId,
-                doctorId = resolveDoctorUuid(s.doctorId),
+                doctorId = validDoctorId,
                 examinationDate = LocalDate.now().toString(),
                 generalObservations = s.periodontalObservations.ifBlank { null },
                 sites = s.siteMeasurements.values.toList()
@@ -752,16 +858,17 @@ class ClinicalAdmissionViewModel(
                     _state.update { it.copy(isLoading = false, currentStep = 5) }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error en periodontograma: ${err.toUserFriendlyMessage()}") }
+                    val msg = "Error en periodontograma: ${err.toUserFriendlyMessage()}"
+                    setError(UiText.StringResource(R.string.admission_error_saving_periodontogram, err.toUserFriendlyMessage()), msg)
                 }
         }
     }
 
     private fun persistStep5AndAdvance() {
         val s = _state.value
+        val validDoctorId = requireValidDoctorId() ?: return
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
-            // 1. Guardar diagnósticos en ClinicalRecord
+            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
             val record = ClinicalRecord(
                 id = s.clinicalRecordId,
                 patientId = s.patientId,
@@ -771,12 +878,18 @@ class ClinicalAdmissionViewModel(
                 complementaryExams = s.complementaryExams.ifBlank { null },
                 status = ClinicalRecordStatus.ABIERTA
             )
-            clinicalRecordRepository.saveRecord(record)
+            val recordResult = clinicalRecordRepository.saveRecord(record)
+            if (recordResult.isFailure) {
+                val err = recordResult.exceptionOrNull()
+                val friendly = err.toUserFriendlyMessage()
+                val msg = "Error en historia: $friendly"
+                setError(UiText.StringResource(R.string.admission_error_saving_clinical_record, friendly), msg)
+                return@launch
+            }
 
-            // 2. Guardar Consentimiento Informado
             val consent = InformedConsent(
                 patientId = s.patientId,
-                doctorId = resolveDoctorUuid(s.doctorId),
+                doctorId = validDoctorId,
                 treatmentSummary = s.treatmentPlanDescription.ifBlank { "Tratamiento Integral de Odontología" },
                 patientSignatureUrl = s.consentPatientSignature.ifBlank { null },
                 doctorLicenseNumber = s.doctorLicense,
@@ -787,18 +900,19 @@ class ClinicalAdmissionViewModel(
                     _state.update { it.copy(isLoading = false, currentStep = 6) }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error en consentimiento: ${err.toUserFriendlyMessage()}") }
+                    val msg = "Error en consentimiento: ${err.toUserFriendlyMessage()}"
+                    setError(UiText.StringResource(R.string.admission_error_saving_consent, err.toUserFriendlyMessage()), msg)
                 }
         }
     }
 
     private fun persistStep6AndAdvance() {
         val s = _state.value
+        val validDoctorId = requireValidDoctorId() ?: return
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
             val cost = s.evolutionCost.toDoubleOrNull() ?: 0.0
             val payment = s.evolutionPayment.toDoubleOrNull() ?: 0.0
-            val validDoctorId = resolveDoctorUuid(s.doctorId)
             val evolution = Evolution(
                 recordId = s.clinicalRecordId,
                 doctorId = validDoctorId,
@@ -813,40 +927,62 @@ class ClinicalAdmissionViewModel(
                 materialsUsed = s.usedMaterials
             )
 
-            evolutionRepository.saveEvolution(evolution)
-                .onSuccess {
-                    // Cierre médico-legal si el doctor lo seleccionó
-                    if (s.closeRecordOnFinish) {
-                        clinicalRecordRepository.closeRecord(
-                            recordId = s.clinicalRecordId,
-                            doctorId = validDoctorId,
-                            summary = s.closureSummary.ifBlank { "Tratamiento de ingreso concluido." },
-                            signatureUrl = s.evolutionPatientSignature
-                        )
+            val saveResult = try {
+                val candidateResult = evolutionRepository.saveEvolution(
+                    evolution = evolution,
+                    closeRecord = s.closeRecordOnFinish,
+                    closureSummary = s.closureSummary.ifBlank { "Tratamiento de ingreso concluido." },
+                    closureSignatureUrl = s.evolutionPatientSignature.ifBlank { null }
+                )
+                if (candidateResult.isSuccess) {
+                    val evo = candidateResult.getOrNull()
+                    if (evo !is Evolution) {
+                        evolutionRepository.saveEvolution(evolution)
+                    } else {
+                        candidateResult
                     }
-                    _state.update { it.copy(isLoading = false, currentStep = 7) }
+                } else {
+                    val exception = candidateResult.exceptionOrNull()
+                    if (exception == null) {
+                        evolutionRepository.saveEvolution(evolution)
+                    } else {
+                        candidateResult
+                    }
                 }
-                .onFailure { err ->
-                    _state.update { it.copy(isLoading = false, errorMessage = "Error en evolución: ${err.toUserFriendlyMessage()}") }
+            } catch (_: Throwable) {
+                evolutionRepository.saveEvolution(evolution)
+            }
+
+            saveResult.onSuccess {
+                if (s.closeRecordOnFinish) {
+                    clinicalRecordRepository.closeRecord(
+                        recordId = s.clinicalRecordId,
+                        doctorId = validDoctorId,
+                        summary = s.closureSummary.ifBlank { "Tratamiento de ingreso concluido." },
+                        signatureUrl = s.evolutionPatientSignature
+                    )
                 }
+                _state.update { it.copy(isLoading = false, currentStep = 7) }
+            }.onFailure { err ->
+                val msg = "Error en evolución: ${err.toUserFriendlyMessage()}"
+                setError(UiText.StringResource(R.string.admission_error_saving_evolution, err.toUserFriendlyMessage()), msg)
+            }
         }
     }
 
     private fun finishAdmission() {
         val s = _state.value
+        val validDoctorId = requireValidDoctorId() ?: return
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
             var scheduledTimeNote = ""
 
-            // Si el doctor programó fecha para la próxima cita
             if (s.nextAppointmentDate.isNotBlank()) {
-                val validDoctorId = resolveDoctorUuid(s.doctorId)
                 var targetTime = s.nextAppointmentTime.ifBlank { "10:00" }.trim()
                 if (targetTime.length == 5) {
                     targetTime = "$targetTime:00"
                 }
 
-                // 1. Consultar franjas ocupadas
                 val busySlots = appointmentRepository.getDoctorBusySlots(validDoctorId, s.nextAppointmentDate)
                     .getOrDefault(emptyList())
 
@@ -855,7 +991,6 @@ class ClinicalAdmissionViewModel(
                     busy.startsWith("${s.nextAppointmentDate}T${targetTime.take(5)}") || busy == requestedIso
                 }
 
-                // Si está ocupado, buscar la siguiente franja horaria disponible en la jornada
                 val candidateTimes = listOf(
                     "08:00:00", "08:30:00", "09:00:00", "09:30:00", "10:00:00", "10:30:00",
                     "11:00:00", "11:30:00", "12:00:00", "14:00:00", "14:30:00", "15:00:00",
@@ -885,7 +1020,6 @@ class ClinicalAdmissionViewModel(
                     appointmentCreated = true
                     scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${targetTime.take(5)}."
                 } else {
-                    // Intento de recuperación probando las siguientes franjas horarias
                     val fallbackTime = candidateTimes.firstNotNullOfOrNull { candidate ->
                         if (candidate == targetTime) {
                             null
@@ -908,11 +1042,21 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
+            if (s.patientId.isNotBlank()) {
+                try {
+                    admissionDraftDao?.deleteDraft(validDoctorId, s.patientId)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                }
+            }
+
+            val successMsg = "¡Proceso de ingreso clínico finalizado con éxito!$scheduledTimeNote"
             _state.update {
                 it.copy(
                     isLoading = false,
                     isFinished = true,
-                    successMessage = "¡Proceso de ingreso clínico finalizado con éxito!$scheduledTimeNote"
+                    successMessage = successMsg,
+                    successUiText = UiText.DynamicString(successMsg)
                 )
             }
         }
@@ -920,15 +1064,18 @@ class ClinicalAdmissionViewModel(
 
     private fun saveOperativeConsent() {
         val s = _state.value
+        val validDoctorId = requireValidDoctorId() ?: return
         val pid = s.patientId.ifBlank {
-            _state.update { it.copy(errorMessage = "Debe registrar la identificación del paciente antes de emitir el consentimiento.") }
+            setError(
+                UiText.StringResource(R.string.admission_error_patient_id_required_for_consent),
+                "Debe registrar la identificación del paciente antes de emitir el consentimiento."
+            )
             return
         }
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
             val today = LocalDate.now().toString()
             val documentCode = "consentimiento_preop_${pid}_$today"
-            val validDoctorId = resolveDoctorUuid(s.doctorId)
             val treatmentDescription = s.operativeConsentProposedTreatment.ifBlank { "Tratamiento de operatoria dental y obturaciones estéticas" }
             val formattedTreatment = "[$documentCode] $treatmentDescription"
 
@@ -956,27 +1103,21 @@ class ClinicalAdmissionViewModel(
 
             informedConsentRepository.saveConsent(consent)
                 .onSuccess {
+                    val msg = "Consentimiento de operatoria guardado y firmado correctamente"
                     _state.update {
                         it.copy(
                             isLoading = false,
                             showOperativeConsentDialog = false,
                             operativeConsentSaved = true,
-                            successMessage = "Consentimiento de operatoria guardado y firmado correctamente"
+                            successMessage = msg,
+                            successUiText = UiText.StringResource(R.string.admission_success_operative_consent)
                         )
                     }
                 }
                 .onFailure { err ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = err.toUserFriendlyMessage("Error al guardar consentimiento de operatoria")
-                        )
-                    }
+                    val msg = err.toUserFriendlyMessage("Error al guardar consentimiento de operatoria")
+                    setError(UiText.StringResource(R.string.admission_error_saving_operative_consent, msg), msg)
                 }
         }
-    }
-
-    companion object {
-        const val DEFAULT_DOCTOR_UUID = "11111111-1111-1111-1111-111111111111"
     }
 }

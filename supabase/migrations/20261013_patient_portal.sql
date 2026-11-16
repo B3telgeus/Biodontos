@@ -1,5 +1,6 @@
 -- ============================================================================
 -- BIODONTOS: MIGRACIÓN PORTAL DEL PACIENTE (CITAS, DOCTORES, PAGOS Y RLS)
+-- Migración: 20261013_patient_portal.sql
 -- ============================================================================
 
 -- 1. Ampliar tabla doctors con bio y foto para el perfil público del paciente
@@ -33,11 +34,11 @@ CREATE POLICY "Doctores gestionan su propia disponibilidad"
   ON public.doctor_availability FOR ALL
   TO authenticated
   USING (
-    doctor_id IN (SELECT id FROM public.doctors WHERE user_id::text = auth.jwt() ->> 'sub')
+    doctor_id IN (SELECT id FROM public.doctors WHERE user_id = auth.uid())
     OR public.is_doctor()
   )
   WITH CHECK (
-    doctor_id IN (SELECT id FROM public.doctors WHERE user_id::text = auth.jwt() ->> 'sub')
+    doctor_id IN (SELECT id FROM public.doctors WHERE user_id = auth.uid())
     OR public.is_doctor()
   );
 
@@ -52,7 +53,7 @@ CREATE POLICY "Pacientes consultan sus propias citas"
   ON public.appointments FOR SELECT
   TO authenticated
   USING (
-    patient_id IN (SELECT id FROM public.patients WHERE user_id::text = auth.jwt() ->> 'sub')
+    patient_id IN (SELECT id FROM public.patients WHERE user_id = auth.uid())
   );
 
 -- 5. RPC segura: Obtener slots ocupados de un doctor (sin exponer datos de pacientes - Cumplimiento HIPAA)
@@ -67,8 +68,13 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000';
+  END IF;
+
   RETURN QUERY
   SELECT a.start_time, a.end_time
   FROM public.appointments a
@@ -88,16 +94,21 @@ CREATE OR REPLACE FUNCTION public.patient_book_appointment(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_patient_id uuid;
   v_end_time timestamp with time zone;
   v_new_appointment record;
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'UNAUTHORIZED');
+  END IF;
+
   -- Obtener el paciente asociado al usuario autenticado
   SELECT id INTO v_patient_id
   FROM public.patients
-  WHERE user_id::text = auth.jwt() ->> 'sub'
+  WHERE user_id = auth.uid()
   LIMIT 1;
 
   IF v_patient_id IS NULL THEN
@@ -126,7 +137,7 @@ BEGIN
     RETURN jsonb_build_object('success', false, 'error', 'SLOT_TAKEN');
   END IF;
 
-  -- Insertar cita con estado PENDING (confirmation_status = false)
+  -- Insertar cita con estado SCHEDULED (confirmation_status = false)
   INSERT INTO public.appointments (
     patient_id,
     doctor_id,
@@ -166,16 +177,21 @@ CREATE OR REPLACE FUNCTION public.patient_reschedule_appointment(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_patient_id uuid;
   v_appointment record;
   v_new_end_time timestamp with time zone;
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'UNAUTHORIZED');
+  END IF;
+
   -- Obtener el paciente asociado al usuario autenticado
   SELECT id INTO v_patient_id
   FROM public.patients
-  WHERE user_id::text = auth.jwt() ->> 'sub'
+  WHERE user_id = auth.uid()
   LIMIT 1;
 
   SELECT * INTO v_appointment
@@ -240,14 +256,19 @@ CREATE OR REPLACE FUNCTION public.patient_cancel_appointment(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_patient_id uuid;
   v_appointment record;
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'UNAUTHORIZED');
+  END IF;
+
   SELECT id INTO v_patient_id
   FROM public.patients
-  WHERE user_id::text = auth.jwt() ->> 'sub'
+  WHERE user_id = auth.uid()
   LIMIT 1;
 
   SELECT * INTO v_appointment

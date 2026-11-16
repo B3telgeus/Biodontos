@@ -1,5 +1,6 @@
 package com.example.biodontos.domain.usecase.auth
 
+import com.example.biodontos.domain.model.RegistrationOutcome
 import com.example.biodontos.domain.model.UserRole
 import com.example.biodontos.domain.model.UserSession
 import com.example.biodontos.domain.repository.AuthRepository
@@ -20,7 +21,7 @@ class RegisterDoctorUseCaseTest {
         val expectedSession = UserSession("doc-1", "doc@clinic.com", UserRole.DOCTOR, "Dr. Ana")
         coEvery {
             authRepository.registerDoctor("doc@clinic.com", "SecurePass", "Ana", "Torres", "MP-9876", "Ortodoncia", null)
-        } returns Result.success(expectedSession)
+        } returns Result.success(RegistrationOutcome.Authenticated(expectedSession))
 
         val result = useCase(
             email = "doc@clinic.com",
@@ -32,7 +33,7 @@ class RegisterDoctorUseCaseTest {
         )
 
         assertTrue(result.isSuccess)
-        assertEquals(expectedSession, result.getOrNull())
+        assertEquals(RegistrationOutcome.Authenticated(expectedSession), result.getOrNull())
     }
 
     @Test

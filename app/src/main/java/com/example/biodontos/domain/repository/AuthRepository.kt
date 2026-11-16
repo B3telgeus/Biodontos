@@ -1,5 +1,6 @@
 package com.example.biodontos.domain.repository
 
+import com.example.biodontos.domain.model.RegistrationOutcome
 import com.example.biodontos.domain.model.UserSession
 
 interface AuthRepository {
@@ -12,7 +13,7 @@ interface AuthRepository {
         lastName: String,
         dniCedula: String,
         phone: String? = null
-    ): Result<UserSession>
+    ): Result<RegistrationOutcome>
 
     suspend fun registerDoctor(
         email: String,
@@ -22,7 +23,7 @@ interface AuthRepository {
         licenseNumber: String,
         specialty: String,
         phone: String? = null
-    ): Result<UserSession>
+    ): Result<RegistrationOutcome>
 
     suspend fun resetPassword(email: String): Result<Unit>
 

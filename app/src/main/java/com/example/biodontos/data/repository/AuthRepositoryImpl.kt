@@ -1,31 +1,39 @@
 package com.example.biodontos.data.repository
 
-import com.example.biodontos.core.network.SupabaseClient
-import com.example.biodontos.data.dto.PatientDto
-import com.example.biodontos.domain.model.Patient
+import com.example.biodontos.data.local.SessionLocalCleaner
+import com.example.biodontos.domain.model.RegistrationOutcome
 import com.example.biodontos.domain.model.UserRole
 import com.example.biodontos.domain.model.UserSession
 import com.example.biodontos.domain.repository.AuthRepository
+import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
-import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
-class AuthRepositoryImpl : AuthRepository {
+class AuthRepositoryImpl(
+    private val supabaseClient: SupabaseClient = com.example.biodontos.core.network.SupabaseClient.client,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val sessionLocalCleaner: SessionLocalCleaner? = null
+) : AuthRepository {
 
-    override suspend fun login(email: String, password: String): Result<UserSession> = withContext(Dispatchers.IO) {
+    override suspend fun login(email: String, password: String): Result<UserSession> = withContext(ioDispatcher) {
         try {
-            SupabaseClient.client.auth.signInWith(Email) {
+            supabaseClient.auth.signInWith(Email) {
                 this.email = email.trim()
                 this.password = password
             }
-            val user = SupabaseClient.client.auth.currentUserOrNull()
+            val user = supabaseClient.auth.currentUserOrNull()
                 ?: return@withContext Result.failure(Exception("No se pudo obtener el usuario autenticado"))
+
+            if (user.id.isBlank()) {
+                return@withContext Result.failure(Exception("Identificador de usuario inválido"))
+            }
 
             val roleStr = user.userMetadata?.get("role")?.jsonPrimitive?.content ?: "UNKNOWN"
             val role = when (roleStr.uppercase()) {
@@ -38,12 +46,12 @@ class AuthRepositoryImpl : AuthRepository {
             Result.success(
                 UserSession(
                     id = user.id,
-                    email = user.email ?: email,
+                    email = user.email ?: email.trim(),
                     role = role,
                     displayName = name
                 )
             )
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             if (e is CancellationException) throw e
             Result.failure(e)
         }
@@ -56,57 +64,40 @@ class AuthRepositoryImpl : AuthRepository {
         lastName: String,
         dniCedula: String,
         phone: String?
-    ): Result<UserSession> = withContext(Dispatchers.IO) {
+    ): Result<RegistrationOutcome> = withContext(ioDispatcher) {
+        val trimmedEmail = email.trim()
+        val trimmedFirstName = firstName.trim()
+        val trimmedLastName = lastName.trim()
+        val trimmedDni = dniCedula.trim()
+        val trimmedPhone = phone?.trim()
+
         try {
-            SupabaseClient.client.auth.signUpWith(Email) {
-                this.email = email.trim()
+            supabaseClient.auth.signUpWith(Email) {
+                this.email = trimmedEmail
                 this.password = password
                 data = buildJsonObject {
                     put("role", "PATIENT")
-                    put("first_name", firstName.trim())
-                    put("last_name", lastName.trim())
-                    put("dni_cedula", dniCedula.trim())
-                    phone?.let { put("phone", it.trim()) }
+                    put("first_name", trimmedFirstName)
+                    put("last_name", trimmedLastName)
+                    put("dni_cedula", trimmedDni)
+                    trimmedPhone?.takeIf { it.isNotBlank() }?.let { put("phone", it) }
                 }
             }
 
-            val user = SupabaseClient.client.auth.currentUserOrNull()
+            val user = supabaseClient.auth.currentUserOrNull()
 
-            // Guardar o sincronizar también en la tabla patients de la BD
-            try {
-                val patientId = user?.id ?: Patient.generateIdFromDni(dniCedula.trim())
-                val trimmedLastName = lastName.trim()
-                val firstLastName = trimmedLastName.split(" ").firstOrNull() ?: trimmedLastName
-                val secondLastName = trimmedLastName.split(" ").drop(1).joinToString(" ")
-
-                SupabaseClient.client.from("patients").upsert(
-                    PatientDto(
-                        id = patientId,
-                        userId = user?.id,
-                        dniCedula = dniCedula.trim(),
-                        firstName = firstName.trim(),
-                        lastNameCol = trimmedLastName,
-                        firstLastName = firstLastName,
-                        secondLastName = secondLastName,
-                        phone = phone?.trim().orEmpty(),
-                        email = email.trim(),
-                        criticalAllergies = "Ninguna",
-                        consentSigned = true
-                    )
+            if (user != null && user.id.isNotBlank()) {
+                val session = UserSession(
+                    id = user.id,
+                    email = user.email ?: trimmedEmail,
+                    role = UserRole.PATIENT,
+                    displayName = trimmedFirstName
                 )
-            } catch (syncEx: Exception) {
-                if (syncEx is CancellationException) throw syncEx
-                // Silencioso si la tabla tiene RLS o si el usuario aún requiere confirmación por email
+                Result.success(RegistrationOutcome.Authenticated(session))
+            } else {
+                Result.success(RegistrationOutcome.PendingEmailVerification(trimmedEmail))
             }
-
-            val session = UserSession(
-                id = user?.id ?: "",
-                email = email.trim(),
-                role = UserRole.PATIENT,
-                displayName = firstName.trim()
-            )
-            Result.success(session)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             if (e is CancellationException) throw e
             Result.failure(e)
         }
@@ -120,65 +111,61 @@ class AuthRepositoryImpl : AuthRepository {
         licenseNumber: String,
         specialty: String,
         phone: String?
-    ): Result<UserSession> = withContext(Dispatchers.IO) {
+    ): Result<RegistrationOutcome> = withContext(ioDispatcher) {
+        val trimmedEmail = email.trim()
+        val trimmedFirstName = firstName.trim()
+        val trimmedLastName = lastName.trim()
+        val trimmedLicense = licenseNumber.trim()
+        val trimmedSpecialty = specialty.trim()
+        val trimmedPhone = phone?.trim()
+
         try {
-            SupabaseClient.client.auth.signUpWith(Email) {
-                this.email = email.trim()
+            supabaseClient.auth.signUpWith(Email) {
+                this.email = trimmedEmail
                 this.password = password
                 data = buildJsonObject {
                     put("role", "DOCTOR")
-                    put("first_name", firstName.trim())
-                    put("last_name", lastName.trim())
-                    put("license_number", licenseNumber.trim())
-                    put("specialty", specialty.trim())
-                    phone?.let { put("phone", it.trim()) }
+                    put("first_name", trimmedFirstName)
+                    put("last_name", trimmedLastName)
+                    put("license_number", trimmedLicense)
+                    put("specialty", trimmedSpecialty)
+                    trimmedPhone?.takeIf { it.isNotBlank() }?.let { put("phone", it) }
                 }
             }
 
-            val user = SupabaseClient.client.auth.currentUserOrNull()
+            val user = supabaseClient.auth.currentUserOrNull()
 
-            try {
-                SupabaseClient.client.from("doctors").insert(
-                    buildJsonObject {
-                        user?.id?.let { put("user_id", it) }
-                        put("first_name", firstName.trim())
-                        put("last_name", lastName.trim())
-                        put("email", email.trim())
-                        put("license_number", licenseNumber.trim())
-                        put("specialty", specialty.trim())
-                        phone?.let { put("phone", it.trim()) }
-                    }
+            if (user != null && user.id.isNotBlank()) {
+                val session = UserSession(
+                    id = user.id,
+                    email = user.email ?: trimmedEmail,
+                    role = UserRole.DOCTOR,
+                    displayName = "$trimmedFirstName $trimmedLastName".trim()
                 )
-            } catch (syncEx: Exception) {
-                if (syncEx is CancellationException) throw syncEx
-                // Silencioso si ya está manejado por trigger o RLS
+                Result.success(RegistrationOutcome.Authenticated(session))
+            } else {
+                Result.success(RegistrationOutcome.PendingEmailVerification(trimmedEmail))
             }
-
-            val session = UserSession(
-                id = user?.id ?: "",
-                email = email.trim(),
-                role = UserRole.DOCTOR,
-                displayName = "$firstName $lastName".trim()
-            )
-            Result.success(session)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
 
-    override suspend fun resetPassword(email: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun resetPassword(email: String): Result<Unit> = withContext(ioDispatcher) {
         try {
-            SupabaseClient.client.auth.resetPasswordForEmail(email.trim())
+            supabaseClient.auth.resetPasswordForEmail(email.trim())
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
 
-    override suspend fun getCurrentSession(): UserSession? = withContext(Dispatchers.IO) {
-        val user = SupabaseClient.client.auth.currentUserOrNull() ?: return@withContext null
+    override suspend fun getCurrentSession(): UserSession? = withContext(ioDispatcher) {
+        val user = supabaseClient.auth.currentUserOrNull() ?: return@withContext null
+        if (user.id.isBlank()) return@withContext null
+
         val roleStr = user.userMetadata?.get("role")?.jsonPrimitive?.content ?: "UNKNOWN"
         val role = when (roleStr.uppercase()) {
             "DOCTOR" -> UserRole.DOCTOR
@@ -195,25 +182,42 @@ class AuthRepositoryImpl : AuthRepository {
         )
     }
 
-    override suspend fun updatePassword(newPassword: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun updatePassword(newPassword: String): Result<Unit> = withContext(ioDispatcher) {
         try {
-            SupabaseClient.client.auth.modifyUser(updateCurrentUser = true) {
+            supabaseClient.auth.modifyUser(updateCurrentUser = true) {
                 password = newPassword
             }
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             if (e is CancellationException) throw e
             Result.failure(e)
         }
     }
 
-    override suspend fun logout(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun logout(): Result<Unit> = withContext(ioDispatcher) {
+        var remoteError: Throwable? = null
         try {
-            SupabaseClient.client.auth.signOut()
+            supabaseClient.auth.signOut()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            remoteError = e
+        }
+
+        try {
+            sessionLocalCleaner?.clearSessionData()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            if (remoteError == null) {
+                return@withContext Result.failure(e)
+            }
+        }
+
+        if (remoteError != null) {
+            Result.failure(remoteError)
+        } else {
             Result.success(Unit)
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            Result.failure(e)
         }
     }
 }

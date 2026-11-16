@@ -1,5 +1,9 @@
 package com.example.biodontos.core.di
 
+import android.content.Context
+import com.example.biodontos.data.local.BiodontosDatabase
+import com.example.biodontos.data.local.SessionLocalCleaner
+import kotlinx.coroutines.Dispatchers
 import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.data.repository.AnamnesisRepositoryImpl
 import com.example.biodontos.data.repository.AppointmentRepositoryImpl
@@ -90,6 +94,8 @@ interface AppContainer {
     val billingRepository: BillingRepository
     val clinicalAuditRepository: ClinicalAuditRepository
     val clinicClock: ClinicClock
+    val admissionDraftDao: com.example.biodontos.data.local.dao.AdmissionDraftDao?
+        get() = null
 
     val loginUseCase: LoginUseCase
     val registerPatientAuthUseCase: RegisterPatientAuthUseCase
@@ -143,9 +149,26 @@ interface AppContainer {
     val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase
 }
 
-class DefaultAppContainer : AppContainer {
+class DefaultAppContainer(private val context: Context? = null) : AppContainer {
+
+    private val database: BiodontosDatabase? by lazy {
+        context?.let { BiodontosDatabase.getInstance(it) }
+    }
+
+    val sessionLocalCleaner: SessionLocalCleaner? by lazy {
+        context?.let { ctx ->
+            database?.let { db ->
+                SessionLocalCleaner(db, ctx)
+            }
+        }
+    }
+
     override val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl()
+        AuthRepositoryImpl(
+            supabaseClient = com.example.biodontos.core.network.SupabaseClient.client,
+            ioDispatcher = Dispatchers.IO,
+            sessionLocalCleaner = sessionLocalCleaner
+        )
     }
 
     override val patientRepository: PatientRepository by lazy {
@@ -173,7 +196,10 @@ class DefaultAppContainer : AppContainer {
     }
 
     override val evolutionRepository: EvolutionRepository by lazy {
-        EvolutionRepositoryImpl()
+        EvolutionRepositoryImpl(
+            supabaseClient = com.example.biodontos.core.network.SupabaseClient.client,
+            ioDispatcher = Dispatchers.IO
+        )
     }
 
     override val materialRepository: MaterialRepository by lazy {
@@ -202,6 +228,10 @@ class DefaultAppContainer : AppContainer {
 
     override val clinicClock: ClinicClock by lazy {
         SystemClinicClock()
+    }
+
+    override val admissionDraftDao: com.example.biodontos.data.local.dao.AdmissionDraftDao? by lazy {
+        database?.admissionDraftDao()
     }
 
     override val loginUseCase: LoginUseCase by lazy {

@@ -60,7 +60,8 @@ class ClinicalAdmissionViewModelFactory(
                 guardianRepository = container.guardianRepository,
                 initialPatientId = patientId,
                 getCurrentDoctorUseCase = container.getCurrentDoctorUseCase,
-                doctorRepository = container.doctorRepository
+                doctorRepository = container.doctorRepository,
+                admissionDraftDao = container.admissionDraftDao
             )
         }
     }

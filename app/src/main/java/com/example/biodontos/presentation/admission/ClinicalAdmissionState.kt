@@ -1,6 +1,7 @@
 package com.example.biodontos.presentation.admission
 
 import androidx.compose.runtime.Immutable
+import com.example.biodontos.core.ui.UiText
 import com.example.biodontos.domain.model.ClinicalMaterial
 import com.example.biodontos.domain.model.DentitionType
 import com.example.biodontos.domain.model.EvolutionMaterialUsed
@@ -14,7 +15,9 @@ data class ClinicalAdmissionState(
     val currentStep: Int = 1,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val errorUiText: UiText? = null,
     val successMessage: String? = null,
+    val successUiText: UiText? = null,
     val isFinished: Boolean = false,
 
     // Identificadores de sesión clínica
@@ -27,10 +30,12 @@ data class ClinicalAdmissionState(
     // --- PASO 1: Identificación del Paciente ---
     val dniCedula: String = "",
     val dniError: String? = null,
+    val dniErrorUiText: UiText? = null,
     val firstName: String = "",
     val firstLastName: String = "",
     val secondLastName: String = "",
     val nameError: String? = null,
+    val nameErrorUiText: UiText? = null,
     val birthDate: String = "",
     val birthPlace: String = "Bogotá D.C.",
     val eps: String = "Particular",

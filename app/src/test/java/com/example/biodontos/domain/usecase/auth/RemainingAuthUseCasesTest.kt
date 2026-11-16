@@ -1,5 +1,6 @@
 package com.example.biodontos.domain.usecase.auth
 
+import com.example.biodontos.domain.model.RegistrationOutcome
 import com.example.biodontos.domain.model.UserRole
 import com.example.biodontos.domain.model.UserSession
 import com.example.biodontos.domain.repository.AuthRepository
@@ -28,7 +29,7 @@ class RemainingAuthUseCasesTest {
                 "10203040",
                 "3001112233"
             )
-        } returns Result.success(expectedSession)
+        } returns Result.success(RegistrationOutcome.Authenticated(expectedSession))
 
         val invalidName = useCase("ana@biodontos.com", "secret123", "", "Martínez", "10203040")
         assertTrue(invalidName.isFailure)
@@ -38,7 +39,7 @@ class RemainingAuthUseCasesTest {
 
         val validResult = useCase("ana@biodontos.com", "secret123", "Ana", "Martínez", "10203040", "3001112233")
         assertTrue(validResult.isSuccess)
-        assertEquals(expectedSession, validResult.getOrNull())
+        assertEquals(RegistrationOutcome.Authenticated(expectedSession), validResult.getOrNull())
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.example.biodontos.domain.usecase.auth
 
-import com.example.biodontos.domain.model.UserSession
+import com.example.biodontos.domain.model.RegistrationOutcome
 import com.example.biodontos.domain.repository.AuthRepository
 
 class RegisterDoctorUseCase(private val authRepository: AuthRepository) {
@@ -12,7 +12,7 @@ class RegisterDoctorUseCase(private val authRepository: AuthRepository) {
         licenseNumber: String,
         specialty: String,
         phone: String? = null
-    ): Result<UserSession> {
+    ): Result<RegistrationOutcome> {
         if (firstName.isBlank()) return Result.failure(IllegalArgumentException("El nombre es obligatorio"))
         if (lastName.isBlank()) return Result.failure(IllegalArgumentException("El apellido es obligatorio"))
         if (licenseNumber.isBlank()) return Result.failure(IllegalArgumentException("La tarjeta o cédula profesional es obligatoria"))

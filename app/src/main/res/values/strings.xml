@@ -26,4 +26,69 @@
     <string name="onboarding_patient_description">Con Biodontos podrás crear, reagendar o cancelar citas, y ver todos los detalles de tu tratamiento. Todo.</string>
     <string name="onboarding_doctor_description">Con Biodontos podrás manejar todo, pacientes, citas, historial clínico y cuentas de cobro. Todo.</string>
     <string name="action_next">Siguiente</string>
+
+    <!-- ================================================================= -->
+    <!-- CLINICAL ADMISSION (Milestone 5)                                  -->
+    <!-- ================================================================= -->
+
+    <!-- Validation and Guardrail Errors -->
+    <string name="admission_error_dni_required">El número de documento es obligatorio</string>
+    <string name="admission_error_name_required">El nombre y primer apellido son obligatorios</string>
+    <string name="admission_error_material_already_added">Este material ya fue anexado a la evolución.</string>
+    <string name="admission_error_patient_id_required_for_consent">Debe registrar la identificación del paciente antes de emitir el consentimiento.</string>
+    <string name="admission_error_invalid_doctor_session">Sesión de doctor no válida o no iniciada. Inicie sesión nuevamente.</string>
+    <string name="admission_error_doctor_id_invalid">Identificador de doctor no válido. Verifique la sesión activa.</string>
+    <string name="error_doctor_session_required">Se requiere una sesión de doctor activa y válida para realizar operaciones clínicas.</string>
+    <string name="error_doctor_identity_invalid">La identidad del doctor no tiene un formato válido.</string>
+
+    <!-- Step Persistence Errors -->
+    <string name="admission_error_saving_patient">Error al guardar paciente: %1$s</string>
+    <string name="admission_error_saving_clinical_record">Error en historia: %1$s</string>
+    <string name="admission_error_saving_anamnesis">Error en anamnesis: %1$s</string>
+    <string name="admission_error_saving_odontogram">Error en odontograma: %1$s</string>
+    <string name="admission_error_saving_periodontogram">Error en periodontograma: %1$s</string>
+    <string name="admission_error_saving_consent">Error en consentimiento: %1$s</string>
+    <string name="admission_error_saving_evolution">Error en evolución: %1$s</string>
+    <string name="admission_error_saving_operative_consent">Error al guardar consentimiento de operatoria: %1$s</string>
+
+    <!-- Success Messages -->
+    <string name="admission_success_finished">¡Proceso de ingreso clínico finalizado con éxito!</string>
+    <string name="admission_note_appointment_scheduled"> Cita agendada para el %1$s a las %2$s.</string>
+    <string name="admission_note_appointment_conflict"> (Nota: No se pudo agendar la próxima cita automáticamente por conflicto de horario).</string>
+    <string name="admission_success_operative_consent">Consentimiento de operatoria guardado y firmado correctamente</string>
+
+    <!-- Step Titles (Navigation Bar & Headers) -->
+    <string name="admission_step_1_title">Datos</string>
+    <string name="admission_step_2_title">Anamnesis</string>
+    <string name="admission_step_3_title">Odonto</string>
+    <string name="admission_step_4_title">Periodonto</string>
+    <string name="admission_step_5_title">Plan/Firma</string>
+    <string name="admission_step_6_title">Evolución</string>
+    <string name="admission_step_7_title">Cita</string>
+
+    <string name="admission_step_1_full_title">Identificación del Paciente</string>
+    <string name="admission_step_2_full_title">Anamnesis Sistémica (20 Preguntas)</string>
+    <string name="admission_step_3_full_title">Odontograma Inicial</string>
+    <string name="admission_step_4_full_title">Periodontograma Clínico</string>
+    <string name="admission_step_5_full_title">Plan de Tratamiento &amp; Consentimiento Informado</string>
+    <string name="admission_step_6_full_title">Evolución, Costos &amp; Materiales INVIMA</string>
+    <string name="admission_step_7_full_title">Agendamiento Próxima Cita</string>
+
+    <!-- Clinical Defaults & Fallbacks -->
+    <string name="admission_default_marital_status">Soltero(a)</string>
+    <string name="admission_default_allergies_none">Ninguna</string>
+    <string name="admission_default_odontogram_change_reason">Admisión inicial</string>
+    <string name="admission_default_treatment_summary">Tratamiento Integral de Odontología</string>
+    <string name="admission_default_evolution_description">Apertura de historia clínica e ingreso</string>
+    <string name="admission_default_closure_summary">Tratamiento de ingreso concluido.</string>
+    <string name="admission_default_appointment_reason">Control y seguimiento post-tratamiento</string>
+    <string name="admission_default_operative_treatment">Tratamiento de operatoria dental y obturaciones estéticas</string>
+    <string name="admission_default_doctor_name">Dr. Odontólogo</string>
+    <string name="admission_default_doctor_license">OD-98234-COL</string>
+    <string name="admission_default_birth_place">Bogotá D.C.</string>
+    <string name="admission_default_eps">Particular</string>
+
+    <!-- Local Persistence / Drafts -->
+    <string name="admission_draft_saved">Borrador guardado localmente</string>
+    <string name="admission_draft_restored">Borrador de admisión restaurado</string>
 </resources>

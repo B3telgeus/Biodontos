@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.biodontos.core.util.Validators
 import com.example.biodontos.core.util.toUserFriendlyMessage
+import com.example.biodontos.domain.model.RegistrationOutcome
 import com.example.biodontos.domain.usecase.auth.RegisterDoctorUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -190,9 +191,16 @@ class DoctorRegistrationViewModel(
                 phone = s.phone.trim().ifBlank { null }
             )
 
-            result.onSuccess { session ->
+            result.onSuccess { outcome ->
                 _state.update { it.copy(isLoading = false) }
-                _events.send(DoctorRegistrationEvent.RegisteredSuccess(session))
+                when (outcome) {
+                    is RegistrationOutcome.Authenticated -> {
+                        _events.send(DoctorRegistrationEvent.RegisteredSuccess(session = outcome.session, outcome = outcome))
+                    }
+                    is RegistrationOutcome.PendingEmailVerification -> {
+                        _events.send(DoctorRegistrationEvent.RegisteredSuccess(session = null, outcome = outcome))
+                    }
+                }
             }.onFailure { ex ->
                 _state.update {
                     it.copy(
