@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.patientportal.doctors
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -66,8 +70,7 @@ import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.DoctorId
-import com.example.biodontos.presentation.doctor.profile.DoctorInitialsAvatar
-import com.example.biodontos.presentation.doctor.profile.ImageCompressor
+import com.example.biodontos.presentation.doctor.profile.DoctorAsyncAvatar
 
 @Composable
 fun DoctorAvatar(
@@ -77,27 +80,13 @@ fun DoctorAvatar(
     size: Dp = 54.dp,
     modifier: Modifier = Modifier
 ) {
-    val bitmap = remember(photoUrl) {
-        ImageCompressor.decodeBase64ToBitmap(photoUrl)
-    }
-
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = "Foto del especialista",
-            contentScale = ContentScale.Crop,
-            modifier = modifier
-                .size(size)
-                .clip(CircleShape)
-        )
-    } else {
-        DoctorInitialsAvatar(
-            firstName = firstName,
-            lastName = lastName,
-            size = size,
-            modifier = modifier
-        )
-    }
+    DoctorAsyncAvatar(
+        photoUrl = photoUrl,
+        firstName = firstName,
+        lastName = lastName,
+        size = size,
+        modifier = modifier
+    )
 }
 
 
@@ -142,14 +131,14 @@ fun DoctorSearchScreen(
     ) {
         // Título de la pantalla
         Text(
-            text = "DOCTORES",
+            text = stringResource(R.string.ui_doctor_search_screen_386),
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             color = BiodontosGreyText,
             letterSpacing = 1.sp
         )
         Text(
-            text = "Encuentra tu Especialista",
+            text = stringResource(R.string.ui_doctor_search_screen_387),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = BiodontosDark
@@ -164,7 +153,7 @@ fun DoctorSearchScreen(
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text(
-                    text = "Buscar por nombre del especialista...",
+                    text = stringResource(R.string.ui_doctor_search_screen_388),
                     color = BiodontosGreyText,
                     fontSize = 14.sp
                 )
@@ -172,7 +161,7 @@ fun DoctorSearchScreen(
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Buscar",
+                    contentDescription = stringResource(R.string.ui_doctor_documents_screen_228),
                     tint = BiodontosGreyText
                 )
             },
@@ -181,7 +170,7 @@ fun DoctorSearchScreen(
                     IconButton(onClick = { onEvent(DoctorSearchUiEvent.QueryChanged("")) }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "Limpiar búsqueda",
+                            contentDescription = stringResource(R.string.ui_doctor_appointments_screen_213),
                             tint = BiodontosGreyText
                         )
                     }
@@ -266,7 +255,7 @@ fun DoctorSearchScreen(
                             fontSize = 14.sp
                         )
                         BiodontosPillButton(
-                            text = "Reintentar",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_175),
                             onClick = { onEvent(DoctorSearchUiEvent.Retry) }
                         )
                     }
@@ -284,12 +273,12 @@ fun DoctorSearchScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "No encontramos especialistas con ese criterio.",
+                            text = stringResource(R.string.ui_doctor_search_screen_389),
                             color = BiodontosGreyText,
                             fontSize = 14.sp
                         )
                         BiodontosPillButton(
-                            text = "Limpiar filtros",
+                            text = stringResource(R.string.ui_doctor_search_screen_390),
                             variant = PillButtonVariant.OUTLINED,
                             onClick = {
                                 onEvent(DoctorSearchUiEvent.QueryChanged(""))
@@ -381,7 +370,7 @@ private fun DoctorItemCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
-                                contentDescription = "Dirección",
+                                contentDescription = stringResource(R.string.ui_doctor_detail_screen_379),
                                 tint = BiodontosDark,
                                 modifier = Modifier.size(12.dp)
                             )
@@ -413,13 +402,13 @@ private fun DoctorItemCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 BiodontosPillButton(
-                    text = "Ver perfil",
+                    text = stringResource(R.string.ui_doctor_search_screen_391),
                     variant = PillButtonVariant.OUTLINED,
                     onClick = onDoctorClick,
                     modifier = Modifier.weight(1f)
                 )
                 BiodontosPillButton(
-                    text = "Agendar",
+                    text = stringResource(R.string.ui_doctor_search_screen_392),
                     variant = PillButtonVariant.DARK,
                     onClick = onBookClick,
                     modifier = Modifier.weight(1f)

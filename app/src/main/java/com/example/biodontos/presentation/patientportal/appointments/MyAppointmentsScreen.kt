@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.patientportal.appointments
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -119,14 +123,14 @@ fun MyAppointmentsScreen(
             ) {
                 Column {
                     Text(
-                        text = "AGENDA",
+                        text = stringResource(R.string.ui_my_appointments_screen_367),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosGreyText,
                         letterSpacing = 1.sp
                     )
                     Text(
-                        text = "Tus Citas",
+                        text = stringResource(R.string.ui_my_appointments_screen_368),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
@@ -143,13 +147,13 @@ fun MyAppointmentsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Actualizar citas",
+                            contentDescription = stringResource(R.string.ui_my_appointments_screen_369),
                             tint = BiodontosDark
                         )
                     }
 
                     BiodontosPillButton(
-                        text = "Nueva Cita",
+                        text = stringResource(R.string.ui_my_appointments_screen_370),
                         variant = PillButtonVariant.DARK,
                         onClick = { onEvent(MyAppointmentsUiEvent.BookNewAppointment) }
                     )
@@ -166,19 +170,19 @@ fun MyAppointmentsScreen(
                     .padding(4.dp)
             ) {
                 TabItem(
-                    text = "Próximas (${state.upcomingAppointments.size})",
+                    text = stringResource(R.string.ui_my_appointments_screen_371, state.upcomingAppointments.size),
                     isSelected = state.selectedTab == AppointmentTab.UPCOMING,
                     onClick = { onEvent(MyAppointmentsUiEvent.SelectTab(AppointmentTab.UPCOMING)) },
                     modifier = Modifier.weight(1f)
                 )
                 TabItem(
-                    text = "Completadas (${state.completedAppointments.size})",
+                    text = stringResource(R.string.ui_my_appointments_screen_372, state.completedAppointments.size),
                     isSelected = state.selectedTab == AppointmentTab.COMPLETED,
                     onClick = { onEvent(MyAppointmentsUiEvent.SelectTab(AppointmentTab.COMPLETED)) },
                     modifier = Modifier.weight(1f)
                 )
                 TabItem(
-                    text = "Canceladas (${state.cancelledAppointments.size})",
+                    text = stringResource(R.string.ui_my_appointments_screen_373, state.cancelledAppointments.size),
                     isSelected = state.selectedTab == AppointmentTab.CANCELLED,
                     onClick = { onEvent(MyAppointmentsUiEvent.SelectTab(AppointmentTab.CANCELLED)) },
                     modifier = Modifier.weight(1f)
@@ -241,7 +245,7 @@ fun MyAppointmentsScreen(
                             )
                             if (state.selectedTab == AppointmentTab.UPCOMING) {
                                 BiodontosPillButton(
-                                    text = "Buscar Especialista",
+                                    text = stringResource(R.string.ui_my_appointments_screen_374),
                                     variant = PillButtonVariant.OUTLINED,
                                     onClick = { onEvent(MyAppointmentsUiEvent.BookNewAppointment) }
                                 )
@@ -323,7 +327,7 @@ private fun AppointmentsErrorCard(
                 textAlign = TextAlign.Center
             )
             BiodontosPillButton(
-                text = "Reintentar",
+                text = stringResource(R.string.ui_doctor_appointments_screen_175),
                 variant = PillButtonVariant.DARK,
                 onClick = onRetry
             )
@@ -426,7 +430,7 @@ private fun AppointmentItemCard(
 
             appointment.reason?.takeIf { it.isNotBlank() }?.let { reason ->
                 Text(
-                    text = "Motivo: $reason",
+                    text = stringResource(R.string.ui_my_appointments_screen_375, reason),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
@@ -438,13 +442,13 @@ private fun AppointmentItemCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     BiodontosPillButton(
-                        text = "Reagendar",
+                        text = stringResource(R.string.ui_doctor_appointments_screen_190),
                         variant = PillButtonVariant.OUTLINED,
                         onClick = onRescheduleClick,
                         modifier = Modifier.weight(1f)
                     )
                     BiodontosPillButton(
-                        text = "Cancelar",
+                        text = stringResource(R.string.ui_doctor_appointments_screen_191),
                         variant = PillButtonVariant.LIGHT,
                         onClick = onCancelClick,
                         modifier = Modifier.weight(1f)

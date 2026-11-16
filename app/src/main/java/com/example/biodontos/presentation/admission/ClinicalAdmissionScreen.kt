@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.admission
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -111,13 +115,13 @@ fun ClinicalAdmissionContent(
                 title = {
                     Column {
                         Text(
-                            text = "Ingreso Clínico Odontológico",
+                            text = stringResource(R.string.ui_clinical_admission_screen_1),
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark,
                             fontSize = 18.sp
                         )
                         Text(
-                            text = "Paso ${state.currentStep} de 7: ${getStepTitle(state.currentStep)}",
+                            text = stringResource(R.string.ui_clinical_admission_screen_2, state.currentStep, getStepTitle(state.currentStep)),
                             style = MaterialTheme.typography.bodySmall,
                             color = BiodontosGreyText
                         )
@@ -127,7 +131,7 @@ fun ClinicalAdmissionContent(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
+                            contentDescription = stringResource(R.string.ui_clinical_admission_screen_3),
                             tint = BiodontosDark
                         )
                     }
@@ -144,7 +148,7 @@ fun ClinicalAdmissionContent(
                     ) {
                         Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Consentimiento Operatoria", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ui_clinical_admission_screen_4), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BiodontosWhite)
@@ -167,7 +171,7 @@ fun ClinicalAdmissionContent(
                             onClick = { onEvent(ClinicalAdmissionEvent.PreviousStep) },
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Anterior", color = BiodontosDark)
+                            Text(stringResource(R.string.ui_clinical_admission_screen_5), color = BiodontosDark)
                         }
                     } else {
                         Spacer(modifier = Modifier.width(8.dp))
@@ -223,7 +227,7 @@ fun ClinicalAdmissionContent(
                         .padding(horizontal = 16.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "⚠ $errorMsg",
+                        text = stringResource(R.string.ui_clinical_admission_screen_6, errorMsg),
                         color = BiodontosErrorRed,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
@@ -370,7 +374,7 @@ private fun Step1IdentificationContent(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Información Personal y Demográfica",
+                text = stringResource(R.string.ui_clinical_admission_screen_7),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 color = BiodontosDark
@@ -384,7 +388,7 @@ private fun Step1IdentificationContent(
                         onEvent(ClinicalAdmissionEvent.UpdateDni(value = input))
                     }
                 },
-                label = { Text("Número de Documento (DNI/Cédula) *") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_8)) },
                 isError = state.dniError != null,
                 supportingText = state.dniError?.let { { Text(it, color = BiodontosErrorRed) } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -398,7 +402,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.firstName,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateFirstName(it)) },
-                    label = { Text("Nombres *") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_9)) },
                     isError = state.nameError != null,
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
@@ -407,7 +411,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.firstLastName,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateFirstLastName(it)) },
-                    label = { Text("1° Apellido *") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_10)) },
                     isError = state.nameError != null,
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
@@ -419,7 +423,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.secondLastName,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateSecondLastName(it)) },
-                    label = { Text("2° Apellido") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_11)) },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
@@ -427,8 +431,8 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.birthDate,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateBirthDate(it)) },
-                    label = { Text("Fecha Nac. (AAAA-MM-DD)") },
-                    placeholder = { Text("2000-01-01") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_12)) },
+                    placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_13)) },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
@@ -442,7 +446,7 @@ private fun Step1IdentificationContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Dentición sugerida por edad: ${state.dentitionType.name}",
+                    text = stringResource(R.string.ui_clinical_admission_screen_14, state.dentitionType.name),
                     fontSize = 12.sp,
                     color = Zafiro,
                     fontWeight = FontWeight.SemiBold,
@@ -454,7 +458,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.birthPlace,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateBirthPlace(it)) },
-                    label = { Text("Lugar de Nacimiento") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_15)) },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
@@ -462,7 +466,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.eps,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateEps(it)) },
-                    label = { Text("EPS / Aseguradora") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_16)) },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
@@ -474,7 +478,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.bloodGroup,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateBloodGroup(it, state.rhFactor)) },
-                    label = { Text("Grupo Sang.") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_17)) },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
@@ -482,7 +486,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.rhFactor,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateBloodGroup(state.bloodGroup, it)) },
-                    label = { Text("Factor RH") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_18)) },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
@@ -490,7 +494,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.phone,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdatePhone(it)) },
-                    label = { Text("Teléfono *") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_19)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     modifier = Modifier.weight(2f),
                     colors = biodontosTextFieldColors(),
@@ -501,7 +505,7 @@ private fun Step1IdentificationContent(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateEmail(it)) },
-                label = { Text("Correo Electrónico") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_20)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
@@ -512,7 +516,7 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.address,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateAddress(it)) },
-                    label = { Text("Dirección de Residencia") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_21)) },
                     modifier = Modifier.weight(1.3f),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
@@ -520,8 +524,8 @@ private fun Step1IdentificationContent(
                 OutlinedTextField(
                     value = state.locality,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateLocality(it)) },
-                    label = { Text("Localidad / Barrio") },
-                    placeholder = { Text("Ej: Suba, Kennedy...") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_22)) },
+                    placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_23)) },
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
@@ -548,7 +552,7 @@ private fun Step1IdentificationContent(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Paciente menor de edad: se sugiere registrar acudiente o representante legal para fines médico-legales y consentimiento informado.",
+                            text = stringResource(R.string.ui_clinical_admission_screen_24),
                             fontSize = 12.sp,
                             color = Color(0xFF92400E)
                         )
@@ -581,7 +585,7 @@ private fun Step1IdentificationContent(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Acudiente o Acompañante",
+                                text = stringResource(R.string.ui_clinical_admission_screen_25),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
                                 color = BiodontosDark
@@ -598,8 +602,8 @@ private fun Step1IdentificationContent(
                             OutlinedTextField(
                                 value = state.guardianRelationship,
                                 onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateGuardianRelationship(it)) },
-                                label = { Text("Parentesco o Relación *") },
-                                placeholder = { Text("Ej: Madre, Padre, Tutor Legal...") },
+                                label = { Text(stringResource(R.string.ui_clinical_admission_screen_26)) },
+                                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_27)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = biodontosTextFieldColors(),
                                 shape = RoundedCornerShape(12.dp)
@@ -620,7 +624,7 @@ private fun Step1IdentificationContent(
                                             )
                                         )
                                     },
-                                    label = { Text("Nombres Acudiente *") },
+                                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_28)) },
                                     modifier = Modifier.weight(1f),
                                     colors = biodontosTextFieldColors(),
                                     shape = RoundedCornerShape(12.dp)
@@ -639,7 +643,7 @@ private fun Step1IdentificationContent(
                                             )
                                         )
                                     },
-                                    label = { Text("Apellidos Acudiente") },
+                                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_29)) },
                                     modifier = Modifier.weight(1f),
                                     colors = biodontosTextFieldColors(),
                                     shape = RoundedCornerShape(12.dp)
@@ -660,7 +664,7 @@ private fun Step1IdentificationContent(
                                         )
                                     )
                                 },
-                                label = { Text("Teléfono de Contacto del Acudiente") },
+                                label = { Text(stringResource(R.string.ui_clinical_admission_screen_30)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = biodontosTextFieldColors(),
@@ -673,13 +677,13 @@ private fun Step1IdentificationContent(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Dirección de residencia del acudiente",
+                                    text = stringResource(R.string.ui_clinical_admission_screen_31),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = BiodontosGreyText
                                 )
                                 TextButton(onClick = { onEvent(ClinicalAdmissionEvent.CopyAddressToGuardian) }) {
-                                    Text("📋 Misma del paciente", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.ui_clinical_admission_screen_32), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                             }
 
@@ -698,7 +702,7 @@ private fun Step1IdentificationContent(
                                             )
                                         )
                                     },
-                                    label = { Text("Dirección Acudiente") },
+                                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_33)) },
                                     modifier = Modifier.weight(1.3f),
                                     colors = biodontosTextFieldColors(),
                                     shape = RoundedCornerShape(12.dp)
@@ -708,7 +712,7 @@ private fun Step1IdentificationContent(
                                     onValueChange = { loc ->
                                         onEvent(ClinicalAdmissionEvent.UpdateGuardianLocality(loc))
                                     },
-                                    label = { Text("Localidad Acudiente") },
+                                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_34)) },
                                     modifier = Modifier.weight(1f),
                                     colors = biodontosTextFieldColors(),
                                     shape = RoundedCornerShape(12.dp)
@@ -721,7 +725,7 @@ private fun Step1IdentificationContent(
 
             // Motivo de Consulta
             Text(
-                text = "Motivo de Consulta y Antecedentes",
+                text = stringResource(R.string.ui_clinical_admission_screen_35),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall,
                 color = BiodontosDark
@@ -739,8 +743,8 @@ private fun Step1IdentificationContent(
                         )
                     )
                 },
-                label = { Text("Motivo de Consulta") },
-                placeholder = { Text("Ej: Dolor en molar superior, limpieza dental...") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_36)) },
+                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_37)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -758,7 +762,7 @@ private fun Step1IdentificationContent(
                         )
                     )
                 },
-                label = { Text("Historia de la Enfermedad Actual") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_38)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 colors = biodontosTextFieldColors(),
@@ -772,7 +776,7 @@ private fun Step1IdentificationContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "¿Presenta Alergias Medicamentosas / Críticas?",
+                    text = stringResource(R.string.ui_clinical_admission_screen_39),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp
                 )
@@ -792,7 +796,7 @@ private fun Step1IdentificationContent(
                     onValueChange = {
                         onEvent(ClinicalAdmissionEvent.UpdateAllergies(true, it))
                     },
-                    label = { Text("Detalle de Alergias (Penicilina, Látex, AINEs...)") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_40)) },
                     isError = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = biodontosTextFieldColors(),
@@ -821,13 +825,13 @@ private fun Step2AnamnesisContent(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "Cuestionario de Salud General (20 Preguntas)",
+                text = stringResource(R.string.ui_clinical_admission_screen_41),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 color = BiodontosDark
             )
             Text(
-                text = "Marque Sí / No según las respuestas del paciente para seguridad clínica.",
+                text = stringResource(R.string.ui_clinical_admission_screen_42),
                 fontSize = 12.sp,
                 color = BiodontosGreyText
             )
@@ -897,7 +901,7 @@ private fun Step2AnamnesisContent(
                         )
                     )
                 },
-                label = { Text("Medicamentos Actuales y Dosis") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_43)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -914,7 +918,7 @@ private fun Step2AnamnesisContent(
                         )
                     )
                 },
-                label = { Text("Antecedentes Familiares Médicos") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_44)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -931,7 +935,7 @@ private fun Step2AnamnesisContent(
                         )
                     )
                 },
-                label = { Text("Observaciones de Anamnesis") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_45)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -963,7 +967,7 @@ private fun Step3OdontogramContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Odontograma Reactivo FDI",
+                    text = stringResource(R.string.ui_clinical_admission_screen_46),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                     color = BiodontosDark
@@ -997,7 +1001,7 @@ private fun Step3OdontogramContent(
             }
 
             Text(
-                text = "1. Elija la patología. 2. Toque las superficies (Vestibular, Oclusal, Mesial, Distal, Lingual).",
+                text = stringResource(R.string.ui_clinical_admission_screen_47),
                 fontSize = 12.sp,
                 color = BiodontosGreyText
             )
@@ -1040,7 +1044,7 @@ private fun Step3OdontogramContent(
 
             // Rejilla de Dientes
             Text(
-                text = "Arco Dental (Pieza seleccionada para detalle: ${state.selectedOdontogramTooth})",
+                text = stringResource(R.string.ui_clinical_admission_screen_48, state.selectedOdontogramTooth),
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp,
                 color = Zafiro
@@ -1124,7 +1128,7 @@ private fun Step5TreatmentConsentContent(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Diagnósticos y Plan de Tratamiento",
+                text = stringResource(R.string.ui_clinical_admission_screen_49),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 color = BiodontosDark
@@ -1142,8 +1146,8 @@ private fun Step5TreatmentConsentContent(
                         )
                     )
                 },
-                label = { Text("Diagnóstico Principal (DP - CIE-10) *") },
-                placeholder = { Text("Ej: K02.1 Caries de la dentina") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_50)) },
+                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_51)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -1161,7 +1165,7 @@ private fun Step5TreatmentConsentContent(
                         )
                     )
                 },
-                label = { Text("Diagnósticos Relacionados (DR)") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_52)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -1179,8 +1183,8 @@ private fun Step5TreatmentConsentContent(
                         )
                     )
                 },
-                label = { Text("Plan de Tratamiento Proyectado *") },
-                placeholder = { Text("Operatoria en piezas 16, 26; profilaxis periodontal profunda...") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_53)) },
+                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_54)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 colors = biodontosTextFieldColors(),
@@ -1197,14 +1201,14 @@ private fun Step5TreatmentConsentContent(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = "Consentimiento Informado de Operatoria Dental (Res. 1995/1999)",
+                        text = stringResource(R.string.ui_clinical_admission_screen_55),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = BiodontosDark
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Declaro que se me han explicado los procedimientos odontológicos a realizar, los beneficios, riesgos previstos, alternativas de tratamiento y secuelas potenciales. Autorizo la realización del tratamiento y la administración de anestesia local si fuese requerida.",
+                        text = stringResource(R.string.ui_clinical_admission_screen_56),
                         fontSize = 11.sp,
                         color = BiodontosGreyText,
                         lineHeight = 16.sp
@@ -1220,7 +1224,7 @@ private fun Step5TreatmentConsentContent(
             ) {
                 Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Emitir Consentimiento Detallado de Operatoria (Por Diente / Recomendaciones)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_clinical_admission_screen_57), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
 
             // Pad de Firma
@@ -1254,7 +1258,7 @@ private fun Step6EvolutionMaterialsContent(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Evolución Clínica y Honorarios",
+                text = stringResource(R.string.ui_clinical_admission_screen_58),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 color = BiodontosDark
@@ -1271,8 +1275,8 @@ private fun Step6EvolutionMaterialsContent(
                         )
                     )
                 },
-                label = { Text("Nota de Evolución del Procedimiento Realizado *") },
-                placeholder = { Text("Se realiza apertura de cavidad, desinfección y obturación...") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_59)) },
+                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_60)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 colors = biodontosTextFieldColors(),
@@ -1292,7 +1296,7 @@ private fun Step6EvolutionMaterialsContent(
                             )
                         )
                     },
-                    label = { Text("Costo Total ($)") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_61)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
@@ -1310,7 +1314,7 @@ private fun Step6EvolutionMaterialsContent(
                             )
                         )
                     },
-                    label = { Text("Abono / Pago ($)") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_62)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
                     colors = biodontosTextFieldColors(),
@@ -1330,12 +1334,12 @@ private fun Step6EvolutionMaterialsContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Saldo Pendiente por Pagar:",
+                        text = stringResource(R.string.ui_clinical_admission_screen_63),
                         fontWeight = FontWeight.Bold,
                         color = if (state.evolutionBalance > 0.0) Carmesi else Esmeralda
                     )
                     Text(
-                        text = "$ ${String.format(Locale.getDefault(), "%,.2f", state.evolutionBalance)}",
+                        text = stringResource(R.string.ui_clinical_admission_screen_64, String.format(Locale.getDefault(), "%,.2f", state.evolutionBalance)),
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 16.sp,
                         color = if (state.evolutionBalance > 0.0) Carmesi else Esmeralda
@@ -1347,7 +1351,7 @@ private fun Step6EvolutionMaterialsContent(
 
             // Trazabilidad de Materiales INVIMA
             Text(
-                text = "Trazabilidad de Materiales Utilizados (INVIMA)",
+                text = stringResource(R.string.ui_clinical_admission_screen_65),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall,
                 color = BiodontosDark
@@ -1355,7 +1359,7 @@ private fun Step6EvolutionMaterialsContent(
 
             if (state.materialsCatalog.isNotEmpty()) {
                 Text(
-                    text = "Seleccione del inventario de clínica:",
+                    text = stringResource(R.string.ui_clinical_admission_screen_66),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
@@ -1389,21 +1393,21 @@ private fun Step6EvolutionMaterialsContent(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = "Material: ${selectedMat.name}", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Text(text = "Registro INVIMA: ${selectedMat.invimaRegistration}", fontSize = 11.sp)
-                            Text(text = "Lote: ${selectedMat.batchLotNumber} | Elaboración: ${selectedMat.manufacturingDate} | Vence: ${selectedMat.expirationDate}", fontSize = 11.sp)
+                            Text(text = stringResource(R.string.ui_clinical_admission_screen_67, selectedMat.name), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(text = stringResource(R.string.ui_clinical_admission_screen_68, selectedMat.invimaRegistration), fontSize = 11.sp)
+                            Text(text = stringResource(R.string.ui_clinical_admission_screen_69, selectedMat.batchLotNumber, selectedMat.manufacturingDate, selectedMat.expirationDate), fontSize = 11.sp)
                             val today = java.time.LocalDate.now()
                             val selectedExpired = selectedMat.isExpired(today)
                             if (selectedExpired) {
-                                Text(text = "Vencido: no puede usarse en la evolución.", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Carmesi)
+                                Text(text = stringResource(R.string.ui_clinical_admission_screen_70), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Carmesi)
                             } else if (selectedMat.isNearExpiration(today)) {
-                                Text(text = "Próximo a vencer (${java.time.temporal.ChronoUnit.DAYS.between(today, selectedMat.expirationDate)} días)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Ambar)
+                                Text(text = stringResource(R.string.ui_clinical_admission_screen_71, java.time.temporal.ChronoUnit.DAYS.between(today, selectedMat.expirationDate)), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Ambar)
                             }
                             var quantityText by remember(selectedMat.id) { mutableStateOf("1.0") }
                             OutlinedTextField(
                                 value = quantityText,
                                 onValueChange = { quantityText = it.replace(',', '.') },
-                                label = { Text("Cantidad utilizada") },
+                                label = { Text(stringResource(R.string.ui_clinical_admission_screen_72)) },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 colors = biodontosTextFieldColors(),
@@ -1419,7 +1423,7 @@ private fun Step6EvolutionMaterialsContent(
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Registrar Uso en Evolución", fontSize = 12.sp)
+                                Text(stringResource(R.string.ui_clinical_admission_screen_73), fontSize = 12.sp)
                             }
                         }
                     }
@@ -1429,7 +1433,7 @@ private fun Step6EvolutionMaterialsContent(
             // Lista de Materiales Anexados a la Evolución
             if (state.usedMaterials.isNotEmpty()) {
                 Text(
-                    text = "Materiales Anexados a esta Consulta:",
+                    text = stringResource(R.string.ui_clinical_admission_screen_74),
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
                     color = Zafiro
@@ -1446,10 +1450,10 @@ private fun Step6EvolutionMaterialsContent(
                     ) {
                         Column {
                             Text(text = used.materialName, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Text(text = "INVIMA: ${used.invimaSnapshot} | Lote: ${used.lotNumberSnapshot} | Vence: ${used.expirationDateSnapshot} | Cant.: ${used.quantityUsed}", fontSize = 10.sp, color = BiodontosGreyText)
+                            Text(text = stringResource(R.string.ui_clinical_admission_screen_75, used.invimaSnapshot, used.lotNumberSnapshot, used.expirationDateSnapshot, used.quantityUsed), fontSize = 10.sp, color = BiodontosGreyText)
                         }
                         IconButton(onClick = { onEvent(ClinicalAdmissionEvent.RemoveMaterialUsed(used.materialId)) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Carmesi, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_clinical_admission_screen_76), tint = Carmesi, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -1472,7 +1476,7 @@ private fun Step6EvolutionMaterialsContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "¿Cerrar Historia Clínica Médicamente al terminar?",
+                    text = stringResource(R.string.ui_clinical_admission_screen_77),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -1505,13 +1509,13 @@ private fun Step7NextAppointmentContent(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Agendamiento de Próxima Cita de Control",
+                text = stringResource(R.string.ui_clinical_admission_screen_78),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 color = BiodontosDark
             )
             Text(
-                text = "Vincule la siguiente cita de seguimiento a esta evolución clínica.",
+                text = stringResource(R.string.ui_clinical_admission_screen_79),
                 fontSize = 12.sp,
                 color = BiodontosGreyText
             )
@@ -1527,8 +1531,8 @@ private fun Step7NextAppointmentContent(
                         )
                     )
                 },
-                label = { Text("Fecha de Próxima Cita (AAAA-MM-DD)") },
-                placeholder = { Text("2026-10-25") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_80)) },
+                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_81)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -1545,7 +1549,7 @@ private fun Step7NextAppointmentContent(
                         )
                     )
                 },
-                label = { Text("Hora de la Cita (HH:MM)") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_82)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -1562,7 +1566,7 @@ private fun Step7NextAppointmentContent(
                         )
                     )
                 },
-                label = { Text("Motivo de Control o Procedimiento Programado") },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_83)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -1575,14 +1579,14 @@ private fun Step7NextAppointmentContent(
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Text(
-                        text = "✓ Resumen del Ingreso Clínico Completo",
+                        text = stringResource(R.string.ui_clinical_admission_screen_84),
                         fontWeight = FontWeight.Bold,
                         color = Esmeralda,
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Paciente: ${state.firstName} ${state.firstLastName} (DNI: ${state.dniCedula})\n" +
+                        text = stringResource(R.string.ui_clinical_admission_screen_85, state.firstName, state.firstLastName, state.dniCedula) +
                                 "Dentición: ${state.dentitionType.name} | Anamnesis: 20 puntos diligenciados\n" +
                                 "Odontograma y Periodontograma registrados.\n" +
                                 "Evolución y firmas anexadas correctamente.",

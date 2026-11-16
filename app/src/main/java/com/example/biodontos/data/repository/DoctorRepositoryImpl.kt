@@ -1,6 +1,6 @@
 package com.example.biodontos.data.repository
 
-import com.example.biodontos.core.network.SupabaseClient
+import com.example.biodontos.core.network.SupabaseClient as AppSupabaseClient
 import com.example.biodontos.data.dto.DoctorAvailabilityDto
 import com.example.biodontos.data.dto.DoctorDto
 import com.example.biodontos.data.dto.toDomain
@@ -8,97 +8,94 @@ import com.example.biodontos.data.dto.toDto
 import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.WeeklyAvailability
 import com.example.biodontos.domain.repository.DoctorRepository
-import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.exceptions.RestException
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class DoctorRepositoryImpl : DoctorRepository {
+class DoctorRepositoryImpl(
+    private val supabaseClient: SupabaseClient = AppSupabaseClient.client,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    internal var availabilityQuery: (suspend (doctorId: String) -> List<DoctorAvailabilityDto>)? = null
+) : DoctorRepository {
 
     override suspend fun getDoctors(): Result<List<Doctor>> {
-        return try {
-            val list = SupabaseClient.client.from("doctors")
-                .select {
-                    order("first_name", order = Order.ASCENDING)
-                }
-                .decodeList<DoctorDto>()
-            Result.success(list.map { it.toDomain() })
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun getDoctorById(id: String): Result<Doctor?> {
-        return try {
-            val dto = SupabaseClient.client.from("doctors")
-                .select {
-                    filter {
-                        or {
-                            eq("id", id)
-                            eq("user_id", id)
-                        }
+        return withContext(ioDispatcher) {
+            try {
+                val list = supabaseClient.postgrest.from("doctors")
+                    .select {
+                        order("first_name", order = Order.ASCENDING)
                     }
-                }
-                .decodeSingleOrNull<DoctorDto>()
-            Result.success(dto?.toDomain())
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun getDoctorByUserId(userId: String): Result<Doctor?> {
-        return try {
-            val dto = SupabaseClient.client.from("doctors")
-                .select { filter { eq("user_id", userId) } }
-                .decodeSingleOrNull<DoctorDto>()
-            Result.success(dto?.toDomain())
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun getDoctorAvailability(doctorId: String): Result<List<WeeklyAvailability>> {
-        return try {
-            val list = SupabaseClient.client.from("doctor_availability")
-                .select {
-                    filter {
-                        eq("doctor_id", doctorId)
-                    }
-                    order("day_of_week", order = Order.ASCENDING)
-                }
-                .decodeList<DoctorAvailabilityDto>()
-
-            if (list.isEmpty()) {
-                Result.success(createDefaultAvailability(doctorId))
-            } else {
+                    .decodeList<DoctorDto>()
                 Result.success(list.map { it.toDomain() })
-            }
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            val msg = e.message?.lowercase().orEmpty()
-            if (msg.contains("could not find") || msg.contains("doctor_availability") || msg.contains("pgrst200") || msg.contains("404")) {
-                Result.success(createDefaultAvailability(doctorId))
-            } else {
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Result.failure(e)
             }
         }
     }
 
-    private fun createDefaultAvailability(doctorId: String): List<WeeklyAvailability> {
-        val docId = com.example.biodontos.domain.model.DoctorId(doctorId)
-        return java.time.DayOfWeek.entries.map { day ->
-            val isWeekday = day.value in 1..5
-            WeeklyAvailability(
-                id = "",
-                doctorId = docId,
-                dayOfWeek = day,
-                startTime = java.time.LocalTime.of(8, 0),
-                endTime = if (isWeekday) java.time.LocalTime.of(17, 0) else java.time.LocalTime.of(13, 0),
-                slotMinutes = 30,
-                isActive = isWeekday
-            )
+    override suspend fun getDoctorById(id: String): Result<Doctor?> {
+        return withContext(ioDispatcher) {
+            try {
+                val dto = supabaseClient.postgrest.from("doctors")
+                    .select {
+                        filter {
+                            or {
+                                eq("id", id)
+                                eq("user_id", id)
+                            }
+                        }
+                    }
+                    .decodeSingleOrNull<DoctorDto>()
+                Result.success(dto?.toDomain())
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun getDoctorByUserId(userId: String): Result<Doctor?> {
+        return withContext(ioDispatcher) {
+            try {
+                val dto = supabaseClient.postgrest.from("doctors")
+                    .select { filter { eq("user_id", userId) } }
+                    .decodeSingleOrNull<DoctorDto>()
+                Result.success(dto?.toDomain())
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun getDoctorAvailability(doctorId: String): Result<List<WeeklyAvailability>> {
+        return withContext(ioDispatcher) {
+            try {
+                val list = availabilityQuery?.invoke(doctorId)
+                    ?: supabaseClient.postgrest.from("doctor_availability")
+                        .select {
+                            filter {
+                                eq("doctor_id", doctorId)
+                            }
+                            order("day_of_week", order = Order.ASCENDING)
+                        }
+                        .decodeList<DoctorAvailabilityDto>()
+
+                if (list.isEmpty()) {
+                    Result.success(emptyList())
+                } else {
+                    Result.success(list.map { it.toDomain() })
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Result.failure(e)
+            }
         }
     }
 
@@ -106,24 +103,24 @@ class DoctorRepositoryImpl : DoctorRepository {
         doctorId: String,
         availabilities: List<WeeklyAvailability>
     ): Result<Unit> {
-        return try {
-            // Eliminar registros existentes para el doctor
-            SupabaseClient.client.from("doctor_availability")
-                .delete {
-                    filter {
-                        eq("doctor_id", doctorId)
+        return withContext(ioDispatcher) {
+            try {
+                supabaseClient.postgrest.from("doctor_availability")
+                    .delete {
+                        filter {
+                            eq("doctor_id", doctorId)
+                        }
                     }
-                }
 
-            // Insertar los nuevos registros
-            val dtos = availabilities.map { it.toDto() }
-            if (dtos.isNotEmpty()) {
-                SupabaseClient.client.from("doctor_availability").insert(dtos)
+                val dtos = availabilities.map { it.toDto() }
+                if (dtos.isNotEmpty()) {
+                    supabaseClient.postgrest.from("doctor_availability").insert(dtos)
+                }
+                Result.success(Unit)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Result.failure(e)
             }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            Result.failure(e)
         }
     }
 
@@ -133,34 +130,38 @@ class DoctorRepositoryImpl : DoctorRepository {
         limit: Int,
         offset: Int
     ): Result<List<Doctor>> {
-        return try {
-            val list = SupabaseClient.client.from("doctors")
-                .select {
-                    order("first_name", order = Order.ASCENDING)
-                    range(offset.toLong(), (offset + limit - 1).toLong())
-                    filter {
-                        if (!specialty.isNullOrBlank() && specialty != "Todas" && specialty != "Todos") {
-                            eq("specialty", specialty)
-                        }
-                        if (query.isNotBlank()) {
-                            ilike("first_name", "%${query.trim()}%")
+        return withContext(ioDispatcher) {
+            try {
+                val list = supabaseClient.postgrest.from("doctors")
+                    .select {
+                        order("first_name", order = Order.ASCENDING)
+                        range(offset.toLong(), (offset + limit - 1).toLong())
+                        filter {
+                            if (!specialty.isNullOrBlank() && specialty != "Todas" && specialty != "Todos") {
+                                eq("specialty", specialty)
+                            }
+                            if (query.isNotBlank()) {
+                                ilike("first_name", "%${query.trim()}%")
+                            }
                         }
                     }
-                }
-                .decodeList<DoctorDto>()
-            Result.success(list.map { it.toDomain() })
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            Result.failure(e)
+                    .decodeList<DoctorDto>()
+                Result.success(list.map { it.toDomain() })
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Result.failure(e)
+            }
         }
     }
 
     override suspend fun updateDoctorProfile(doctor: Doctor): Result<Doctor> {
-        return try {
-            executeDoctorUpdate(doctor, includeOptionalFields = true)
-            Result.success(doctor)
-        } catch (e: Exception) {
-            handleUpdateProfileError(doctor, e)
+        return withContext(ioDispatcher) {
+            try {
+                executeDoctorUpdate(doctor, includeOptionalFields = true)
+                Result.success(doctor)
+            } catch (e: Exception) {
+                handleUpdateProfileError(doctor, e)
+            }
         }
     }
 
@@ -168,7 +169,7 @@ class DoctorRepositoryImpl : DoctorRepository {
         val docId = doctor.id.value
         val targetUserId = doctor.userId.takeUnless { it.isNullOrBlank() } ?: docId
 
-        SupabaseClient.client.from("doctors").update(
+        supabaseClient.postgrest.from("doctors").update(
             {
                 set("first_name", doctor.firstName.trim())
                 set("last_name", doctor.lastName.trim())
@@ -194,7 +195,8 @@ class DoctorRepositoryImpl : DoctorRepository {
 
     private suspend fun handleUpdateProfileError(doctor: Doctor, e: Exception): Result<Doctor> {
         if (e is CancellationException) throw e
-        if (!isMissingColumnError(e)) {
+        val isMissingColumn = e is RestException && (e.error == "42703" || e.error == "PGRST204")
+        if (!isMissingColumn) {
             return Result.failure(e)
         }
         return try {
@@ -204,17 +206,5 @@ class DoctorRepositoryImpl : DoctorRepository {
             if (fallbackEx is CancellationException) throw fallbackEx
             Result.failure(fallbackEx)
         }
-    }
-
-    private fun isMissingColumnError(e: Exception): Boolean {
-        val msg = e.message?.lowercase().orEmpty()
-        return msg.contains("bio") ||
-            msg.contains("photo_url") ||
-            msg.contains("clinic_address") ||
-            msg.contains("services") ||
-            msg.contains("column") ||
-            msg.contains("42703") ||
-            msg.contains("schema cache") ||
-            msg.contains("pgrst204")
     }
 }

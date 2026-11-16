@@ -13,9 +13,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.example.biodontos.R
 import com.example.biodontos.domain.model.ToothCondition
 import com.example.biodontos.domain.model.ToothSurface
 
@@ -27,11 +29,12 @@ fun InteractiveTooth(
     modifier: Modifier = Modifier.size(70.dp)
 ) {
     val haptic = LocalHapticFeedback.current
+    val toothContentDescription = stringResource(R.string.cd_tooth_fdi, toothNumber)
 
     Canvas(
         modifier = modifier
             .semantics {
-                contentDescription = "Diente FDI $toothNumber"
+                contentDescription = toothContentDescription
             }
             .pointerInput(toothNumber) {
                 detectTapGestures { offset ->

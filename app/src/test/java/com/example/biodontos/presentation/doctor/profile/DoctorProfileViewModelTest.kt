@@ -5,6 +5,7 @@ import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.DoctorId
 import com.example.biodontos.domain.model.UserRole
 import com.example.biodontos.domain.model.UserSession
+import com.example.biodontos.domain.repository.AvatarRepository
 import com.example.biodontos.domain.repository.DoctorRepository
 import com.example.biodontos.domain.usecase.auth.GetCurrentSessionUseCase
 import com.example.biodontos.domain.usecase.auth.LogoutUseCase
@@ -262,5 +263,31 @@ class DoctorProfileViewModelTest {
         assertEquals("Sede Chicó, Cons 401", state.clinicAddress)
         assertEquals("Ortodoncia, Implantes", state.services)
         assertFalse(state.isSavingProfile)
+    }
+
+    @Test
+    fun `updatePhotoUrl with AvatarRepository uploads image off UI thread and persists public storage URL`() = runTest {
+        val avatarRepository: AvatarRepository = mockk()
+        val storageUrl = "https://example.supabase.co/storage/v1/object/public/doctor-avatars/doc-uid-1/avatar.jpg?v=123"
+        coEvery { avatarRepository.uploadDoctorAvatar("doc-uid-1", "content://media/picker/10") } returns Result.success(storageUrl)
+        coEvery { updateDoctorProfileUseCase(any()) } answers { Result.success(firstArg()) }
+
+        val viewModel = DoctorProfileViewModel(
+            getCurrentSessionUseCase = getCurrentSessionUseCase,
+            doctorRepository = doctorRepository,
+            updateDoctorProfileUseCase = updateDoctorProfileUseCase,
+            updatePasswordUseCase = updatePasswordUseCase,
+            resetPasswordUseCase = resetPasswordUseCase,
+            logoutUseCase = logoutUseCase,
+            avatarRepository = avatarRepository
+        )
+        advanceUntilIdle()
+
+        viewModel.onEvent(DoctorProfileEvent.UpdatePhotoUrl("content://media/picker/10"))
+        advanceUntilIdle()
+
+        coVerify { avatarRepository.uploadDoctorAvatar("doc-uid-1", "content://media/picker/10") }
+        coVerify { updateDoctorProfileUseCase(match { it.photoUrl == storageUrl }) }
+        assertEquals(storageUrl, viewModel.state.value.photoUrl)
     }
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.biodontos.core.util.toUserFriendlyMessage
 import com.example.biodontos.domain.model.Doctor
 import com.example.biodontos.domain.model.DoctorId
+import com.example.biodontos.domain.repository.AvatarRepository
 import com.example.biodontos.domain.repository.DoctorRepository
 import com.example.biodontos.domain.usecase.auth.GetCurrentSessionUseCase
 import com.example.biodontos.domain.usecase.auth.LogoutUseCase
@@ -24,7 +25,8 @@ class DoctorProfileViewModel(
     private val updateDoctorProfileUseCase: UpdateDoctorProfileUseCase,
     private val updatePasswordUseCase: UpdatePasswordUseCase,
     private val resetPasswordUseCase: ResetPasswordUseCase,
-    private val logoutUseCase: LogoutUseCase
+    private val logoutUseCase: LogoutUseCase,
+    private val avatarRepository: AvatarRepository? = null
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DoctorProfileState())
@@ -103,14 +105,30 @@ class DoctorProfileViewModel(
 
     private fun updatePhoto(photoUrl: String) {
         viewModelScope.launch {
-            _state.update { it.copy(photoUrl = photoUrl, isSavingProfile = true, errorMessage = null) }
+            _state.update { it.copy(isSavingProfile = true, errorMessage = null) }
             val currentDoctor = _state.value.doctor
             if (currentDoctor == null) {
                 _state.update { it.copy(isSavingProfile = false, errorMessage = "No se ha cargado el doctor") }
                 return@launch
             }
 
-            val updatedDoctor = currentDoctor.copy(photoUrl = photoUrl)
+            val resolvedPhotoUrl = if (avatarRepository != null) {
+                val uploadResult = avatarRepository.uploadDoctorAvatar(currentDoctor.id.value, photoUrl)
+                uploadResult.getOrElse { ex ->
+                    _state.update {
+                        it.copy(
+                            isSavingProfile = false,
+                            errorMessage = "Error al guardar foto: ${ex.toUserFriendlyMessage()}"
+                        )
+                    }
+                    return@launch
+                }
+            } else {
+                photoUrl
+            }
+
+            _state.update { it.copy(photoUrl = resolvedPhotoUrl) }
+            val updatedDoctor = currentDoctor.copy(photoUrl = resolvedPhotoUrl)
             val result = updateDoctorProfileUseCase(updatedDoctor)
             result.onSuccess { savedDoctor ->
                 _state.update {

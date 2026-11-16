@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.auth.reset
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -50,7 +54,7 @@ fun ForgotPasswordScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás",
+                            contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
                             tint = BiodontosDark
                         )
                     }
@@ -94,7 +98,7 @@ fun ForgotPasswordScreen(
                         )
                         Spacer(modifier = Modifier.height(20.dp))
                         Text(
-                            text = "¡Correo Enviado!",
+                            text = stringResource(R.string.ui_forgot_password_screen_160),
                             fontSize = 26.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark,
@@ -102,7 +106,7 @@ fun ForgotPasswordScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Hemos enviado las instrucciones y el enlace para restablecer tu contraseña a:\n\n${state.email}",
+                            text = stringResource(R.string.ui_forgot_password_screen_161, state.email),
                             fontSize = 15.sp,
                             color = BiodontosGreyText,
                             textAlign = TextAlign.Center,
@@ -120,12 +124,12 @@ fun ForgotPasswordScreen(
                                 .fillMaxWidth()
                                 .height(56.dp)
                         ) {
-                            Text("Volver al Inicio de Sesión", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.ui_forgot_password_screen_162), fontWeight = FontWeight.Bold)
                         }
                     } else {
                         // Request View
                         Text(
-                            text = "Vamos a recuperar tu acceso",
+                            text = stringResource(R.string.ui_forgot_password_screen_163),
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark,
@@ -133,7 +137,7 @@ fun ForgotPasswordScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Enviaremos un enlace a tu correo para que puedas crear una nueva contraseña de forma segura.",
+                            text = stringResource(R.string.ui_forgot_password_screen_164),
                             fontSize = 15.sp,
                             color = BiodontosGreyText,
                             textAlign = TextAlign.Center,
@@ -145,8 +149,8 @@ fun ForgotPasswordScreen(
                         OutlinedTextField(
                             value = state.email,
                             onValueChange = onEmailChange,
-                            label = { Text("Correo Electrónico") },
-                            placeholder = { Text("ejemplo@biodontos.com") },
+                            label = { Text(stringResource(R.string.ui_clinical_admission_screen_20)) },
+                            placeholder = { Text(stringResource(R.string.ui_forgot_password_screen_165)) },
                             leadingIcon = {
                                 Icon(imageVector = Icons.Default.Email, contentDescription = null, tint = BiodontosDark)
                             },
@@ -190,7 +194,7 @@ fun ForgotPasswordScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Atrás", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.ui_doctor_registration_screen_110), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             }
 
                             Button(
@@ -212,7 +216,7 @@ fun ForgotPasswordScreen(
                                         strokeWidth = 2.dp
                                     )
                                 } else {
-                                    Text("Siguiente", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.ui_forgot_password_screen_166), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,

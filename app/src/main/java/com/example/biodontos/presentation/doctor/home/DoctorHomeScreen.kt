@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.doctor.home
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.Image
@@ -209,7 +213,7 @@ fun DoctorHomeScreen(
                                         onClick = { onEvent(DoctorHomeUiEvent.Refresh) },
                                         modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                     ) {
-                                        Text("Reintentar", color = Color(0xFFC62828), fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.ui_doctor_appointments_screen_175), color = Color(0xFFC62828), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -364,7 +368,7 @@ private fun DoctorHomeHeader(
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Mi Perfil",
+                    contentDescription = stringResource(R.string.ui_doctor_home_screen_238),
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape),
@@ -395,7 +399,7 @@ private fun DoctorHomeHeader(
                     } else {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Mi Perfil",
+                            contentDescription = stringResource(R.string.ui_doctor_home_screen_238),
                             tint = BiodontosWhite,
                             modifier = Modifier.size(24.dp)
                         )
@@ -407,7 +411,7 @@ private fun DoctorHomeHeader(
 
             Column {
                 Text(
-                    text = "Hola, Doc!",
+                    text = stringResource(R.string.ui_doctor_home_screen_239),
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
@@ -437,7 +441,7 @@ private fun DoctorHomeHeader(
             } else {
                 Icon(
                     imageVector = Icons.Default.Refresh,
-                    contentDescription = "Actualizar",
+                    contentDescription = stringResource(R.string.ui_doctor_appointments_screen_186),
                     tint = BiodontosDark,
                     modifier = Modifier.size(24.dp)
                 )
@@ -464,14 +468,14 @@ private fun PatientsEvolutionCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Pacientes & Evolución",
+                text = stringResource(R.string.ui_doctor_home_screen_240),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark
             )
 
             Text(
-                text = "$patientsCount pacientes activos en registro",
+                text = stringResource(R.string.ui_doctor_home_screen_241, patientsCount),
                 fontSize = 13.sp,
                 color = BiodontosGreyText
             )
@@ -481,13 +485,13 @@ private fun PatientsEvolutionCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 BiodontosPillButton(
-                    text = "+ Ingreso Clínico",
+                    text = stringResource(R.string.ui_doctor_home_screen_242),
                     variant = PillButtonVariant.DARK,
                     onClick = onNavigateToClinicalAdmission,
                     modifier = Modifier.weight(1f)
                 )
                 BiodontosPillButton(
-                    text = "Directorio",
+                    text = stringResource(R.string.ui_doctor_home_screen_243),
                     variant = PillButtonVariant.LIGHT,
                     onClick = onNavigateToPatients,
                     modifier = Modifier.weight(1f)
@@ -515,7 +519,7 @@ private fun DocumentsSummaryCard(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                text = "Documentos",
+                text = stringResource(R.string.ui_doctor_home_screen_244),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark
@@ -525,9 +529,9 @@ private fun DocumentsSummaryCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Consentimientos OK", fontSize = 13.sp, color = BiodontosGreyText)
+                Text(text = stringResource(R.string.ui_doctor_home_screen_245), fontSize = 13.sp, color = BiodontosGreyText)
                 Text(
-                    text = "$consentedPatientsCount",
+                    text = stringResource(R.string.ui_doctor_home_screen_246, consentedPatientsCount),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
@@ -538,9 +542,9 @@ private fun DocumentsSummaryCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Firma Pendiente", fontSize = 13.sp, color = BiodontosGreyText)
+                Text(text = stringResource(R.string.ui_doctor_documents_screen_234), fontSize = 13.sp, color = BiodontosGreyText)
                 Text(
-                    text = "$pendingConsentCount",
+                    text = stringResource(R.string.ui_doctor_home_screen_246, pendingConsentCount),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (pendingConsentCount > 0) Color(0xFFC62828) else BiodontosDark
@@ -548,7 +552,7 @@ private fun DocumentsSummaryCard(
             }
 
             BiodontosPillButton(
-                text = "Historias clínicas",
+                text = stringResource(R.string.ui_doctor_documents_screen_226),
                 variant = PillButtonVariant.DARK,
                 onClick = onViewDocumentsClick
             )
@@ -573,7 +577,7 @@ private fun AgendaSummaryCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Tu agenda",
+                text = stringResource(R.string.ui_doctor_home_screen_247),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark
@@ -586,7 +590,7 @@ private fun AgendaSummaryCard(
             )
 
             BiodontosPillButton(
-                text = "Gestión de calendario",
+                text = stringResource(R.string.ui_doctor_home_screen_248),
                 variant = PillButtonVariant.DARK,
                 onClick = onManageCalendarClick
             )
@@ -618,14 +622,14 @@ private fun UpcomingAppointmentsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Tus próximas citas",
+                    text = stringResource(R.string.ui_doctor_home_screen_249),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
                 )
 
                 BiodontosPillButton(
-                    text = "Ver agenda",
+                    text = stringResource(R.string.ui_doctor_home_screen_250),
                     variant = PillButtonVariant.LIGHT,
                     onClick = onSeeAll
                 )
@@ -633,7 +637,7 @@ private fun UpcomingAppointmentsCard(
 
             if (appointments.isEmpty()) {
                 Text(
-                    text = "No tienes citas próximas registradas.",
+                    text = stringResource(R.string.ui_doctor_home_screen_251),
                     fontSize = 13.sp,
                     color = BiodontosGreyText,
                     modifier = Modifier.padding(vertical = 12.dp)
@@ -779,13 +783,13 @@ private fun PaymentsSummaryCard(
             ) {
                 Column {
                     Text(
-                        text = "Pagos y Abonos",
+                        text = stringResource(R.string.ui_doctor_home_screen_252),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
                     )
                     Text(
-                        text = "Tus últimos pagos registrados",
+                        text = stringResource(R.string.ui_doctor_home_screen_253),
                         fontSize = 12.sp,
                         color = BiodontosGreyText
                     )
@@ -811,13 +815,13 @@ private fun PaymentsSummaryCard(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "No hay abonos registrados aún",
+                            text = stringResource(R.string.ui_doctor_home_screen_254),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             color = BiodontosGreyText
                         )
                         Text(
-                            text = "Pulsa el botón inferior para ingresar el primer abono.",
+                            text = stringResource(R.string.ui_doctor_home_screen_255),
                             fontSize = 11.sp,
                             color = BiodontosGreyText
                         )
@@ -866,7 +870,7 @@ private fun PaymentsSummaryCard(
                                     color = BiodontosDark
                                 )
                                 Text(
-                                    text = "${payment.treatmentDescription} • ${payment.dateStr}",
+                                    text = stringResource(R.string.ui_doctor_home_screen_256, payment.treatmentDescription, payment.dateStr),
                                     fontSize = 11.sp,
                                     color = BiodontosGreyText
                                 )
@@ -889,7 +893,7 @@ private fun PaymentsSummaryCard(
                                 },
                                 modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                             ) {
-                                Text("Ver", fontSize = 12.sp, color = BiodontosDark, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.ui_doctor_home_screen_257), fontSize = 12.sp, color = BiodontosDark, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -897,7 +901,7 @@ private fun PaymentsSummaryCard(
             }
 
             BiodontosPillButton(
-                text = "Nuevo Pago o Abono",
+                text = stringResource(R.string.ui_doctor_home_screen_258),
                 variant = PillButtonVariant.DARK,
                 onClick = onNewPaymentClick
             )
@@ -943,13 +947,13 @@ private fun RecordPaymentDialog(
         title = {
             Column {
                 Text(
-                    text = "Registrar Abono / Pago",
+                    text = stringResource(R.string.ui_doctor_home_screen_259),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
                 )
                 Text(
-                    text = "Vincula el abono al tratamiento del paciente",
+                    text = stringResource(R.string.ui_doctor_home_screen_260),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
@@ -965,7 +969,7 @@ private fun RecordPaymentDialog(
             ) {
                 // 1. Selección de Paciente
                 Text(
-                    text = "1. Paciente",
+                    text = stringResource(R.string.ui_doctor_home_screen_261),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
@@ -974,7 +978,7 @@ private fun RecordPaymentDialog(
                 if (state.selectedPatient == null) {
                     if (state.availablePatients.isEmpty()) {
                         Text(
-                            text = "No hay pacientes registrados en el sistema.",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_215),
                             fontSize = 12.sp,
                             color = BiodontosGreyText
                         )
@@ -982,14 +986,14 @@ private fun RecordPaymentDialog(
                         OutlinedTextField(
                             value = patientSearchQuery,
                             onValueChange = { patientSearchQuery = it },
-                            placeholder = { Text("Buscar paciente...") },
+                            placeholder = { Text(stringResource(R.string.ui_doctor_home_screen_262)) },
                             leadingIcon = {
-                                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = BiodontosGreyText)
+                                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.ui_doctor_documents_screen_228), tint = BiodontosGreyText)
                             },
                             trailingIcon = {
                                 if (patientSearchQuery.isNotEmpty()) {
                                     IconButton(onClick = { patientSearchQuery = "" }) {
-                                        Icon(Icons.Default.Close, contentDescription = "Limpiar", tint = BiodontosGreyText)
+                                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.ui_signature_pad_172), tint = BiodontosGreyText)
                                     }
                                 }
                             },
@@ -1013,7 +1017,7 @@ private fun RecordPaymentDialog(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "No se encontraron pacientes para \"$patientSearchQuery\"",
+                                        text = stringResource(R.string.ui_doctor_home_screen_263, patientSearchQuery),
                                         fontSize = 12.sp,
                                         color = BiodontosGreyText
                                     )
@@ -1038,13 +1042,13 @@ private fun RecordPaymentDialog(
                                                 color = BiodontosDark
                                             )
                                             Text(
-                                                text = "DNI: ${pat.dniCedula}",
+                                                text = stringResource(R.string.ui_doctor_home_screen_264, pat.dniCedula),
                                                 fontSize = 11.sp,
                                                 color = BiodontosGreyText
                                             )
                                         }
                                         Text(
-                                            text = "Seleccionar",
+                                            text = stringResource(R.string.ui_doctor_home_screen_265),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = BiodontosDark
@@ -1072,7 +1076,7 @@ private fun RecordPaymentDialog(
                                 color = BiodontosDark
                             )
                             Text(
-                                text = "DNI: ${state.selectedPatient.dniCedula}",
+                                text = stringResource(R.string.ui_doctor_home_screen_264, state.selectedPatient.dniCedula),
                                 fontSize = 11.sp,
                                 color = BiodontosGreyText
                             )
@@ -1081,13 +1085,13 @@ private fun RecordPaymentDialog(
                             onClick = onClearSelectedPatient,
                             modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                         ) {
-                            Text("Cambiar", color = BiodontosDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.ui_login_screen_130), color = BiodontosDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
                     // 2. Selección de Tratamiento
                     Text(
-                        text = "2. Tratamiento / Concepto",
+                        text = stringResource(R.string.ui_doctor_home_screen_266),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
@@ -1107,7 +1111,7 @@ private fun RecordPaymentDialog(
                                         .padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
                                     Text(
-                                        text = "Existente",
+                                        text = stringResource(R.string.ui_doctor_home_screen_267),
                                         fontSize = 11.sp,
                                         color = if (hasExisting) BiodontosWhite else BiodontosDark
                                     )
@@ -1123,7 +1127,7 @@ private fun RecordPaymentDialog(
                                         .padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
                                     Text(
-                                        text = "Nuevo Plan",
+                                        text = stringResource(R.string.ui_doctor_home_screen_268),
                                         fontSize = 11.sp,
                                         color = if (isNewTreatmentMode) BiodontosWhite else BiodontosDark
                                     )
@@ -1164,16 +1168,16 @@ private fun RecordPaymentDialog(
                             OutlinedTextField(
                                 value = newTreatmentDesc,
                                 onValueChange = { newTreatmentDesc = it },
-                                label = { Text("Descripción del Tratamiento") },
-                                placeholder = { Text("Ej. Profilaxis y Resinas, Ortodoncia") },
+                                label = { Text(stringResource(R.string.ui_doctor_home_screen_269)) },
+                                placeholder = { Text(stringResource(R.string.ui_doctor_home_screen_270)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp)
                             )
                             OutlinedTextField(
                                 value = newTreatmentCostInput,
                                 onValueChange = { newTreatmentCostInput = it.filter { ch -> ch.isDigit() } },
-                                label = { Text("Costo Total Proyectado (COP)") },
-                                placeholder = { Text("Ej. 500000") },
+                                label = { Text(stringResource(R.string.ui_doctor_home_screen_271)) },
+                                placeholder = { Text(stringResource(R.string.ui_doctor_home_screen_272)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp)
@@ -1183,7 +1187,7 @@ private fun RecordPaymentDialog(
 
                     // 3. Monto y Método
                     Text(
-                        text = "3. Monto del Abono y Método",
+                        text = stringResource(R.string.ui_doctor_home_screen_273),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
@@ -1192,8 +1196,8 @@ private fun RecordPaymentDialog(
                     OutlinedTextField(
                         value = amountInput,
                         onValueChange = { amountInput = it.filter { ch -> ch.isDigit() } },
-                        label = { Text("Monto a abonar (COP)") },
-                        placeholder = { Text("Ej. 150000") },
+                        label = { Text(stringResource(R.string.ui_doctor_home_screen_274)) },
+                        placeholder = { Text(stringResource(R.string.ui_doctor_home_screen_275)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
@@ -1269,7 +1273,7 @@ private fun RecordPaymentDialog(
                 if (state.isRecordingPayment) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
                 } else {
-                    Text("Guardar Abono", color = BiodontosWhite, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_doctor_home_screen_276), color = BiodontosWhite, fontWeight = FontWeight.Bold)
                 }
             }
         },
@@ -1279,7 +1283,7 @@ private fun RecordPaymentDialog(
                 enabled = !state.isRecordingPayment,
                 modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
             ) {
-                Text("Cancelar", color = BiodontosDark)
+                Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosDark)
             }
         }
     )

@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.patients.detail
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -196,7 +200,7 @@ fun PatientDetailScreen(
                             color = BiodontosDark
                         )
                         Text(
-                            text = "DNI: ${patient?.dniCedula ?: state.patientId} · EPS: ${patient?.eps ?: "Particular"}",
+                            text = stringResource(R.string.ui_doctor_documents_screen_231, patient?.dniCedula ?: state.patientId, patient?.eps ?: "Particular"),
                             style = MaterialTheme.typography.bodySmall,
                             color = BiodontosGreyText
                         )
@@ -206,7 +210,7 @@ fun PatientDetailScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás",
+                            contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
                             tint = BiodontosDark
                         )
                     }
@@ -215,7 +219,7 @@ fun PatientDetailScreen(
                     TextButton(onClick = onNavigateToAdmission) {
                         Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Admisión", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ui_doctor_documents_screen_237), fontWeight = FontWeight.Bold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BiodontosWhite)
@@ -229,9 +233,9 @@ fun PatientDetailScreen(
                         containerColor = BiodontosDark,
                         contentColor = BiodontosWhite
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Registrar Actividad")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_patient_detail_screen_500))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Registrar Actividad", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ui_patient_detail_screen_500), fontWeight = FontWeight.Bold)
                     }
                 }
                 PatientDetailTab.EVOLUTIONS -> {
@@ -240,9 +244,9 @@ fun PatientDetailScreen(
                         containerColor = BiodontosDark,
                         contentColor = BiodontosWhite
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Nueva Evolución")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_patient_detail_screen_501))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Nueva Evolución", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ui_patient_detail_screen_501), fontWeight = FontWeight.Bold)
                     }
                 }
                 PatientDetailTab.TREATMENTS -> {
@@ -251,9 +255,9 @@ fun PatientDetailScreen(
                         containerColor = BiodontosDark,
                         contentColor = BiodontosWhite
                     ) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Agendar Cita")
+                        Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.ui_patient_detail_screen_502))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Agendar Cita", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ui_patient_detail_screen_502), fontWeight = FontWeight.Bold)
                     }
                 }
                 else -> {}
@@ -350,7 +354,7 @@ fun PatientDetailScreen(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Text(
-                                                text = "No hay notas de evolución registradas aún.",
+                                                text = stringResource(R.string.ui_patient_detail_screen_503),
                                                 color = BiodontosGreyText,
                                                 textAlign = TextAlign.Center
                                             )
@@ -359,7 +363,7 @@ fun PatientDetailScreen(
                                                 onClick = onOpenNewEvolutionDialog,
                                                 colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
                                             ) {
-                                                Text("Registrar Primera Evolución")
+                                                Text(stringResource(R.string.ui_patient_detail_screen_504))
                                             }
                                         }
                                     }
@@ -380,7 +384,7 @@ fun PatientDetailScreen(
                             }
                             item {
                                 Text(
-                                    text = "Tratamientos Registrados",
+                                    text = stringResource(R.string.ui_patient_detail_screen_505),
                                     fontWeight = FontWeight.Bold,
                                     style = MaterialTheme.typography.titleMedium,
                                     color = BiodontosDark
@@ -389,7 +393,7 @@ fun PatientDetailScreen(
                             if (state.treatments.isEmpty()) {
                                 item {
                                     Text(
-                                        text = "No hay tratamientos activos.",
+                                        text = stringResource(R.string.ui_patient_detail_screen_506),
                                         color = BiodontosGreyText,
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -402,7 +406,7 @@ fun PatientDetailScreen(
                             item {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Citas del Paciente",
+                                    text = stringResource(R.string.ui_patient_detail_screen_507),
                                     fontWeight = FontWeight.Bold,
                                     style = MaterialTheme.typography.titleMedium,
                                     color = BiodontosDark
@@ -411,7 +415,7 @@ fun PatientDetailScreen(
                             if (state.appointments.isEmpty()) {
                                 item {
                                     Text(
-                                        text = "No hay citas programadas.",
+                                        text = stringResource(R.string.ui_patient_detail_screen_508),
                                         color = BiodontosGreyText,
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -560,7 +564,7 @@ private fun PatientDemographicsCard(patient: Patient?) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Datos de Identificación y Contacto",
+                text = stringResource(R.string.ui_patient_detail_screen_509),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 color = BiodontosDark
@@ -568,26 +572,26 @@ private fun PatientDemographicsCard(patient: Patient?) {
             Spacer(modifier = Modifier.height(10.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
-                    Text("Teléfono", fontSize = 11.sp, color = BiodontosGreyText)
+                    Text(stringResource(R.string.ui_patient_detail_screen_510), fontSize = 11.sp, color = BiodontosGreyText)
                     Text(patient?.phone?.ifBlank { "No registrado" } ?: "—", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 }
                 Column {
-                    Text("Grupo / RH", fontSize = 11.sp, color = BiodontosGreyText)
-                    Text("${patient?.bloodGroup ?: "O"}${patient?.rhFactor ?: "+"}", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    Text(stringResource(R.string.ui_patient_detail_screen_511), fontSize = 11.sp, color = BiodontosGreyText)
+                    Text(stringResource(R.string.ui_patient_detail_screen_512, patient?.bloodGroup ?: "O", patient?.rhFactor ?: "+"), fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 }
                 Column {
-                    Text("Estado Civil", fontSize = 11.sp, color = BiodontosGreyText)
+                    Text(stringResource(R.string.ui_patient_detail_screen_513), fontSize = 11.sp, color = BiodontosGreyText)
                     Text(patient?.maritalStatus ?: "Soltero(a)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
             if (!patient?.email.isNullOrBlank()) {
-                Text("Correo Electrónico", fontSize = 11.sp, color = BiodontosGreyText)
+                Text(stringResource(R.string.ui_clinical_admission_screen_20), fontSize = 11.sp, color = BiodontosGreyText)
                 Text(patient?.email ?: "", fontSize = 13.sp)
                 Spacer(modifier = Modifier.height(8.dp))
             }
             if (!patient?.address.isNullOrBlank()) {
-                Text("Dirección de Residencia", fontSize = 11.sp, color = BiodontosGreyText)
+                Text(stringResource(R.string.ui_clinical_admission_screen_21), fontSize = 11.sp, color = BiodontosGreyText)
                 Text(patient?.address ?: "", fontSize = 13.sp)
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -602,7 +606,7 @@ private fun PatientDemographicsCard(patient: Patient?) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "⚠ ALERGIAS CRÍTICAS: ${patient.allergiesDescription}",
+                            text = stringResource(R.string.ui_patient_detail_screen_514, patient.allergiesDescription),
                             color = Carmesi,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp
@@ -624,14 +628,14 @@ private fun AnamnesisSummaryCard(anamnesis: Anamnesis?) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Anamnesis (Cuestionario Médico de 20 Preguntas)",
+                text = stringResource(R.string.ui_patient_detail_screen_515),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 color = BiodontosDark
             )
             Spacer(modifier = Modifier.height(8.dp))
             if (anamnesis == null) {
-                Text("Anamnesis pendiente de registro.", color = BiodontosGreyText, fontSize = 13.sp)
+                Text(stringResource(R.string.ui_patient_detail_screen_516), color = BiodontosGreyText, fontSize = 13.sp)
             } else {
                 val positives = mutableListOf<String>()
                 if (anamnesis.tratamientoMedicoActual) positives.add("Tratamiento médico actual")
@@ -646,16 +650,16 @@ private fun AnamnesisSummaryCard(anamnesis: Anamnesis?) {
                 if (anamnesis.inmunosupresion) positives.add("Inmunosupresión")
 
                 if (positives.isEmpty()) {
-                    Text("✓ Sin hallazgos patológicos reportados en el cuestionario de salud.", color = Esmeralda, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.ui_patient_detail_screen_517), color = Esmeralda, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 } else {
-                    Text("Condiciones afirmativas registradas:", color = Carmesi, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_patient_detail_screen_518), color = Carmesi, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(positives.joinToString(" · "), fontSize = 12.sp, color = BiodontosDark)
                 }
 
                 if (!anamnesis.observaciones.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Observaciones: ${anamnesis.observaciones}", fontSize = 12.sp, color = BiodontosGreyText)
+                    Text(stringResource(R.string.ui_patient_detail_screen_519, anamnesis.observaciones), fontSize = 12.sp, color = BiodontosGreyText)
                 }
             }
         }
@@ -678,7 +682,7 @@ private fun ConsentSummaryCard(consent: InformedConsent?) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Consentimiento Informado", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = BiodontosDark)
+                Text(stringResource(R.string.ui_patient_detail_screen_520), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = BiodontosDark)
                 Spacer(modifier = Modifier.height(4.dp))
                 val isSigned = consent?.status == "SIGNED" || !consent?.patientSignatureUrl.isNullOrBlank()
                 Text(
@@ -720,14 +724,14 @@ private fun OdontogramHubCard(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                text = "Odontograma y Periodontometría",
+                text = stringResource(R.string.ui_patient_detail_screen_521),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 color = BiodontosDark
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Tipo de dentición: $dentitionType · Diagnóstico: $mainDiagnosis",
+                text = stringResource(R.string.ui_patient_detail_screen_522, dentitionType, mainDiagnosis),
                 fontSize = 12.sp,
                 color = BiodontosGreyText
             )
@@ -742,14 +746,14 @@ private fun OdontogramHubCard(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Abrir Odontograma FDI")
+                    Text(stringResource(R.string.ui_patient_detail_screen_523))
                 }
                 OutlinedButton(
                     onClick = onOpenAdmission,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Periodontograma / Admisión")
+                    Text(stringResource(R.string.ui_patient_detail_screen_524))
                 }
             }
         }
@@ -782,7 +786,7 @@ private fun EvolutionItemCard(evolution: Evolution) {
                         shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
-                            text = "Pieza FDI: ${evolution.toothTreated}",
+                            text = stringResource(R.string.ui_patient_detail_screen_525, evolution.toothTreated),
                             color = BiodontosWhite,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -803,12 +807,12 @@ private fun EvolutionItemCard(evolution: Evolution) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Costo: $${evolution.cost.toInt()} · Abono: $${evolution.paymentAmount.toInt()}",
+                    text = stringResource(R.string.ui_patient_detail_screen_526, evolution.cost.toInt(), evolution.paymentAmount.toInt()),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
                 Text(
-                    text = "Saldo: $${evolution.balance.toInt()}",
+                    text = stringResource(R.string.ui_patient_detail_screen_527, evolution.balance.toInt()),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (evolution.balance > 0) Carmesi else Esmeralda
@@ -835,18 +839,18 @@ private fun TreatmentsBalanceHeaderCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Balance de Tratamientos", color = BiodontosWhite.copy(alpha = 0.8f), fontSize = 12.sp)
+            Text(stringResource(R.string.ui_patient_detail_screen_528), color = BiodontosWhite.copy(alpha = 0.8f), fontSize = 12.sp)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Saldo Pendiente: $${balance.toInt()}",
+                text = stringResource(R.string.ui_patient_detail_screen_529, balance.toInt()),
                 color = BiodontosWhite,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(10.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Total Presupuestado: $${totalBilled.toInt()}", color = BiodontosWhite.copy(alpha = 0.8f), fontSize = 12.sp)
-                Text("Total Abonado: $${totalPaid.toInt()}", color = Esmeralda, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_patient_detail_screen_530, totalBilled.toInt()), color = BiodontosWhite.copy(alpha = 0.8f), fontSize = 12.sp)
+                Text(stringResource(R.string.ui_patient_detail_screen_531, totalPaid.toInt()), color = Esmeralda, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -869,10 +873,10 @@ private fun TreatmentItemCard(treatment: Treatment) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(treatment.description, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = BiodontosDark)
-                Text("Estado: ${treatment.status}", fontSize = 12.sp, color = BiodontosGreyText)
+                Text(stringResource(R.string.ui_patient_detail_screen_532, treatment.status), fontSize = 12.sp, color = BiodontosGreyText)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("Costo: $${treatment.totalCost.pesos}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
+                Text(stringResource(R.string.ui_patient_detail_screen_533, treatment.totalCost.pesos), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
             }
         }
     }
@@ -897,7 +901,7 @@ private fun PatientAppointmentItemCard(appointment: Appointment) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(appointment.reason ?: "Cita Odontológica", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = BiodontosDark)
                 Text(
-                    "Estado: ${appointment.status.name} · ${if (appointment.isConfirmed) "Confirmada" else "Sin confirmar"}",
+                    stringResource(R.string.ui_patient_detail_screen_534, appointment.status.name, if (appointment.isConfirmed) "Confirmada" else "Sin confirmar"),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
@@ -932,7 +936,7 @@ private fun NewEvolutionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nueva Nota de Evolución Clínica", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.ui_patient_detail_screen_535), fontWeight = FontWeight.Bold) },
         text = {
             LazyColumn(
                 modifier = Modifier
@@ -944,8 +948,8 @@ private fun NewEvolutionDialog(
                     OutlinedTextField(
                         value = description,
                         onValueChange = onDescriptionChange,
-                        label = { Text("Descripción del Procedimiento *") },
-                        placeholder = { Text("Ej: Obturación en resina compuesta clase II...") },
+                        label = { Text(stringResource(R.string.ui_patient_detail_screen_536)) },
+                        placeholder = { Text(stringResource(R.string.ui_patient_detail_screen_537)) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = biodontosTextFieldColors()
                     )
@@ -955,7 +959,7 @@ private fun NewEvolutionDialog(
                         OutlinedTextField(
                             value = tooth?.toString() ?: "",
                             onValueChange = { onToothChange(it.toIntOrNull()) },
-                            label = { Text("Pieza FDI (opc)") },
+                            label = { Text(stringResource(R.string.ui_patient_detail_screen_538)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f),
                             colors = biodontosTextFieldColors()
@@ -963,7 +967,7 @@ private fun NewEvolutionDialog(
                         OutlinedTextField(
                             value = cost,
                             onValueChange = onCostChange,
-                            label = { Text("Costo ($)") },
+                            label = { Text(stringResource(R.string.ui_patient_detail_screen_539)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f),
                             colors = biodontosTextFieldColors()
@@ -971,7 +975,7 @@ private fun NewEvolutionDialog(
                         OutlinedTextField(
                             value = payment,
                             onValueChange = onPaymentChange,
-                            label = { Text("Abono ($)") },
+                            label = { Text(stringResource(R.string.ui_patient_detail_screen_540)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f),
                             colors = biodontosTextFieldColors()
@@ -979,12 +983,12 @@ private fun NewEvolutionDialog(
                     }
                 }
                 item {
-                    Text("Trazabilidad de Materiales INVIMA:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BiodontosDark)
+                    Text(stringResource(R.string.ui_patient_detail_screen_541), fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BiodontosDark)
                     Spacer(modifier = Modifier.height(4.dp))
 
                     if (catalog.isEmpty()) {
                         Text(
-                            text = "No hay insumos registrados en el catálogo.",
+                            text = stringResource(R.string.ui_patient_detail_screen_542),
                             fontSize = 11.sp,
                             color = BiodontosGreyText
                         )
@@ -1001,7 +1005,7 @@ private fun NewEvolutionDialog(
                                 value = selectedDisplayText,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Material del Catálogo") },
+                                label = { Text(stringResource(R.string.ui_patient_detail_screen_543)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded) },
                                 modifier = Modifier
                                     .menuAnchor(MenuAnchorType.PrimaryNotEditable)
@@ -1043,7 +1047,7 @@ private fun NewEvolutionDialog(
                                                             shape = RoundedCornerShape(4.dp)
                                                         ) {
                                                             Text(
-                                                                text = "VENCIDO",
+                                                                text = stringResource(R.string.ui_materials_screen_299),
                                                                 color = Carmesi,
                                                                 fontSize = 9.sp,
                                                                 fontWeight = FontWeight.Bold,
@@ -1056,7 +1060,7 @@ private fun NewEvolutionDialog(
                                                             shape = RoundedCornerShape(4.dp)
                                                         ) {
                                                             Text(
-                                                                text = "POR VENCER",
+                                                                text = stringResource(R.string.ui_patient_detail_screen_544),
                                                                 color = Ambar,
                                                                 fontSize = 9.sp,
                                                                 fontWeight = FontWeight.Bold,
@@ -1066,12 +1070,12 @@ private fun NewEvolutionDialog(
                                                     }
                                                 }
                                                 Text(
-                                                    text = "INVIMA: ${mat.invimaRegistration} · Lote: ${mat.batchLotNumber}",
+                                                    text = stringResource(R.string.ui_patient_detail_screen_545, mat.invimaRegistration, mat.batchLotNumber),
                                                     fontSize = 10.sp,
                                                     color = BiodontosGreyText
                                                 )
                                                 Text(
-                                                    text = "Vencimiento: ${mat.expirationDate}",
+                                                    text = stringResource(R.string.ui_materials_screen_303, mat.expirationDate),
                                                     fontSize = 10.sp,
                                                     color = if (isExpired) Carmesi else if (isNearExpiry) Ambar else BiodontosGreyText
                                                 )
@@ -1108,20 +1112,20 @@ private fun NewEvolutionDialog(
                                         Text(text = selMat.name, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BiodontosDark)
                                         if (isExpired) {
                                             Surface(color = Carmesi.copy(alpha = 0.14f), shape = RoundedCornerShape(4.dp)) {
-                                                Text("VENCIDO", color = Carmesi, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp))
+                                                Text(stringResource(R.string.ui_materials_screen_299), color = Carmesi, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp))
                                             }
                                         } else if (isNear) {
                                             Surface(color = Ambar.copy(alpha = 0.15f), shape = RoundedCornerShape(4.dp)) {
-                                                Text("POR VENCER (≤30d)", color = Ambar, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp))
+                                                Text(stringResource(R.string.ui_patient_detail_screen_546), color = Ambar, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp))
                                             }
                                         }
                                     }
-                                    Text(text = "Registro INVIMA: ${selMat.invimaRegistration}", fontSize = 11.sp, color = BiodontosGreyText)
-                                    Text(text = "Lote: ${selMat.batchLotNumber} | Vence: ${selMat.expirationDate}", fontSize = 11.sp, color = if (isExpired) Carmesi else BiodontosGreyText)
+                                    Text(text = stringResource(R.string.ui_clinical_admission_screen_68, selMat.invimaRegistration), fontSize = 11.sp, color = BiodontosGreyText)
+                                    Text(text = stringResource(R.string.ui_patient_detail_screen_547, selMat.batchLotNumber, selMat.expirationDate), fontSize = 11.sp, color = if (isExpired) Carmesi else BiodontosGreyText)
                                     if (isExpired) {
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Text(
-                                            text = "Material vencido. Bloqueado por seguridad sanitaria (INVIMA).",
+                                            text = stringResource(R.string.ui_patient_detail_screen_548),
                                             fontSize = 11.sp,
                                             color = Carmesi,
                                             fontWeight = FontWeight.SemiBold
@@ -1142,8 +1146,8 @@ private fun NewEvolutionDialog(
                                                     materialQty = input
                                                 }
                                             },
-                                            label = { Text("Cantidad *") },
-                                            placeholder = { Text("1.0") },
+                                            label = { Text(stringResource(R.string.ui_patient_detail_screen_549)) },
+                                            placeholder = { Text(stringResource(R.string.ui_patient_detail_screen_550)) },
                                             enabled = !isExpired,
                                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                             modifier = Modifier.weight(1f),
@@ -1164,7 +1168,7 @@ private fun NewEvolutionDialog(
                                         ) {
                                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Agregar")
+                                            Text(stringResource(R.string.ui_patient_detail_screen_551))
                                         }
                                     }
                                 }
@@ -1176,7 +1180,7 @@ private fun NewEvolutionDialog(
                 if (materials.isNotEmpty()) {
                     item {
                         Text(
-                            text = "Materiales Agregados (${materials.size}):",
+                            text = stringResource(R.string.ui_patient_detail_screen_552, materials.size),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp,
                             color = Zafiro
@@ -1197,13 +1201,13 @@ private fun NewEvolutionDialog(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "${mat.quantityUsed}x ${mat.materialName}",
+                                        text = stringResource(R.string.ui_patient_detail_screen_553, mat.quantityUsed, mat.materialName),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp,
                                         color = BiodontosDark
                                     )
                                     Text(
-                                        text = "INVIMA: ${mat.invimaSnapshot} | Lote: ${mat.lotNumberSnapshot} | Vence: ${mat.expirationDateSnapshot}",
+                                        text = stringResource(R.string.ui_patient_detail_screen_554, mat.invimaSnapshot, mat.lotNumberSnapshot, mat.expirationDateSnapshot),
                                         fontSize = 10.sp,
                                         color = BiodontosGreyText
                                     )
@@ -1214,7 +1218,7 @@ private fun NewEvolutionDialog(
                                 ) {
                                     Icon(
                                         Icons.Default.Delete,
-                                        contentDescription = "Eliminar insumo",
+                                        contentDescription = stringResource(R.string.ui_patient_detail_screen_555),
                                         tint = Carmesi,
                                         modifier = Modifier.size(18.dp)
                                     )
@@ -1234,13 +1238,13 @@ private fun NewEvolutionDialog(
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
                 } else {
-                    Text("Guardar Evolución")
+                    Text(stringResource(R.string.ui_patient_detail_screen_556))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("Cancelar")
+                Text(stringResource(R.string.ui_doctor_appointments_screen_191))
             }
         }
     )
@@ -1260,7 +1264,7 @@ private fun NewAppointmentDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Agendar Próxima Cita", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.ui_patient_detail_screen_557), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier.imePadding(),
@@ -1269,21 +1273,21 @@ private fun NewAppointmentDialog(
                 OutlinedTextField(
                     value = date,
                     onValueChange = onDateChange,
-                    label = { Text("Fecha (YYYY-MM-DD) *") },
+                    label = { Text(stringResource(R.string.ui_patient_detail_screen_558)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = biodontosTextFieldColors()
                 )
                 OutlinedTextField(
                     value = time,
                     onValueChange = onTimeChange,
-                    label = { Text("Hora (HH:mm) *") },
+                    label = { Text(stringResource(R.string.ui_patient_detail_screen_559)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = biodontosTextFieldColors()
                 )
                 OutlinedTextField(
                     value = reason,
                     onValueChange = onReasonChange,
-                    label = { Text("Motivo de Consulta") },
+                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_36)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = biodontosTextFieldColors()
                 )
@@ -1298,13 +1302,13 @@ private fun NewAppointmentDialog(
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
                 } else {
-                    Text("Agendar Cita")
+                    Text(stringResource(R.string.ui_patient_detail_screen_502))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("Cancelar")
+                Text(stringResource(R.string.ui_doctor_appointments_screen_191))
             }
         }
     )

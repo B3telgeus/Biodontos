@@ -32,6 +32,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -41,8 +42,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.SubcomposeAsyncImage
+import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.*
-import java.io.ByteArrayOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun DoctorProfileScreen(
@@ -80,19 +84,13 @@ fun DoctorProfileContent(
     onEvent: (DoctorProfileEvent) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         uri?.let {
-            val dataUri = ImageCompressor.compressUriToBase64(context, it, maxDimension = 300, quality = 80)
-            if (dataUri != null) {
-                onEvent(DoctorProfileEvent.UpdatePhotoUrl(dataUri))
-            } else {
-                Toast.makeText(context, "No se pudo procesar la imagen seleccionada", Toast.LENGTH_SHORT).show()
-            }
+            onEvent(DoctorProfileEvent.UpdatePhotoUrl(it.toString()))
         }
     }
 
@@ -101,7 +99,7 @@ fun DoctorProfileContent(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Mi Cuenta Profesional",
+                        text = stringResource(R.string.ui_doctor_profile_screen_308),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark
@@ -118,7 +116,7 @@ fun DoctorProfileContent(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
+                            contentDescription = stringResource(R.string.ui_clinical_admission_screen_3),
                             tint = BiodontosDark
                         )
                     }
@@ -133,7 +131,7 @@ fun DoctorProfileContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Actualizar",
+                            contentDescription = stringResource(R.string.ui_doctor_appointments_screen_186),
                             tint = BiodontosDark
                         )
                     }
@@ -146,7 +144,7 @@ fun DoctorProfileContent(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Cerrar sesión",
+                            contentDescription = stringResource(R.string.ui_doctor_profile_screen_309),
                             tint = Carmesi
                         )
                     }
@@ -199,7 +197,7 @@ fun DoctorProfileContent(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Cerrar mensaje de error",
+                                        contentDescription = stringResource(R.string.ui_doctor_profile_screen_310),
                                         tint = BiodontosErrorRed
                                     )
                                 }
@@ -285,14 +283,14 @@ fun DoctorProfileContent(
                     containerColor = BiodontosWhite,
                     title = {
                         Text(
-                            text = "Cerrar Sesión",
+                            text = stringResource(R.string.ui_doctor_profile_screen_309),
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark
                         )
                     },
                     text = {
                         Text(
-                            text = "¿Está seguro de que desea cerrar la sesión de su cuenta profesional en este dispositivo?",
+                            text = stringResource(R.string.ui_doctor_profile_screen_311),
                             color = BiodontosGreyText,
                             fontSize = 14.sp
                         )
@@ -306,7 +304,7 @@ fun DoctorProfileContent(
                             colors = ButtonDefaults.buttonColors(containerColor = Carmesi),
                             modifier = Modifier.heightIn(min = 48.dp)
                         ) {
-                            Text("Cerrar Sesión", color = BiodontosWhite, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.ui_doctor_profile_screen_309), color = BiodontosWhite, fontWeight = FontWeight.Bold)
                         }
                     },
                     dismissButton = {
@@ -316,7 +314,7 @@ fun DoctorProfileContent(
                             },
                             modifier = Modifier.heightIn(min = 48.dp)
                         ) {
-                            Text("Cancelar", color = BiodontosDark)
+                            Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosDark)
                         }
                     }
                 )
@@ -356,26 +354,12 @@ fun DoctorAvatarHeaderSection(
                 modifier = Modifier.size(104.dp),
                 contentAlignment = Alignment.Center
             ) {
-                val bitmap = remember(photoUrl) {
-                    ImageCompressor.decodeBase64ToBitmap(photoUrl)
-                }
-
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Foto de perfil del doctor",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(88.dp)
-                            .clip(CircleShape)
-                    )
-                } else {
-                    DoctorInitialsAvatar(
-                        firstName = firstName,
-                        lastName = lastName,
-                        size = 88.dp
-                    )
-                }
+                DoctorAsyncAvatar(
+                    photoUrl = photoUrl,
+                    firstName = firstName,
+                    lastName = lastName,
+                    size = 88.dp
+                )
 
                 if (isSavingPhoto) {
                     Box(
@@ -409,7 +393,7 @@ fun DoctorAvatarHeaderSection(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Cambiar foto de perfil",
+                            contentDescription = stringResource(R.string.ui_doctor_profile_screen_312),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -441,7 +425,7 @@ fun DoctorAvatarHeaderSection(
 
             if (licenseNumber.isNotBlank()) {
                 Text(
-                    text = "Reg. Profesional: $licenseNumber",
+                    text = stringResource(R.string.ui_doctor_profile_screen_313, licenseNumber),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = BiodontosGreyText
                     ),
@@ -458,7 +442,7 @@ fun DoctorAvatarHeaderSection(
                 ) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Dirección del consultorio",
+                        contentDescription = stringResource(R.string.ui_doctor_profile_screen_314),
                         tint = BiodontosDark,
                         modifier = Modifier.size(16.dp)
                     )
@@ -503,7 +487,7 @@ fun DoctorAvatarHeaderSection(
                             color = BiodontosInputBg
                         ) {
                             Text(
-                                text = "+${servicesList.size - 3}",
+                                text = stringResource(R.string.ui_login_screen_135, servicesList.size - 3),
                                 fontSize = 11.sp,
                                 color = BiodontosGreyText,
                                 fontWeight = FontWeight.SemiBold,
@@ -576,7 +560,7 @@ fun DoctorProfessionalInfoCard(
                     tint = Zafiro
                 )
                 Text(
-                    text = "Información Profesional",
+                    text = stringResource(R.string.ui_doctor_profile_screen_315),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
@@ -587,8 +571,8 @@ fun DoctorProfessionalInfoCard(
             OutlinedTextField(
                 value = state.firstName,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdateFirstName(it)) },
-                label = { Text("Nombre") },
-                placeholder = { Text("Ej. Carlos") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_316)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_317)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors()
@@ -597,8 +581,8 @@ fun DoctorProfessionalInfoCard(
             OutlinedTextField(
                 value = state.lastName,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdateLastName(it)) },
-                label = { Text("Apellidos") },
-                placeholder = { Text("Ej. Mendoza Pérez") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_318)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_319)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors()
@@ -607,8 +591,8 @@ fun DoctorProfessionalInfoCard(
             OutlinedTextField(
                 value = state.specialty,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdateSpecialty(it)) },
-                label = { Text("Especialidad Odontológica") },
-                placeholder = { Text("Ej. Ortodoncia & Estética") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_320)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_321)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors()
@@ -617,8 +601,8 @@ fun DoctorProfessionalInfoCard(
             OutlinedTextField(
                 value = state.licenseNumber,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdateLicenseNumber(it)) },
-                label = { Text("Tarjeta / Cédula Profesional") },
-                placeholder = { Text("Ej. OD-20381") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_322)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_323)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors()
@@ -627,8 +611,8 @@ fun DoctorProfessionalInfoCard(
             OutlinedTextField(
                 value = state.phone,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdatePhone(it)) },
-                label = { Text("Teléfono de Contacto") },
-                placeholder = { Text("Ej. +57 300 123 4567") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_324)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_325)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth(),
@@ -638,8 +622,8 @@ fun DoctorProfessionalInfoCard(
             OutlinedTextField(
                 value = state.bio,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdateBio(it)) },
-                label = { Text("Biografía / Perfil Clínico") },
-                placeholder = { Text("Resumen de experiencia, enfoque clínico y certificaciones...") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_326)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_327)) },
                 minLines = 3,
                 maxLines = 5,
                 modifier = Modifier.fillMaxWidth(),
@@ -649,8 +633,8 @@ fun DoctorProfessionalInfoCard(
             OutlinedTextField(
                 value = state.clinicAddress,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdateClinicAddress(it)) },
-                label = { Text("Dirección del Consultorio") },
-                placeholder = { Text("Ej. Calle 100 # 15-20, Consultorio 402, Bogotá") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_314)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_328)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors()
@@ -659,12 +643,12 @@ fun DoctorProfessionalInfoCard(
             OutlinedTextField(
                 value = state.services,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdateServices(it)) },
-                label = { Text("Servicios que Ofrece") },
-                placeholder = { Text("Ej. Ortodoncia invisible, Diseño de sonrisa, Implantes, Blanqueamiento") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_329)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_330)) },
                 minLines = 2,
                 maxLines = 4,
                 supportingText = {
-                    Text("Ingresa los procedimientos separados por comas", fontSize = 11.sp, color = BiodontosGreyText)
+                    Text(stringResource(R.string.ui_doctor_profile_screen_331), fontSize = 11.sp, color = BiodontosGreyText)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors()
@@ -675,7 +659,7 @@ fun DoctorProfessionalInfoCard(
                 onValueChange = {},
                 readOnly = true,
                 enabled = false,
-                label = { Text("Correo Electrónico (Cuenta de acceso)") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_332)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = biodontosTextFieldColors()
             )
@@ -708,7 +692,7 @@ fun DoctorProfessionalInfoCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Guardar Cambios Profesionales",
+                        text = stringResource(R.string.ui_doctor_profile_screen_333),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
@@ -749,7 +733,7 @@ fun DoctorSecurityCard(
                     tint = Zafiro
                 )
                 Text(
-                    text = "Seguridad & Cuenta",
+                    text = stringResource(R.string.ui_doctor_profile_screen_334),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
@@ -758,7 +742,7 @@ fun DoctorSecurityCard(
             }
 
             Text(
-                text = "Cambiar Contraseña",
+                text = stringResource(R.string.ui_doctor_profile_screen_335),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = BiodontosDark
@@ -768,8 +752,8 @@ fun DoctorSecurityCard(
             OutlinedTextField(
                 value = state.newPassword,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdateNewPassword(it)) },
-                label = { Text("Nueva Contraseña") },
-                placeholder = { Text("Mínimo 6 caracteres") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_336)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_337)) },
                 singleLine = true,
                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -793,8 +777,8 @@ fun DoctorSecurityCard(
             OutlinedTextField(
                 value = state.confirmPassword,
                 onValueChange = { onEvent(DoctorProfileEvent.UpdateConfirmPassword(it)) },
-                label = { Text("Confirmar Nueva Contraseña") },
-                placeholder = { Text("Repita la nueva contraseña") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_338)) },
+                placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_339)) },
                 singleLine = true,
                 visualTransformation = if (state.isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -835,7 +819,7 @@ fun DoctorSecurityCard(
                     )
                 } else {
                     Text(
-                        text = "Actualizar Contraseña",
+                        text = stringResource(R.string.ui_doctor_profile_screen_340),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
@@ -848,7 +832,7 @@ fun DoctorSecurityCard(
             )
 
             Text(
-                text = "Restablecimiento por Correo",
+                text = stringResource(R.string.ui_doctor_profile_screen_341),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = BiodontosDark
@@ -856,7 +840,7 @@ fun DoctorSecurityCard(
             )
 
             Text(
-                text = "Enviaremos un enlace seguro a ${state.email.ifBlank { "su correo institucional" }} para restablecer su clave de acceso.",
+                text = stringResource(R.string.ui_doctor_profile_screen_342, state.email.ifBlank { "su correo institucional" }),
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = BiodontosGreyText
                 )
@@ -887,7 +871,7 @@ fun DoctorSecurityCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Enviar Enlace de Recuperación",
+                        text = stringResource(R.string.ui_doctor_profile_screen_343),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
@@ -919,7 +903,7 @@ fun DoctorSecurityCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Cerrar Sesión Profesional",
+                    text = stringResource(R.string.ui_doctor_profile_screen_344),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     color = Carmesi
@@ -929,49 +913,76 @@ fun DoctorSecurityCard(
     }
 }
 
-object ImageCompressor {
-    fun compressUriToBase64(
-        context: Context,
-        uri: Uri,
-        maxDimension: Int = 300,
-        quality: Int = 80
-    ): String? {
-        return try {
-            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
-            val originalBitmap = BitmapFactory.decodeStream(inputStream)
-            inputStream.close()
-            if (originalBitmap == null) return null
+@Composable
+fun DoctorAsyncAvatar(
+    photoUrl: String?,
+    firstName: String,
+    lastName: String,
+    size: Dp = 88.dp,
+    modifier: Modifier = Modifier
+) {
+    val cleanUrl = photoUrl?.trim().orEmpty()
+    val isLegacyDataUri = cleanUrl.startsWith("data:image", ignoreCase = true)
 
-            val width = originalBitmap.width
-            val height = originalBitmap.height
-            val scale = if (width > height) {
-                if (width > maxDimension) maxDimension.toFloat() / width else 1.0f
-            } else {
-                if (height > maxDimension) maxDimension.toFloat() / height else 1.0f
+    val decodedBytes by produceState<ByteArray?>(initialValue = null, key1 = cleanUrl) {
+        value = if (isLegacyDataUri) {
+            withContext(Dispatchers.Default) {
+                ImageCompressor.decodeBase64ToBytes(cleanUrl)
             }
-
-            val scaledBitmap = if (scale < 1.0f) {
-                Bitmap.createScaledBitmap(
-                    originalBitmap,
-                    (width * scale).toInt().coerceAtLeast(1),
-                    (height * scale).toInt().coerceAtLeast(1),
-                    true
-                )
-            } else {
-                originalBitmap
-            }
-
-            val outputStream = ByteArrayOutputStream()
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
-            val bytes = outputStream.toByteArray()
-            val base64String = Base64.encodeToString(bytes, Base64.NO_WRAP)
-            "data:image/jpeg;base64,$base64String"
-        } catch (e: Exception) {
+        } else {
             null
         }
     }
 
-    fun decodeBase64ToBitmap(dataUri: String?): Bitmap? {
+    val model: Any? = when {
+        cleanUrl.isEmpty() -> null
+        isLegacyDataUri -> decodedBytes
+        else -> cleanUrl
+    }
+
+    if (model != null) {
+        SubcomposeAsyncImage(
+            model = model,
+            contentDescription = stringResource(R.string.cd_doctor_profile_photo),
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+                .size(size)
+                .clip(CircleShape),
+            loading = {
+                Box(
+                    modifier = Modifier
+                        .size(size)
+                        .clip(CircleShape)
+                        .background(BiodontosInputBg),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Zafiro,
+                        modifier = Modifier.size(size * 0.32f),
+                        strokeWidth = 2.dp
+                    )
+                }
+            },
+            error = {
+                DoctorInitialsAvatar(
+                    firstName = firstName,
+                    lastName = lastName,
+                    size = size
+                )
+            }
+        )
+    } else {
+        DoctorInitialsAvatar(
+            firstName = firstName,
+            lastName = lastName,
+            size = size,
+            modifier = modifier
+        )
+    }
+}
+
+object ImageCompressor {
+    fun decodeBase64ToBytes(dataUri: String?): ByteArray? {
         if (dataUri.isNullOrBlank()) return null
         return try {
             val base64Part = if (dataUri.contains(",")) {
@@ -979,9 +990,8 @@ object ImageCompressor {
             } else {
                 dataUri
             }
-            val decodedBytes = Base64.decode(base64Part, Base64.DEFAULT)
-            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-        } catch (e: Exception) {
+            Base64.decode(base64Part.trim(), Base64.DEFAULT).takeIf { it.isNotEmpty() }
+        } catch (_: Exception) {
             null
         }
     }

@@ -1,5 +1,7 @@
 package com.example.biodontos.presentation.patientportal.home
 
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -143,7 +145,7 @@ fun PatientHomeScreen(
         ) {
             Column(modifier = Modifier.weight(1f, fill = false)) {
                 Text(
-                    text = "¡Hola, ${state.patientName.ifBlank { "Usuario" }}!",
+                    text = stringResource(R.string.ui_patient_home_screen_393, state.patientName.ifBlank { "Usuario" }),
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
@@ -156,14 +158,14 @@ fun PatientHomeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Actualizar información",
+                        contentDescription = stringResource(R.string.ui_patient_home_screen_394),
                         tint = BiodontosDark
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Image(
                     painter = painterResource(id = R.drawable.ic_launcher_tooth),
-                    contentDescription = "Biodontos",
+                    contentDescription = stringResource(R.string.ui_login_screen_126),
                     modifier = Modifier.size(44.dp)
                 )
             }
@@ -191,7 +193,7 @@ fun PatientHomeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Warning,
-                            contentDescription = "Error",
+                            contentDescription = stringResource(R.string.ui_materials_screen_297),
                             tint = BiodontosErrorRed,
                             modifier = Modifier.size(24.dp)
                         )
@@ -205,7 +207,7 @@ fun PatientHomeScreen(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     BiodontosPillButton(
-                        text = "Reintentar",
+                        text = stringResource(R.string.ui_doctor_appointments_screen_175),
                         onClick = { onEvent(PatientHomeUiEvent.Refresh) },
                         modifier = Modifier.height(36.dp)
                     )
@@ -309,21 +311,21 @@ private fun AgendaCard(
             ) {
                 Column {
                     Text(
-                        text = "AGENDA",
+                        text = stringResource(R.string.ui_my_appointments_screen_367),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosGreyText,
                         letterSpacing = 1.sp
                     )
                     Text(
-                        text = "Tus próximas citas",
+                        text = stringResource(R.string.ui_doctor_home_screen_249),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
                     )
                 }
                 BiodontosPillButton(
-                    text = "Ir a Citas",
+                    text = stringResource(R.string.ui_patient_home_screen_395),
                     onClick = onGoToAppointments,
                     trailingIcon = {
                         Icon(
@@ -345,7 +347,7 @@ private fun AgendaCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No tienes citas programadas en este momento.",
+                        text = stringResource(R.string.ui_patient_home_screen_396),
                         color = BiodontosGreyText,
                         fontSize = 14.sp
                     )
@@ -381,7 +383,7 @@ private fun AgendaCard(
                                 verticalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "PRÓXIMA CITA",
+                                    text = stringResource(R.string.ui_patient_home_screen_397),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = BiodontosDark
@@ -395,7 +397,7 @@ private fun AgendaCard(
                                         lineHeight = 44.sp
                                     )
                                     Text(
-                                        text = "$month $year",
+                                        text = stringResource(R.string.ui_login_screen_133, month, year),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = BiodontosDark
@@ -489,14 +491,14 @@ private fun PaymentsSummaryCard(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "PAGOS",
+                    text = stringResource(R.string.ui_patient_home_screen_398),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosGreyText,
                     letterSpacing = 1.sp
                 )
                 Text(
-                    text = "Saldo del mes",
+                    text = stringResource(R.string.ui_patient_home_screen_399),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
@@ -508,12 +510,12 @@ private fun PaymentsSummaryCard(
                     color = BiodontosDark
                 )
                 Text(
-                    text = "Revisa tus abonos y planes activos",
+                    text = stringResource(R.string.ui_patient_home_screen_400),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
                 BiodontosPillButton(
-                    text = "Ver pagos",
+                    text = stringResource(R.string.ui_patient_home_screen_401),
                     variant = PillButtonVariant.LIGHT,
                     onClick = onGoToPayments,
                     trailingIcon = {
@@ -546,14 +548,14 @@ private fun ClinicalRecordsSummaryCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "HISTORIA CLÍNICA",
+                text = stringResource(R.string.ui_patient_home_screen_402),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosGreyText,
                 letterSpacing = 1.sp
             )
             Text(
-                text = "Documentos",
+                text = stringResource(R.string.ui_doctor_home_screen_244),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark
@@ -562,12 +564,12 @@ private fun ClinicalRecordsSummaryCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Atenciones finalizadas", fontSize = 13.sp, color = BiodontosGreyText)
-                Text(text = "$completedCount", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
+                Text(text = stringResource(R.string.ui_patient_home_screen_403), fontSize = 13.sp, color = BiodontosGreyText)
+                Text(text = stringResource(R.string.ui_doctor_home_screen_246, completedCount), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
             }
             Spacer(modifier = Modifier.height(16.dp))
             BiodontosPillButton(
-                text = "Ir a documentos",
+                text = stringResource(R.string.ui_patient_home_screen_404),
                 onClick = onGoToRecords
             )
         }
@@ -599,14 +601,14 @@ private fun DoctorsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "TUS DOCTORES",
+                    text = stringResource(R.string.ui_patient_home_screen_405),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosGreyText,
                     letterSpacing = 1.sp
                 )
                 BiodontosPillButton(
-                    text = "Ver todos",
+                    text = stringResource(R.string.ui_patient_home_screen_406),
                     variant = PillButtonVariant.LIGHT,
                     onClick = onSeeAllDoctors
                 )
@@ -627,14 +629,14 @@ private fun DoctorsCard(
                         tint = BiodontosGreyText.copy(alpha = 0.5f)
                     )
                     Text(
-                        text = "Aún no tienes especialistas agendados",
+                        text = stringResource(R.string.ui_patient_home_screen_407),
                         color = BiodontosDark,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "Consulta el directorio de doctores de Biodontos para agendar tu primera consulta.",
+                        text = stringResource(R.string.ui_patient_home_screen_408),
                         color = BiodontosGreyText,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
@@ -642,7 +644,7 @@ private fun DoctorsCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     BiodontosPillButton(
-                        text = "Ir a la lista de doctores",
+                        text = stringResource(R.string.ui_patient_home_screen_409),
                         variant = PillButtonVariant.DARK,
                         onClick = onSeeAllDoctors,
                         modifier = Modifier.fillMaxWidth()
@@ -668,7 +670,7 @@ private fun DoctorsCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Dirección",
+                            contentDescription = stringResource(R.string.ui_doctor_detail_screen_379),
                             tint = BiodontosDark,
                             modifier = Modifier.size(14.dp)
                         )
@@ -714,7 +716,7 @@ private fun DoctorsCard(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     BiodontosPillButton(
-                        text = "Agendar",
+                        text = stringResource(R.string.ui_doctor_search_screen_392),
                         onClick = { onBookDoctor(doctor.id.value) },
                         modifier = Modifier.weight(1f)
                     )

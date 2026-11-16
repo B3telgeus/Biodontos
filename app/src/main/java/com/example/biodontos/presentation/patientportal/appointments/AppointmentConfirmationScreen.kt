@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.patientportal.appointments
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import android.content.Intent
 import android.provider.CalendarContract
 import androidx.compose.foundation.background
@@ -114,14 +118,14 @@ fun AppointmentConfirmationScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     BiodontosPillButton(
-                        text = "Ver mis citas",
+                        text = stringResource(R.string.ui_appointment_confirmation_screen_353),
                         variant = PillButtonVariant.DARK,
                         onClick = onNavigateToMyAppointments,
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     BiodontosPillButton(
-                        text = "Añadir a mi calendario",
+                        text = stringResource(R.string.ui_appointment_confirmation_screen_354),
                         variant = PillButtonVariant.OUTLINED,
                         onClick = {
                             try {
@@ -153,7 +157,7 @@ fun AppointmentConfirmationScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Volver al inicio",
+                            text = stringResource(R.string.ui_appointment_confirmation_screen_355),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = BiodontosDark
@@ -189,7 +193,7 @@ fun AppointmentConfirmationScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Confirmación exitosa",
+                            contentDescription = stringResource(R.string.ui_appointment_confirmation_screen_356),
                             tint = StatusConfirmed,
                             modifier = Modifier.size(46.dp)
                         )
@@ -308,7 +312,7 @@ fun AppointmentConfirmationScreen(
                                     color = BiodontosDark
                                 )
                                 Text(
-                                    text = "Sede Principal - Calle 100 # 15-20",
+                                    text = stringResource(R.string.ui_appointment_confirmation_screen_357),
                                     fontSize = 12.sp,
                                     color = BiodontosGreyText
                                 )
@@ -332,7 +336,7 @@ fun AppointmentConfirmationScreen(
 
                             Column {
                                 Text(
-                                    text = "Procedimiento / Motivo",
+                                    text = stringResource(R.string.ui_appointment_confirmation_screen_358),
                                     fontSize = 12.sp,
                                     color = BiodontosGreyText
                                 )
@@ -369,7 +373,7 @@ fun AppointmentConfirmationScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                text = "Instrucciones para tu cita",
+                                text = stringResource(R.string.ui_appointment_confirmation_screen_359),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosDark

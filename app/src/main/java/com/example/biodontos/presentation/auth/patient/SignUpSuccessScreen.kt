@@ -1,5 +1,7 @@
 package com.example.biodontos.presentation.auth.patient
 
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -57,7 +59,7 @@ fun SignUpSuccessScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "¡Hemos creado tu cuenta con éxito!",
+                text = stringResource(R.string.ui_sign_up_success_screen_158),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark,
@@ -67,7 +69,7 @@ fun SignUpSuccessScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Vamos a empezar esta experiencia juntos.",
+                text = stringResource(R.string.ui_sign_up_success_screen_159),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Normal,
                 color = BiodontosDark.copy(alpha = 0.8f),
@@ -82,12 +84,12 @@ fun SignUpSuccessScreen(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_launcher_tooth),
-                    contentDescription = "Biodontos",
+                    contentDescription = stringResource(R.string.ui_login_screen_126),
                     modifier = Modifier.size(240.dp)
                 )
 
                 BiodontosPillButton(
-                    text = "Iniciar sesión",
+                    text = stringResource(R.string.ui_login_screen_137),
                     onClick = onLoginClick,
                     modifier = Modifier.padding(top = 16.dp)
                 )

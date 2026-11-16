@@ -118,5 +118,24 @@ class DoctorDetailViewModelTest {
         assertNotNull(state.doctorDetail)
         assertEquals("Dr. Andrés Silva", state.doctorDetail?.doctor?.displayName)
     }
+
+    @Test
+    fun `when doctor has empty availability, detail loads with empty availability and isAvailableToday false`() = runTest {
+        val emptyAvailabilityDetail = testDetail.copy(
+            availability = emptyList(),
+            isAvailableToday = false
+        )
+        coEvery { getDoctorDetailUseCase("doc-1") } returns Result.success(emptyAvailabilityDetail)
+
+        val viewModel = createViewModel("doc-1")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals(null, state.errorMessage)
+        assertNotNull(state.doctorDetail)
+        assertTrue(state.doctorDetail?.availability?.isEmpty() == true)
+        assertFalse(state.doctorDetail?.isAvailableToday == true)
+    }
 }
 

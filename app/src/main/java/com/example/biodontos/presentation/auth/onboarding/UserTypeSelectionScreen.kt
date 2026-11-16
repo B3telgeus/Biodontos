@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.auth.onboarding
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,7 +49,7 @@ fun UserTypeSelectionScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás",
+                            contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
                             tint = BiodontosDark
                         )
                     }
@@ -81,7 +85,7 @@ fun UserTypeSelectionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "¡Nos alegra mucho tenerte por acá!",
+                        text = stringResource(R.string.ui_user_type_selection_screen_141),
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark,
@@ -89,7 +93,7 @@ fun UserTypeSelectionScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Por favor, selecciona la opción que mejor te represente:",
+                        text = stringResource(R.string.ui_user_type_selection_screen_142),
                         fontSize = 18.sp,
                         color = BiodontosGreyText,
                         textAlign = TextAlign.Center
@@ -120,7 +124,7 @@ fun UserTypeSelectionScreen(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "Soy Doctor",
+                                text = stringResource(R.string.ui_user_type_selection_screen_143),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -145,7 +149,7 @@ fun UserTypeSelectionScreen(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "Soy Paciente",
+                                text = stringResource(R.string.ui_user_type_selection_screen_144),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -167,7 +171,7 @@ fun UserTypeSelectionScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Atrás",
+                            text = stringResource(R.string.ui_doctor_registration_screen_110),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )

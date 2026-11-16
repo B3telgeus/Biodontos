@@ -17,7 +17,8 @@ object DoctorProfileViewModelFactory {
                 updateDoctorProfileUseCase = container.updateDoctorProfileUseCase,
                 updatePasswordUseCase = container.updatePasswordUseCase,
                 resetPasswordUseCase = container.resetPasswordUseCase,
-                logoutUseCase = container.logoutUseCase
+                logoutUseCase = container.logoutUseCase,
+                avatarRepository = container.avatarRepository
             ) as T
         }
     }

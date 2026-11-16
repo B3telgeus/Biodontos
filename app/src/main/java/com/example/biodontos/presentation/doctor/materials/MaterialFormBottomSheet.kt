@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.doctor.materials
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -109,7 +113,7 @@ fun MaterialFormBottomSheet(
                         color = BiodontosDark
                     )
                     Text(
-                        text = "Trazabilidad INVIMA y control de lotes",
+                        text = stringResource(R.string.ui_material_form_bottom_sheet_277),
                         fontSize = 12.sp,
                         color = BiodontosGreyText
                     )
@@ -117,7 +121,7 @@ fun MaterialFormBottomSheet(
                 IconButton(onClick = onDismiss) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cerrar",
+                        contentDescription = stringResource(R.string.ui_operative_consent_dialog_89),
                         tint = BiodontosDark
                     )
                 }
@@ -137,8 +141,8 @@ fun MaterialFormBottomSheet(
                 OutlinedTextField(
                     value = formState.name,
                     onValueChange = onNameChange,
-                    label = { Text("Nombre Comercial *") },
-                    placeholder = { Text("Ej: Resina Filtek Z350 XT") },
+                    label = { Text(stringResource(R.string.ui_material_form_bottom_sheet_278)) },
+                    placeholder = { Text(stringResource(R.string.ui_material_form_bottom_sheet_279)) },
                     isError = formState.nameError != null,
                     supportingText = formState.nameError?.let { { Text(it, color = BiodontosErrorRed) } },
                     colors = biodontosTextFieldColors(),
@@ -151,8 +155,8 @@ fun MaterialFormBottomSheet(
                 OutlinedTextField(
                     value = formState.invimaRegistration,
                     onValueChange = onInvimaChange,
-                    label = { Text("Registro Sanitario INVIMA *") },
-                    placeholder = { Text("Ej: INVIMA 2020DM-0012345") },
+                    label = { Text(stringResource(R.string.ui_material_form_bottom_sheet_280)) },
+                    placeholder = { Text(stringResource(R.string.ui_material_form_bottom_sheet_281)) },
                     isError = formState.invimaError != null,
                     supportingText = formState.invimaError?.let { { Text(it, color = BiodontosErrorRed) } },
                     colors = biodontosTextFieldColors(),
@@ -165,8 +169,8 @@ fun MaterialFormBottomSheet(
                 OutlinedTextField(
                     value = formState.batchLotNumber,
                     onValueChange = onLotChange,
-                    label = { Text("Número de Lote *") },
-                    placeholder = { Text("Ej: LOT-2024-X89") },
+                    label = { Text(stringResource(R.string.ui_material_form_bottom_sheet_282)) },
+                    placeholder = { Text(stringResource(R.string.ui_material_form_bottom_sheet_283)) },
                     isError = formState.lotError != null,
                     supportingText = formState.lotError?.let { { Text(it, color = BiodontosErrorRed) } },
                     colors = biodontosTextFieldColors(),
@@ -186,11 +190,11 @@ fun MaterialFormBottomSheet(
                             value = formState.manufacturingDate.format(dateFormatter),
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Elaboración *") },
+                            label = { Text(stringResource(R.string.ui_material_form_bottom_sheet_284)) },
                             trailingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.DateRange,
-                                    contentDescription = "Seleccionar fecha de elaboración",
+                                    contentDescription = stringResource(R.string.ui_material_form_bottom_sheet_285),
                                     tint = BiodontosDark
                                 )
                             },
@@ -214,11 +218,11 @@ fun MaterialFormBottomSheet(
                             value = formState.expirationDate.format(dateFormatter),
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Vencimiento *") },
+                            label = { Text(stringResource(R.string.ui_material_form_bottom_sheet_286)) },
                             trailingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.DateRange,
-                                    contentDescription = "Seleccionar fecha de vencimiento",
+                                    contentDescription = stringResource(R.string.ui_material_form_bottom_sheet_287),
                                     tint = BiodontosDark
                                 )
                             },
@@ -248,7 +252,7 @@ fun MaterialFormBottomSheet(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Info,
-                            contentDescription = "Error de fechas",
+                            contentDescription = stringResource(R.string.ui_material_form_bottom_sheet_288),
                             tint = BiodontosErrorRed,
                             modifier = Modifier.size(16.dp)
                         )
@@ -273,13 +277,13 @@ fun MaterialFormBottomSheet(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Info,
-                            contentDescription = "Aviso regulatorio",
+                            contentDescription = stringResource(R.string.ui_material_form_bottom_sheet_289),
                             tint = Ambar,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "La edición de este catálogo no altera las notas de evoluciones clínicas firmadas anteriormente.",
+                            text = stringResource(R.string.ui_material_form_bottom_sheet_290),
                             fontSize = 11.sp,
                             color = Color(0xFF92400E),
                             lineHeight = 14.sp
@@ -303,7 +307,7 @@ fun MaterialFormBottomSheet(
                         shape = RoundedCornerShape(12.dp),
                         enabled = !formState.isSaving
                     ) {
-                        Text("Cancelar", color = BiodontosDark)
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosDark)
                     }
 
                     Button(
@@ -355,12 +359,12 @@ fun MaterialFormBottomSheet(
                         showMfgDatePicker = false
                     }
                 ) {
-                    Text("Seleccionar", color = BiodontosDark, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_doctor_home_screen_265), color = BiodontosDark, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showMfgDatePicker = false }) {
-                    Text("Cancelar", color = BiodontosGreyText)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosGreyText)
                 }
             },
             colors = DatePickerDefaults.colors(containerColor = BiodontosWhite)
@@ -399,12 +403,12 @@ fun MaterialFormBottomSheet(
                         showExpDatePicker = false
                     }
                 ) {
-                    Text("Seleccionar", color = BiodontosDark, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_doctor_home_screen_265), color = BiodontosDark, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showExpDatePicker = false }) {
-                    Text("Cancelar", color = BiodontosGreyText)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosGreyText)
                 }
             },
             colors = DatePickerDefaults.colors(containerColor = BiodontosWhite)

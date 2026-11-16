@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.auth.doctor
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -66,12 +70,12 @@ fun DoctorRegistrationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Registro de Doctor", fontWeight = FontWeight.Bold, color = BiodontosDark) },
+                title = { Text(stringResource(R.string.ui_doctor_registration_screen_109), fontWeight = FontWeight.Bold, color = BiodontosDark) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás",
+                            contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
                             tint = BiodontosDark
                         )
                     }
@@ -141,13 +145,13 @@ fun DoctorRegistrationScreen(
                         1 -> {
                             // --- PASO 1: IDENTIDAD Y ACCESO ---
                             Text(
-                                text = "Identidad y Acceso",
+                                text = stringResource(R.string.ui_doctor_registration_screen_111),
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosDark
                             )
                             Text(
-                                text = "Paso 1 de 2: Datos personales y credenciales médicas de inicio.",
+                                text = stringResource(R.string.ui_doctor_registration_screen_112),
                                 fontSize = 14.sp,
                                 color = BiodontosGreyText
                             )
@@ -162,7 +166,7 @@ fun DoctorRegistrationScreen(
                                 OutlinedTextField(
                                     value = state.firstName,
                                     onValueChange = onFirstNameChange,
-                                    label = { Text("Nombres *") },
+                                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_9)) },
                                     modifier = Modifier.weight(1f),
                                     singleLine = true,
                                     isError = state.firstNameError != null,
@@ -173,7 +177,7 @@ fun DoctorRegistrationScreen(
                                 OutlinedTextField(
                                     value = state.lastName,
                                     onValueChange = onLastNameChange,
-                                    label = { Text("Apellidos *") },
+                                    label = { Text(stringResource(R.string.ui_doctor_registration_screen_113)) },
                                     modifier = Modifier.weight(1f),
                                     singleLine = true,
                                     isError = state.lastNameError != null,
@@ -187,7 +191,7 @@ fun DoctorRegistrationScreen(
                             OutlinedTextField(
                                 value = state.email,
                                 onValueChange = onEmailChange,
-                                label = { Text("Correo Institucional / Profesional *") },
+                                label = { Text(stringResource(R.string.ui_doctor_registration_screen_114)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -201,7 +205,7 @@ fun DoctorRegistrationScreen(
                             OutlinedTextField(
                                 value = state.phone,
                                 onValueChange = onPhoneChange,
-                                label = { Text("Teléfono de Contacto (opcional)") },
+                                label = { Text(stringResource(R.string.ui_doctor_registration_screen_115)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
@@ -215,7 +219,7 @@ fun DoctorRegistrationScreen(
                             OutlinedTextField(
                                 value = state.password,
                                 onValueChange = onPasswordChange,
-                                label = { Text("Contraseña (mín. 6 caracteres) *") },
+                                label = { Text(stringResource(R.string.ui_doctor_registration_screen_116)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -240,7 +244,7 @@ fun DoctorRegistrationScreen(
                             OutlinedTextField(
                                 value = state.confirmPassword,
                                 onValueChange = onConfirmPasswordChange,
-                                label = { Text("Confirmar Contraseña *") },
+                                label = { Text(stringResource(R.string.ui_doctor_registration_screen_117)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -263,14 +267,14 @@ fun DoctorRegistrationScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Perfil Profesional",
+                                    text = stringResource(R.string.ui_doctor_registration_screen_118),
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = BiodontosDark
                                 )
                             }
                             Text(
-                                text = "Paso 2 de 2: Cédula médica y especialidad odontológica.",
+                                text = stringResource(R.string.ui_doctor_registration_screen_119),
                                 fontSize = 14.sp,
                                 color = BiodontosGreyText
                             )
@@ -281,8 +285,8 @@ fun DoctorRegistrationScreen(
                             OutlinedTextField(
                                 value = state.licenseNumber,
                                 onValueChange = onLicenseNumberChange,
-                                label = { Text("Cédula / Registro Médico Profesional *") },
-                                placeholder = { Text("Ej: RM-4565345") },
+                                label = { Text(stringResource(R.string.ui_doctor_registration_screen_120)) },
+                                placeholder = { Text(stringResource(R.string.ui_doctor_registration_screen_121)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 isError = state.licenseError != null,
@@ -301,7 +305,7 @@ fun DoctorRegistrationScreen(
                                     value = state.specialty,
                                     onValueChange = {},
                                     readOnly = true,
-                                    label = { Text("Especialidad Odontológica *") },
+                                    label = { Text(stringResource(R.string.ui_doctor_registration_screen_122)) },
                                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSpecialty) },
                                     modifier = Modifier
                                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)

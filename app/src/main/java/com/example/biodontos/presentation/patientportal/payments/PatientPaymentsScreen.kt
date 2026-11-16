@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.patientportal.payments
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -258,7 +262,7 @@ private fun PaymentsHeader(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Regresar",
+                        contentDescription = stringResource(R.string.ui_doctor_appointments_screen_182),
                         tint = BiodontosDark
                     )
                 }
@@ -266,14 +270,14 @@ private fun PaymentsHeader(
             }
             Column {
                 Text(
-                    text = "ESTADO DE CUENTA",
+                    text = stringResource(R.string.ui_patient_payments_screen_410),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosGreyText,
                     letterSpacing = 1.2.sp
                 )
                 Text(
-                    text = "Pagos y Abonos",
+                    text = stringResource(R.string.ui_doctor_home_screen_252),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
@@ -295,7 +299,7 @@ private fun PaymentsHeader(
             } else {
                 Icon(
                     imageVector = Icons.Default.Refresh,
-                    contentDescription = "Actualizar",
+                    contentDescription = stringResource(R.string.ui_doctor_appointments_screen_186),
                     tint = BiodontosDark
                 )
             }
@@ -371,7 +375,7 @@ private fun TreatmentsSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Tratamientos y Procedimientos",
+                text = stringResource(R.string.ui_patient_payments_screen_411),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark
@@ -442,7 +446,7 @@ private fun TreatmentBalanceCard(
                         color = BiodontosDark
                     )
                     Text(
-                        text = "Costo Total: ${balance.treatment.totalCost.formatCop()}",
+                        text = stringResource(R.string.ui_patient_payments_screen_412, balance.treatment.totalCost.formatCop()),
                         fontSize = 12.sp,
                         color = BiodontosGreyText
                     )
@@ -465,7 +469,7 @@ private fun TreatmentBalanceCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "PAGADO",
+                                text = stringResource(R.string.ui_patient_payments_screen_413),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = StatusConfirmed
@@ -480,7 +484,7 @@ private fun TreatmentBalanceCard(
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "PENDIENTE",
+                            text = stringResource(R.string.ui_patient_payments_screen_414),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = Ambar
@@ -506,13 +510,13 @@ private fun TreatmentBalanceCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Abonado: ${balance.paidAmount.formatCop()}",
+                        text = stringResource(R.string.ui_patient_payments_screen_415, balance.paidAmount.formatCop()),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = BiodontosDark
                     )
                     Text(
-                        text = "Saldo: ${balance.pendingAmount.formatCop()}",
+                        text = stringResource(R.string.ui_patient_payments_screen_416, balance.pendingAmount.formatCop()),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = if (balance.isPaidInFull) StatusConfirmed else BiodontosErrorRed
@@ -540,7 +544,7 @@ private fun RecentPaymentsCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Historial de Abonos Recientes",
+                text = stringResource(R.string.ui_patient_payments_screen_417),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark
@@ -566,7 +570,7 @@ private fun RecentPaymentsCard(
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
-                            text = "Aún no registras abonos o pagos en la clínica.",
+                            text = stringResource(R.string.ui_patient_payments_screen_418),
                             fontSize = 13.sp,
                             color = BiodontosGreyText,
                             textAlign = TextAlign.Center
@@ -640,7 +644,7 @@ private fun PaymentRow(
         }
 
         Text(
-            text = "+ ${payment.amount.formatCop()}",
+            text = stringResource(R.string.ui_patient_payments_screen_419, payment.amount.formatCop()),
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = StatusConfirmed
@@ -669,13 +673,13 @@ private fun FinancialInfoCard(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.width(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Información sobre abonos",
+                    text = stringResource(R.string.ui_patient_payments_screen_420),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
                 )
                 Text(
-                    text = "Los abonos realizados en la clínica se ven reflejados de forma inmediata. Para facturación electrónica con NIT o solicitudes de crédito, comunícate con el área de recepción.",
+                    text = stringResource(R.string.ui_patient_payments_screen_421),
                     fontSize = 12.sp,
                     color = BiodontosGreyText,
                     lineHeight = 18.sp
@@ -777,7 +781,7 @@ private fun ErrorCard(
                 fontWeight = FontWeight.Medium
             )
             BiodontosPillButton(
-                text = "Reintentar",
+                text = stringResource(R.string.ui_doctor_appointments_screen_175),
                 variant = PillButtonVariant.DARK,
                 onClick = onRetry
             )
@@ -835,14 +839,14 @@ fun PaymentReceiptDialog(
                 ) {
                     Column {
                         Text(
-                            text = "BIODONTOS CLÍNICA",
+                            text = stringResource(R.string.ui_patient_payments_screen_422),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosGreyText,
                             letterSpacing = 1.2.sp
                         )
                         Text(
-                            text = "Comprobante de Abono",
+                            text = stringResource(R.string.ui_patient_payments_screen_423),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark
@@ -855,7 +859,7 @@ fun PaymentReceiptDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Cerrar comprobante",
+                            contentDescription = stringResource(R.string.ui_patient_payments_screen_424),
                             tint = BiodontosDark
                         )
                     }
@@ -907,13 +911,13 @@ fun PaymentReceiptDialog(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Monto Abonado",
+                        text = stringResource(R.string.ui_patient_payments_screen_425),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = BiodontosGreyText
                     )
                     Text(
-                        text = "+ ${payment.amount.formatCop()}",
+                        text = stringResource(R.string.ui_patient_payments_screen_419, payment.amount.formatCop()),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = if (payment.isVoided) BiodontosGreyText else StatusConfirmed
@@ -947,7 +951,7 @@ fun PaymentReceiptDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Comprobante generado electrónicamente. Válido como soporte de abono en sede clínica.",
+                        text = stringResource(R.string.ui_patient_payments_screen_426),
                         fontSize = 12.sp,
                         color = BiodontosGreyText,
                         lineHeight = 16.sp
@@ -956,7 +960,7 @@ fun PaymentReceiptDialog(
 
                 // Botón Cerrar (minHeight >= 48dp)
                 BiodontosPillButton(
-                    text = "Entendido / Cerrar",
+                    text = stringResource(R.string.ui_patient_payments_screen_427),
                     variant = PillButtonVariant.DARK,
                     onClick = onDismiss,
                     modifier = Modifier

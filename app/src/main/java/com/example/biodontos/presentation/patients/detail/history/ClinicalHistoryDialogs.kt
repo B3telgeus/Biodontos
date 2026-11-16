@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.patients.detail.history
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -73,13 +77,13 @@ fun QuickCreateActivityBottomSheet(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "Registrar Actividad en Historia Clínica",
+                text = stringResource(R.string.ui_clinical_history_dialogs_429),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 color = BiodontosDark
             )
             Text(
-                text = "Toda acción queda registrada con sello de tiempo y profesional tratante.",
+                text = stringResource(R.string.ui_clinical_history_dialogs_430),
                 fontSize = 12.sp,
                 color = BiodontosGreyText
             )
@@ -172,7 +176,7 @@ fun VoidActivityDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Warning,
-                    contentDescription = "Advertencia clínica",
+                    contentDescription = stringResource(R.string.ui_clinical_history_dialogs_431),
                     tint = Carmesi,
                     modifier = Modifier.size(22.dp)
                 )
@@ -193,7 +197,7 @@ fun VoidActivityDialog(
             ) {
                 if (step == 1) {
                     Text(
-                        text = "Conforme a la Resolución 1995 de 1999, el registro no se elimina físicamente: quedará marcado como ANULADO en la línea de tiempo con su justificación.",
+                        text = stringResource(R.string.ui_clinical_history_dialogs_432),
                         fontSize = 12.sp,
                         color = BiodontosGreyText
                     )
@@ -213,8 +217,8 @@ fun VoidActivityDialog(
                     OutlinedTextField(
                         value = reason,
                         onValueChange = onReasonChange,
-                        label = { Text("Motivo de anulación (mín. 10 caracteres) *") },
-                        placeholder = { Text("Ej: Error de digitación en monto o pieza dental...") },
+                        label = { Text(stringResource(R.string.ui_clinical_history_dialogs_433)) },
+                        placeholder = { Text(stringResource(R.string.ui_clinical_history_dialogs_434)) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = biodontosTextFieldColors()
                     )
@@ -226,25 +230,25 @@ fun VoidActivityDialog(
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(
-                                text = "RESUMEN DE IMPACTO CLÍNICO Y CONTABLE",
+                                text = stringResource(R.string.ui_clinical_history_dialogs_435),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                                 color = Carmesi
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "• Registro: $itemSummary",
+                                text = stringResource(R.string.ui_clinical_history_dialogs_436, itemSummary),
                                 fontSize = 12.sp,
                                 color = BiodontosDark
                             )
                             Text(
-                                text = "• Justificación: ${reason.trim()}",
+                                text = stringResource(R.string.ui_clinical_history_dialogs_437, reason.trim()),
                                 fontSize = 12.sp,
                                 color = BiodontosDark
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "Esta acción es irreversible y quedará auditada a su nombre.",
+                                text = stringResource(R.string.ui_clinical_history_dialogs_438),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Carmesi
@@ -261,7 +265,7 @@ fun VoidActivityDialog(
                     enabled = reason.trim().length >= 10,
                     colors = ButtonDefaults.buttonColors(containerColor = Carmesi)
                 ) {
-                    Text("Continuar a Confirmación")
+                    Text(stringResource(R.string.ui_clinical_history_dialogs_439))
                 }
             } else {
                 Button(
@@ -272,14 +276,14 @@ fun VoidActivityDialog(
                     if (isProcessing) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
                     } else {
-                        Text("Confirmar Anulación")
+                        Text(stringResource(R.string.ui_clinical_history_dialogs_440))
                     }
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isProcessing) {
-                Text("Cancelar")
+                Text(stringResource(R.string.ui_doctor_appointments_screen_191))
             }
         }
     )
@@ -296,7 +300,7 @@ fun ClarificationNoteDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isSaving) onDismiss() },
-        title = { Text("Agregar Nota Aclaratoria", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.ui_clinical_history_dialogs_441), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier
@@ -305,7 +309,7 @@ fun ClarificationNoteDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    text = "Se creará una nueva evolución vinculada al registro del ${originalEvolution.date} sin alterar el texto original.",
+                    text = stringResource(R.string.ui_clinical_history_dialogs_442, originalEvolution.date),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
@@ -315,7 +319,7 @@ fun ClarificationNoteDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Original: ${originalEvolution.description}",
+                        text = stringResource(R.string.ui_clinical_history_dialogs_443, originalEvolution.description),
                         fontSize = 12.sp,
                         color = BiodontosDark,
                         modifier = Modifier.padding(10.dp)
@@ -324,8 +328,8 @@ fun ClarificationNoteDialog(
                 OutlinedTextField(
                     value = clarificationText,
                     onValueChange = onTextChange,
-                    label = { Text("Texto de la Nota Aclaratoria *") },
-                    placeholder = { Text("Aclaración clínica sobre hallazgo o procedimiento...") },
+                    label = { Text(stringResource(R.string.ui_clinical_history_dialogs_444)) },
+                    placeholder = { Text(stringResource(R.string.ui_clinical_history_dialogs_445)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = biodontosTextFieldColors()
                 )
@@ -340,13 +344,13 @@ fun ClarificationNoteDialog(
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
                 } else {
-                    Text("Guardar Aclaración")
+                    Text(stringResource(R.string.ui_clinical_history_dialogs_446))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("Cancelar")
+                Text(stringResource(R.string.ui_doctor_appointments_screen_191))
             }
         }
     )
@@ -368,7 +372,7 @@ fun TreatmentStatusUpdateDialog(
 
     AlertDialog(
         onDismissRequest = { if (!isUpdating) onDismiss() },
-        title = { Text("Actualizar Estado de Presupuesto", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.ui_clinical_history_dialogs_447), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier
@@ -377,20 +381,20 @@ fun TreatmentStatusUpdateDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "${treatment.description} (${treatment.totalCost.formatCop()})",
+                    text = stringResource(R.string.ui_doctor_documents_screen_229, treatment.description, treatment.totalCost.formatCop()),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
                     color = BiodontosDark
                 )
                 Text(
-                    text = "Estado actual: ${currentStatus.displayName}",
+                    text = stringResource(R.string.ui_clinical_history_dialogs_448, currentStatus.displayName),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
 
                 if (allowedTransitions.isEmpty()) {
                     Text(
-                        text = "Este presupuesto se encuentra en un estado final y no admite más cambios.",
+                        text = stringResource(R.string.ui_clinical_history_dialogs_449),
                         fontSize = 12.sp,
                         color = Carmesi
                     )
@@ -416,8 +420,8 @@ fun TreatmentStatusUpdateDialog(
                         OutlinedTextField(
                             value = reason,
                             onValueChange = onReasonChange,
-                            label = { Text("Motivo de cancelación *") },
-                            placeholder = { Text("Ej: Paciente desiste del plan protésico...") },
+                            label = { Text(stringResource(R.string.ui_clinical_history_dialogs_450)) },
+                            placeholder = { Text(stringResource(R.string.ui_clinical_history_dialogs_451)) },
                             modifier = Modifier.fillMaxWidth(),
                             colors = biodontosTextFieldColors()
                         )
@@ -435,14 +439,14 @@ fun TreatmentStatusUpdateDialog(
                     if (isUpdating) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
                     } else {
-                        Text("Guardar Estado")
+                        Text(stringResource(R.string.ui_clinical_history_dialogs_452))
                     }
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isUpdating) {
-                Text("Cerrar")
+                Text(stringResource(R.string.ui_operative_consent_dialog_89))
             }
         }
     )
@@ -460,7 +464,7 @@ fun NewTreatmentBudgetDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isSaving) onDismiss() },
-        title = { Text("Nuevo Presupuesto de Tratamiento", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.ui_clinical_history_dialogs_453), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier
@@ -471,15 +475,15 @@ fun NewTreatmentBudgetDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = onDescriptionChange,
-                    label = { Text("Descripción del Plan / Tratamiento *") },
-                    placeholder = { Text("Ej: Rehabilitación corona circonio diente 21") },
+                    label = { Text(stringResource(R.string.ui_clinical_history_dialogs_454)) },
+                    placeholder = { Text(stringResource(R.string.ui_clinical_history_dialogs_455)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = biodontosTextFieldColors()
                 )
                 OutlinedTextField(
                     value = totalCost,
                     onValueChange = onTotalCostChange,
-                    label = { Text("Costo Total Presupuestado (COP) *") },
+                    label = { Text(stringResource(R.string.ui_clinical_history_dialogs_456)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     colors = biodontosTextFieldColors()
@@ -495,13 +499,13 @@ fun NewTreatmentBudgetDialog(
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
                 } else {
-                    Text("Crear Presupuesto")
+                    Text(stringResource(R.string.ui_clinical_history_dialogs_457))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("Cancelar")
+                Text(stringResource(R.string.ui_doctor_appointments_screen_191))
             }
         }
     )
@@ -527,7 +531,7 @@ fun NewPaymentDialog(
 
     AlertDialog(
         onDismissRequest = { if (!isSaving) onDismiss() },
-        title = { Text("Registrar Pago / Abono", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.ui_clinical_history_dialogs_458), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier
@@ -537,12 +541,12 @@ fun NewPaymentDialog(
             ) {
                 if (activeTreatments.isEmpty()) {
                     Text(
-                        text = "No hay presupuestos activos para este paciente. Cree primero un presupuesto de tratamiento.",
+                        text = stringResource(R.string.ui_clinical_history_dialogs_459),
                         fontSize = 12.sp,
                         color = Carmesi
                     )
                 } else {
-                    Text("Presupuesto a abonar:", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                    Text(stringResource(R.string.ui_clinical_history_dialogs_460), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                     activeTreatments.forEach { tr ->
                         OutlinedButton(
                             onClick = { onSelectTreatment(tr.id) },
@@ -550,7 +554,7 @@ fun NewPaymentDialog(
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Text(
-                                text = "${if (tr.id == selectedTreatmentId) "✓ " else ""}${tr.description} (${tr.totalCost.formatCop()})",
+                                text = stringResource(R.string.ui_clinical_history_dialogs_461, if (tr.id == selectedTreatmentId) "✓ " else "", tr.description, tr.totalCost.formatCop()),
                                 fontSize = 12.sp,
                                 fontWeight = if (tr.id == selectedTreatmentId) FontWeight.Bold else FontWeight.Normal
                             )
@@ -560,7 +564,7 @@ fun NewPaymentDialog(
                     OutlinedTextField(
                         value = amount,
                         onValueChange = onAmountChange,
-                        label = { Text("Monto del Abono (COP) *") },
+                        label = { Text(stringResource(R.string.ui_clinical_history_dialogs_462)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
                         colors = biodontosTextFieldColors()
@@ -588,14 +592,14 @@ fun NewPaymentDialog(
                     if (isSaving) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
                     } else {
-                        Text("Registrar Abono")
+                        Text(stringResource(R.string.ui_clinical_history_dialogs_463))
                     }
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("Cancelar")
+                Text(stringResource(R.string.ui_doctor_appointments_screen_191))
             }
         }
     )

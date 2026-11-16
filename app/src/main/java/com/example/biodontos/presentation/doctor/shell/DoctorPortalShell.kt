@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.doctor.shell
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -85,14 +89,14 @@ fun DoctorPortalShell(
             onDismissRequest = { showLogoutDialog = false },
             title = {
                 Text(
-                    text = "Cerrar sesión",
+                    text = stringResource(R.string.ui_doctor_profile_screen_309),
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
                 )
             },
             text = {
                 Text(
-                    text = "¿Estás seguro de que deseas salir del portal médico?",
+                    text = stringResource(R.string.ui_doctor_portal_shell_345),
                     color = BiodontosGreyText
                 )
             },
@@ -104,7 +108,7 @@ fun DoctorPortalShell(
                     },
                     modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                 ) {
-                    Text("Cerrar sesión", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ui_doctor_profile_screen_309), color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -112,7 +116,7 @@ fun DoctorPortalShell(
                     onClick = { showLogoutDialog = false },
                     modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                 ) {
-                    Text("Cancelar", color = BiodontosDark)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosDark)
                 }
             },
             containerColor = BiodontosWhite,
@@ -184,7 +188,7 @@ fun DoctorPortalShell(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                                contentDescription = "Cerrar sesión",
+                                contentDescription = stringResource(R.string.ui_doctor_profile_screen_309),
                                 tint = BiodontosWhite.copy(alpha = 0.7f),
                                 modifier = Modifier.size(24.dp)
                             )
@@ -242,12 +246,12 @@ fun DoctorPortalShell(
                             icon = {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                                    contentDescription = "Cerrar sesión"
+                                    contentDescription = stringResource(R.string.ui_doctor_profile_screen_309)
                                 )
                             },
                             label = {
                                 Text(
-                                    text = "Salir",
+                                    text = stringResource(R.string.ui_doctor_portal_shell_346),
                                     fontSize = 11.sp,
                                     color = BiodontosWhite.copy(alpha = 0.6f)
                                 )

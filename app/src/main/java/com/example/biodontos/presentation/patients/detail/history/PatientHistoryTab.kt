@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.patients.detail.history
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -138,7 +142,7 @@ fun PatientHistoryTab(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Warning,
-                        contentDescription = "Error de carga",
+                        contentDescription = stringResource(R.string.ui_patient_history_tab_464),
                         tint = Carmesi,
                         modifier = Modifier.size(36.dp)
                     )
@@ -156,7 +160,7 @@ fun PatientHistoryTab(
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Reintentar")
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_175))
                     }
                 }
             }
@@ -263,20 +267,20 @@ private fun PartialSyncWarningBanner(
             ) {
                 Icon(
                     imageVector = Icons.Default.Warning,
-                    contentDescription = "Sincronización parcial",
+                    contentDescription = stringResource(R.string.ui_patient_history_tab_465),
                     tint = Carmesi,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Algunas fuentes no pudieron sincronizarse ($names).",
+                    text = stringResource(R.string.ui_patient_history_tab_466, names),
                     fontSize = 12.sp,
                     color = Carmesi,
                     fontWeight = FontWeight.SemiBold
                 )
             }
             TextButton(onClick = onRetry) {
-                Text("Reintentar", color = Carmesi, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.ui_doctor_appointments_screen_175), color = Carmesi, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
     }
@@ -298,13 +302,13 @@ private fun PatientHistoryKpiHeader(summary: PatientHistorySummary) {
             ) {
                 Column {
                     Text(
-                        text = "Trazabilidad Clínica y Financiera",
+                        text = stringResource(R.string.ui_patient_history_tab_467),
                         color = BiodontosWhite.copy(alpha = 0.8f),
                         fontSize = 12.sp
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Saldo Pendiente: ${summary.pendingBalance.formatCop()}",
+                        text = stringResource(R.string.ui_patient_history_tab_468, summary.pendingBalance.formatCop()),
                         color = BiodontosWhite,
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Bold
@@ -315,7 +319,7 @@ private fun PatientHistoryKpiHeader(summary: PatientHistorySummary) {
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
-                        text = "${summary.totalActivities} eventos",
+                        text = stringResource(R.string.ui_patient_history_tab_469, summary.totalActivities),
                         color = BiodontosWhite,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -386,7 +390,7 @@ private fun ActivityFilterBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Filtrar por Mes",
+                    text = stringResource(R.string.ui_patient_history_tab_470),
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
                     color = BiodontosDark
@@ -394,7 +398,7 @@ private fun ActivityFilterBar(
                 val isFiltered = selectedMonth != null || selectedTypes.size != ActivityType.entries.size
                 if (isFiltered) {
                     Text(
-                        text = "Limpiar filtros",
+                        text = stringResource(R.string.ui_doctor_search_screen_390),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Zafiro,
@@ -410,7 +414,7 @@ private fun ActivityFilterBar(
                     FilterChip(
                         selected = selectedMonth == null,
                         onClick = { onSelectMonth(null) },
-                        label = { Text("Todos los meses", fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_patient_history_tab_471), fontSize = 12.sp) }
                     )
                 }
                 items(availableMonths, key = { it.toString() }) { ym ->
@@ -426,7 +430,7 @@ private fun ActivityFilterBar(
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Tipo de Actividad",
+                text = stringResource(R.string.ui_patient_history_tab_472),
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.sp,
                 color = BiodontosDark
@@ -478,7 +482,7 @@ private fun MonthStickyHeader(
                 color = BiodontosDark
             )
             Text(
-                text = "$count reg.",
+                text = stringResource(R.string.ui_patient_history_tab_473, count),
                 fontSize = 11.sp,
                 color = BiodontosGreyText,
                 fontWeight = FontWeight.Medium
@@ -539,7 +543,7 @@ private fun PatientActivityTimelineCard(
 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (isVoided) {
-                        StatusPill(text = "ANULADO", color = Carmesi)
+                        StatusPill(text = stringResource(R.string.ui_patient_history_tab_474), color = Carmesi)
                     }
                     Text(
                         text = if (activity.isDateValid) {
@@ -578,7 +582,7 @@ private fun PatientActivityTimelineCard(
 
                     if (activity.auditTrail.isNotEmpty()) {
                         Text(
-                            text = "Trazabilidad de Auditoría:",
+                            text = stringResource(R.string.ui_patient_history_tab_475),
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp,
                             color = BiodontosDark
@@ -586,7 +590,7 @@ private fun PatientActivityTimelineCard(
                         Spacer(modifier = Modifier.height(4.dp))
                         activity.auditTrail.forEach { stamp ->
                             Text(
-                                text = "• ${stamp.action.label} por ${stamp.actorName ?: "Profesional"} (${stamp.occurredAt.format(DATE_TIME_DISPLAY_FORMATTER)})",
+                                text = stringResource(R.string.ui_patient_history_tab_476, stamp.action.label, stamp.actorName ?: "Profesional", stamp.occurredAt.format(DATE_TIME_DISPLAY_FORMATTER)),
                                 fontSize = 11.sp,
                                 color = BiodontosGreyText
                             )
@@ -607,14 +611,14 @@ private fun PatientActivityTimelineCard(
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Nota Aclaratoria", fontSize = 12.sp)
+                                        Text(stringResource(R.string.ui_patient_history_tab_477), fontSize = 12.sp)
                                     }
                                     OutlinedButton(
                                         onClick = onRequestVoid,
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Anular Evolución", fontSize = 12.sp, color = Carmesi)
+                                        Text(stringResource(R.string.ui_patient_history_tab_478), fontSize = 12.sp, color = Carmesi)
                                     }
                                 }
                             }
@@ -625,7 +629,7 @@ private fun PatientActivityTimelineCard(
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Text("Anular Abono Contable", fontSize = 12.sp, color = Carmesi)
+                                        Text(stringResource(R.string.ui_patient_history_tab_479), fontSize = 12.sp, color = Carmesi)
                                     }
                                 }
                             }
@@ -637,7 +641,7 @@ private fun PatientActivityTimelineCard(
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Cambiar Estado", fontSize = 12.sp)
+                                        Text(stringResource(R.string.ui_patient_history_tab_480), fontSize = 12.sp)
                                     }
                                 }
                                 if (activity.status != TreatmentStatus.CANCELADO &&
@@ -649,7 +653,7 @@ private fun PatientActivityTimelineCard(
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Registrar Abono", fontSize = 12.sp)
+                                        Text(stringResource(R.string.ui_clinical_history_dialogs_463), fontSize = 12.sp)
                                     }
                                 }
                             }
@@ -703,10 +707,10 @@ private fun EvolutionActivityContent(activity: PatientActivity.EvolutionActivity
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (evo.isClarification) {
-                StatusPill(text = "NOTA ACLARATORIA", color = Zafiro)
+                StatusPill(text = stringResource(R.string.ui_patient_history_tab_477), color = Zafiro)
             }
             if (evo.toothTreated != null) {
-                StatusPill(text = "Pieza FDI ${evo.toothTreated}", color = BiodontosDark)
+                StatusPill(text = stringResource(R.string.ui_patient_history_tab_481, evo.toothTreated), color = BiodontosDark)
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -724,7 +728,7 @@ private fun EvolutionActivityContent(activity: PatientActivity.EvolutionActivity
         if (activity.voidInfo != null) {
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Motivo de anulación: ${activity.voidInfo.reason}",
+                text = stringResource(R.string.ui_patient_history_tab_482, activity.voidInfo.reason),
                 fontSize = 11.sp,
                 color = Carmesi,
                 fontWeight = FontWeight.SemiBold
@@ -763,7 +767,7 @@ fun EvolutionMaterialsSnapshotCard(
                         modifier = Modifier.size(15.dp)
                     )
                     Text(
-                        text = "Insumos Odontológicos Trazados (INVIMA)",
+                        text = stringResource(R.string.ui_patient_history_tab_483),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
@@ -774,7 +778,7 @@ fun EvolutionMaterialsSnapshotCard(
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        text = "Res. 1995/1999 • Inmutable",
+                        text = stringResource(R.string.ui_patient_history_tab_484),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         color = Zafiro,
@@ -808,7 +812,7 @@ fun EvolutionMaterialsSnapshotCard(
                             color = BiodontosDark
                         )
                         Text(
-                            text = "${mat.quantityUsed} unidad(es)",
+                            text = stringResource(R.string.ui_patient_history_tab_485, mat.quantityUsed),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 11.sp,
                             color = Zafiro
@@ -820,17 +824,17 @@ fun EvolutionMaterialsSnapshotCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "INVIMA: ${mat.invimaSnapshot}",
+                            text = stringResource(R.string.ui_patient_history_tab_486, mat.invimaSnapshot),
                             fontSize = 10.sp,
                             color = BiodontosGreyText
                         )
                         Text(
-                            text = "•",
+                            text = stringResource(R.string.ui_patient_history_tab_487),
                             fontSize = 10.sp,
                             color = BiodontosGreyText
                         )
                         Text(
-                            text = "Lote: ${mat.lotNumberSnapshot}",
+                            text = stringResource(R.string.ui_patient_history_tab_488, mat.lotNumberSnapshot),
                             fontSize = 10.sp,
                             color = BiodontosGreyText
                         )
@@ -841,18 +845,18 @@ fun EvolutionMaterialsSnapshotCard(
                     ) {
                         if (mat.manufacturingDateSnapshot.isNotBlank()) {
                             Text(
-                                text = "Elab: ${mat.manufacturingDateSnapshot}",
+                                text = stringResource(R.string.ui_patient_history_tab_489, mat.manufacturingDateSnapshot),
                                 fontSize = 10.sp,
                                 color = BiodontosGreyText
                             )
                             Text(
-                                text = "•",
+                                text = stringResource(R.string.ui_patient_history_tab_487),
                                 fontSize = 10.sp,
                                 color = BiodontosGreyText
                             )
                         }
                         Text(
-                            text = "Vence: ${mat.expirationDateSnapshot}",
+                            text = stringResource(R.string.ui_patient_history_tab_490, mat.expirationDateSnapshot),
                             fontSize = 10.sp,
                             color = BiodontosGreyText
                         )
@@ -882,7 +886,7 @@ private fun PaymentActivityContent(activity: PatientActivity.PaymentActivity) {
                     textDecoration = if (isVoided) TextDecoration.LineThrough else TextDecoration.None
                 )
                 Text(
-                    text = "Método: ${pay.paymentMethod ?: "EFECTIVO"}",
+                    text = stringResource(R.string.ui_patient_history_tab_491, pay.paymentMethod ?: "EFECTIVO"),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
@@ -898,7 +902,7 @@ private fun PaymentActivityContent(activity: PatientActivity.PaymentActivity) {
         if (activity.voidInfo != null) {
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Anulado: ${activity.voidInfo.reason}",
+                text = stringResource(R.string.ui_patient_history_tab_492, activity.voidInfo.reason),
                 fontSize = 11.sp,
                 color = Carmesi,
                 fontWeight = FontWeight.SemiBold
@@ -930,7 +934,7 @@ private fun TreatmentBudgetActivityContent(activity: PatientActivity.TreatmentBu
                     color = BiodontosDark
                 )
                 Text(
-                    text = "Presupuesto: ${treat.totalCost.formatCop()}",
+                    text = stringResource(R.string.ui_patient_history_tab_493, treat.totalCost.formatCop()),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = BiodontosGreyText
@@ -941,7 +945,7 @@ private fun TreatmentBudgetActivityContent(activity: PatientActivity.TreatmentBu
         if (!treat.statusReason.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Observación de estado: ${treat.statusReason}",
+                text = stringResource(R.string.ui_patient_history_tab_494, treat.statusReason),
                 fontSize = 11.sp,
                 color = BiodontosGreyText
             )
@@ -966,7 +970,7 @@ private fun ConsentActivityContent(activity: PatientActivity.ConsentActivity) {
                 color = BiodontosDark
             )
             Text(
-                text = "Versión ${consent.documentVersion} · ${consent.procedures.size} procedimiento(s)",
+                text = stringResource(R.string.ui_patient_history_tab_495, consent.documentVersion, consent.procedures.size),
                 fontSize = 12.sp,
                 color = BiodontosGreyText
             )
@@ -989,14 +993,14 @@ private fun RecordLifecycleActivityContent(activity: PatientActivity.RecordLifec
             color = BiodontosDark
         )
         Text(
-            text = "Diagnóstico principal: ${rec.mainDiagnosis?.ifBlank { "En evaluación" } ?: "En evaluación"}",
+            text = stringResource(R.string.ui_patient_history_tab_496, rec.mainDiagnosis?.ifBlank { "En evaluación" } ?: "En evaluación"),
             fontSize = 12.sp,
             color = BiodontosGreyText
         )
         if (!rec.closureSummary.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Resumen de cierre: ${rec.closureSummary}",
+                text = stringResource(R.string.ui_patient_history_tab_497, rec.closureSummary),
                 fontSize = 11.sp,
                 color = BiodontosDark
             )
@@ -1008,7 +1012,7 @@ private fun RecordLifecycleActivityContent(activity: PatientActivity.RecordLifec
 private fun AuditFooterRow(stamp: AuditStamp?) {
     val actorText = stamp?.actorName?.takeIf { it.isNotBlank() } ?: "Registro Clínico Verificado"
     Text(
-        text = "Registrado por: $actorText · Toca para ver acciones y auditoría",
+        text = stringResource(R.string.ui_patient_history_tab_498, actorText),
         fontSize = 11.sp,
         color = BiodontosGreyText
     )
@@ -1062,7 +1066,7 @@ private fun EmptyHistoryStateCard(
             if (hasAnyActivities) {
                 Spacer(modifier = Modifier.height(12.dp))
                 OutlinedButton(onClick = onClearFilters) {
-                    Text("Restablecer Filtros")
+                    Text(stringResource(R.string.ui_patient_history_tab_499))
                 }
             }
         }

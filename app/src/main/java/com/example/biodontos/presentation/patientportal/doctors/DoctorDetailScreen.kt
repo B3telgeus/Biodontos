@@ -42,11 +42,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
@@ -108,7 +110,7 @@ fun DoctorDetailScreen(
                     contentPadding = PaddingValues(16.dp)
                 ) {
                     BiodontosPillButton(
-                        text = "Agendar Cita con ${detail.doctor.firstName}",
+                        text = stringResource(R.string.ui_doctor_detail_screen_376, detail.doctor.firstName),
                         variant = PillButtonVariant.DARK,
                         onClick = { onEvent(DoctorDetailUiEvent.BookAppointment) },
                         modifier = Modifier.fillMaxWidth()
@@ -133,13 +135,13 @@ fun DoctorDetailScreen(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
+                        contentDescription = stringResource(R.string.ui_clinical_admission_screen_3),
                         tint = BiodontosDark
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Perfil del Especialista",
+                    text = stringResource(R.string.ui_doctor_detail_screen_377),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
@@ -176,7 +178,7 @@ fun DoctorDetailScreen(
                             fontSize = 14.sp
                         )
                         BiodontosPillButton(
-                            text = "Reintentar",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_175),
                             onClick = { onEvent(DoctorDetailUiEvent.Retry) }
                         )
                     }
@@ -230,7 +232,7 @@ fun DoctorDetailScreen(
 
                                 if (doctor.licenseNumber.isNotBlank()) {
                                     Text(
-                                        text = "Registro Profesional: ${doctor.licenseNumber}",
+                                        text = stringResource(R.string.ui_doctor_detail_screen_378, doctor.licenseNumber),
                                         fontSize = 12.sp,
                                         color = BiodontosGreyText.copy(alpha = 0.8f)
                                     )
@@ -244,7 +246,7 @@ fun DoctorDetailScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.LocationOn,
-                                            contentDescription = "Dirección",
+                                            contentDescription = stringResource(R.string.ui_doctor_detail_screen_379),
                                             tint = BiodontosDark,
                                             modifier = Modifier.size(16.dp)
                                         )
@@ -267,7 +269,7 @@ fun DoctorDetailScreen(
                                             .padding(horizontal = 12.dp, vertical = 6.dp)
                                     ) {
                                         Text(
-                                            text = "● Atiende hoy",
+                                            text = stringResource(R.string.ui_doctor_detail_screen_380),
                                             color = BiodontosWhite,
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.SemiBold
@@ -281,7 +283,7 @@ fun DoctorDetailScreen(
                                             .padding(horizontal = 12.dp, vertical = 6.dp)
                                     ) {
                                         Text(
-                                            text = "Atención según agenda",
+                                            text = stringResource(R.string.ui_doctor_detail_screen_381),
                                             color = BiodontosDark,
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Medium
@@ -306,7 +308,7 @@ fun DoctorDetailScreen(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Text(
-                                        text = "ACERCA DEL ESPECIALISTA",
+                                        text = stringResource(R.string.ui_doctor_detail_screen_382),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = BiodontosGreyText,
@@ -344,7 +346,7 @@ fun DoctorDetailScreen(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "SERVICIOS QUE OFRECE",
+                                        text = stringResource(R.string.ui_doctor_profile_screen_329),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = BiodontosGreyText,
@@ -379,7 +381,7 @@ fun DoctorDetailScreen(
                                     }
                                 } else {
                                     Text(
-                                        text = "Consulta general y procedimientos odontológicos especializados según valoración clínica.",
+                                        text = stringResource(R.string.ui_doctor_detail_screen_383),
                                         fontSize = 13.sp,
                                         color = BiodontosGreyText
                                     )
@@ -409,7 +411,7 @@ fun DoctorDetailScreen(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "HORARIO DE ATENCIÓN",
+                                        text = stringResource(R.string.ui_doctor_detail_screen_384),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = BiodontosGreyText,
@@ -419,7 +421,7 @@ fun DoctorDetailScreen(
 
                                 if (detail.availability.isEmpty()) {
                                     Text(
-                                        text = "Horarios sujetos a programación clínica. Consulta cupos al agendar.",
+                                        text = stringResource(R.string.doctor_availability_empty),
                                         fontSize = 13.sp,
                                         color = BiodontosGreyText
                                     )
@@ -469,7 +471,7 @@ private fun ScheduleRow(slot: WeeklyAvailability) {
             color = BiodontosDark
         )
         Text(
-            text = "$startStr - $endStr",
+            text = stringResource(R.string.ui_doctor_detail_screen_385, startStr, endStr),
             fontSize = 13.sp,
             color = BiodontosGreyText
         )

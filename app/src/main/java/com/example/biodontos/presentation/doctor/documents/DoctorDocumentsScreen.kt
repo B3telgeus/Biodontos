@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.doctor.documents
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -162,21 +166,21 @@ fun DoctorDocumentsContent(
                         IconButton(onClick = onNavigateBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Regresar",
+                                contentDescription = stringResource(R.string.ui_doctor_appointments_screen_182),
                                 tint = BiodontosDark
                             )
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                         Column {
                             Text(
-                                text = "EXPEDIENTES Y CUMPLIMIENTO",
+                                text = stringResource(R.string.ui_doctor_documents_screen_225),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosGreyText,
                                 letterSpacing = 1.2.sp
                             )
                             Text(
-                                text = "Historias Clínicas",
+                                text = stringResource(R.string.ui_doctor_documents_screen_226),
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosDark
@@ -192,7 +196,7 @@ fun DoctorDocumentsContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Actualizar",
+                            contentDescription = stringResource(R.string.ui_doctor_appointments_screen_186),
                             tint = BiodontosDark
                         )
                     }
@@ -213,7 +217,7 @@ fun DoctorDocumentsContent(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
-                            text = "Buscar paciente por nombre o DNI...",
+                            text = stringResource(R.string.ui_doctor_documents_screen_227),
                             color = BiodontosGreyText,
                             fontSize = 13.sp
                         )
@@ -221,7 +225,7 @@ fun DoctorDocumentsContent(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Buscar",
+                            contentDescription = stringResource(R.string.ui_doctor_documents_screen_228),
                             tint = BiodontosDark
                         )
                     },
@@ -230,7 +234,7 @@ fun DoctorDocumentsContent(
                             IconButton(onClick = { onSearchQueryChange("") }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Limpiar búsqueda",
+                                    contentDescription = stringResource(R.string.ui_doctor_appointments_screen_213),
                                     tint = BiodontosGreyText
                                 )
                             }
@@ -264,7 +268,7 @@ fun DoctorDocumentsContent(
                             },
                             label = {
                                 Text(
-                                    text = "${filter.label} ($count)",
+                                    text = stringResource(R.string.ui_doctor_documents_screen_229, filter.label, count),
                                     fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
@@ -313,7 +317,7 @@ fun DoctorDocumentsContent(
                                     onClick = onRefresh,
                                     colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
                                 ) {
-                                    Text("Reintentar")
+                                    Text(stringResource(R.string.ui_doctor_appointments_screen_175))
                                 }
                             }
                         }
@@ -375,7 +379,7 @@ private fun DocumentsKpiSummaryCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "RESUMEN DE CUMPLIMIENTO",
+                text = stringResource(R.string.ui_doctor_documents_screen_230),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosGreyText,
@@ -463,13 +467,13 @@ private fun DocumentItemCard(
                         color = BiodontosDark
                     )
                     Text(
-                        text = "DNI: ${patient.dniCedula} · EPS: ${patient.eps}",
+                        text = stringResource(R.string.ui_doctor_documents_screen_231, patient.dniCedula, patient.eps),
                         fontSize = 12.sp,
                         color = BiodontosGreyText
                     )
                     if (patient.birthDate.isNotBlank()) {
                         Text(
-                            text = "Nacimiento: ${patient.birthDate}",
+                            text = stringResource(R.string.ui_doctor_documents_screen_232, patient.birthDate),
                             fontSize = 11.sp,
                             color = BiodontosGreyText
                         )
@@ -485,14 +489,14 @@ private fun DocumentItemCard(
             ) {
                 if (patient.consentSigned) {
                     DocumentStatusBadge(
-                        text = "Consentimiento Firmado",
+                        text = stringResource(R.string.ui_doctor_documents_screen_233),
                         containerColor = Esmeralda.copy(alpha = 0.12f),
                         textColor = Esmeralda,
                         icon = Icons.Default.Check
                     )
                 } else {
                     DocumentStatusBadge(
-                        text = "Firma Pendiente",
+                        text = stringResource(R.string.ui_doctor_documents_screen_234),
                         containerColor = Carmesi.copy(alpha = 0.12f),
                         textColor = Carmesi,
                         icon = Icons.Default.Warning
@@ -542,7 +546,7 @@ private fun DocumentItemCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Trazabilidad",
+                        text = stringResource(R.string.ui_doctor_documents_screen_235),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -571,7 +575,7 @@ private fun DocumentItemCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Odontograma",
+                        text = stringResource(R.string.ui_doctor_documents_screen_236),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -602,7 +606,7 @@ private fun DocumentItemCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Admisión",
+                        text = stringResource(R.string.ui_doctor_documents_screen_237),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,

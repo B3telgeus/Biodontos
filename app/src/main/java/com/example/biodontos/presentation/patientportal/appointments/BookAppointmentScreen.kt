@@ -47,11 +47,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
@@ -176,7 +178,7 @@ fun BookAppointmentScreen(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
+                        contentDescription = stringResource(R.string.ui_clinical_admission_screen_3),
                         tint = BiodontosDark
                     )
                 }
@@ -244,7 +246,7 @@ fun BookAppointmentScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "1. SELECCIONA LA FECHA",
+                                text = stringResource(R.string.ui_book_appointment_screen_360),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosGreyText,
@@ -278,7 +280,7 @@ fun BookAppointmentScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "2. HORARIOS DISPONIBLES",
+                                text = stringResource(R.string.ui_book_appointment_screen_361),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosGreyText,
@@ -314,7 +316,7 @@ fun BookAppointmentScreen(
                                                 color = BiodontosDark
                                             )
                                             BiodontosPillButton(
-                                                text = "Reintentar horarios",
+                                                text = stringResource(R.string.ui_book_appointment_screen_362),
                                                 variant = PillButtonVariant.OUTLINED,
                                                 onClick = { onEvent(BookAppointmentUiEvent.RetrySlots) }
                                             )
@@ -329,7 +331,7 @@ fun BookAppointmentScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = "No hay horarios disponibles para esta fecha. Intenta con otro día.",
+                                            text = stringResource(R.string.doctor_availability_empty),
                                             fontSize = 13.sp,
                                             color = BiodontosGreyText
                                         )
@@ -341,7 +343,7 @@ fun BookAppointmentScreen(
 
                                     if (morningSlots.isNotEmpty()) {
                                         Text(
-                                            text = "Mañana",
+                                            text = stringResource(R.string.ui_book_appointment_screen_363),
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = BiodontosDark
@@ -365,7 +367,7 @@ fun BookAppointmentScreen(
 
                                     if (afternoonSlots.isNotEmpty()) {
                                         Text(
-                                            text = "Tarde",
+                                            text = stringResource(R.string.ui_book_appointment_screen_364),
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = BiodontosDark
@@ -401,7 +403,7 @@ fun BookAppointmentScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "3. MOTIVO DE CONSULTA",
+                                text = stringResource(R.string.ui_book_appointment_screen_365),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosGreyText,
@@ -447,7 +449,7 @@ fun BookAppointmentScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 placeholder = {
                                     Text(
-                                        text = "Observación adicional (opcional)",
+                                        text = stringResource(R.string.ui_book_appointment_screen_366),
                                         fontSize = 13.sp,
                                         color = BiodontosGreyText
                                     )

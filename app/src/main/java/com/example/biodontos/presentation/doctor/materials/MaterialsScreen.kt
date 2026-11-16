@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.doctor.materials
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -139,8 +143,8 @@ fun MaterialsContent(
                 onClick = { onEvent(MaterialsUiEvent.OpenCreateForm) },
                 containerColor = BiodontosDark,
                 contentColor = BiodontosWhite,
-                icon = { Icon(Icons.Default.Add, contentDescription = "Nuevo Insumo") },
-                text = { Text("Nuevo Material", fontWeight = FontWeight.Bold) }
+                icon = { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_materials_screen_291)) },
+                text = { Text(stringResource(R.string.ui_materials_screen_292), fontWeight = FontWeight.Bold) }
             )
         }
     ) { innerPadding ->
@@ -171,7 +175,7 @@ fun MaterialsContent(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
+                            contentDescription = stringResource(R.string.ui_clinical_admission_screen_3),
                             tint = BiodontosDark
                         )
                     }
@@ -180,13 +184,13 @@ fun MaterialsContent(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Materiales e Insumos",
+                            text = stringResource(R.string.ui_materials_screen_293),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark
                         )
                         Text(
-                            text = "Catálogo regulatorio y trazabilidad INVIMA",
+                            text = stringResource(R.string.ui_materials_screen_294),
                             fontSize = 12.sp,
                             color = BiodontosGreyText
                         )
@@ -200,7 +204,7 @@ fun MaterialsContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Actualizar catálogo",
+                            contentDescription = stringResource(R.string.ui_materials_screen_295),
                             tint = BiodontosDark
                         )
                     }
@@ -239,11 +243,11 @@ fun MaterialsContent(
                 OutlinedTextField(
                     value = state.searchQuery,
                     onValueChange = { onEvent(MaterialsUiEvent.SearchQueryChanged(it)) },
-                    placeholder = { Text("Buscar por nombre, INVIMA o lote...", fontSize = 13.sp) },
+                    placeholder = { Text(stringResource(R.string.ui_materials_screen_296), fontSize = 13.sp) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Buscar",
+                            contentDescription = stringResource(R.string.ui_doctor_documents_screen_228),
                             tint = BiodontosGreyText
                         )
                     },
@@ -252,7 +256,7 @@ fun MaterialsContent(
                             IconButton(onClick = { onEvent(MaterialsUiEvent.SearchQueryChanged("")) }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Limpiar búsqueda",
+                                    contentDescription = stringResource(R.string.ui_doctor_appointments_screen_213),
                                     tint = BiodontosGreyText
                                 )
                             }
@@ -288,7 +292,7 @@ fun MaterialsContent(
                             onClick = { onEvent(MaterialsUiEvent.TabSelected(tab)) },
                             text = {
                                 Text(
-                                    text = "${tab.label} ($count)",
+                                    text = stringResource(R.string.ui_doctor_documents_screen_229, tab.label, count),
                                     fontSize = 13.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) BiodontosDark else BiodontosGreyText
@@ -334,7 +338,7 @@ fun MaterialsContent(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Warning,
-                                        contentDescription = "Error",
+                                        contentDescription = stringResource(R.string.ui_materials_screen_297),
                                         tint = BiodontosErrorRed,
                                         modifier = Modifier.size(36.dp)
                                     )
@@ -350,7 +354,7 @@ fun MaterialsContent(
                                         onClick = { onEvent(MaterialsUiEvent.Refresh) },
                                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
                                     ) {
-                                        Text("Reintentar")
+                                        Text(stringResource(R.string.ui_doctor_appointments_screen_175))
                                     }
                                 }
                             }
@@ -491,28 +495,28 @@ fun MaterialCard(
                 when {
                     !material.isActive -> {
                         MaterialStatusBadge(
-                            text = "Inactivo",
+                            text = stringResource(R.string.ui_materials_screen_298),
                             bgColor = BiodontosInputBg,
                             textColor = Slate
                         )
                     }
                     isExpired -> {
                         MaterialStatusBadge(
-                            text = "Vencido",
+                            text = stringResource(R.string.ui_materials_screen_299),
                             bgColor = BiodontosErrorBg,
                             textColor = Carmesi
                         )
                     }
                     isNearExpiration -> {
                         MaterialStatusBadge(
-                            text = "Vence pronto",
+                            text = stringResource(R.string.ui_materials_screen_300),
                             bgColor = Color(0xFFFEF3C7),
                             textColor = Ambar
                         )
                     }
                     else -> {
                         MaterialStatusBadge(
-                            text = "Vigente",
+                            text = stringResource(R.string.ui_materials_screen_301),
                             bgColor = Color(0xFFD1FAE5),
                             textColor = Esmeralda
                         )
@@ -539,7 +543,7 @@ fun MaterialCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Elaboración: ${material.manufacturingDate.format(dateFormatter)}",
+                    text = stringResource(R.string.ui_materials_screen_302, material.manufacturingDate.format(dateFormatter)),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
@@ -552,7 +556,7 @@ fun MaterialCard(
                 }
 
                 Text(
-                    text = "Vencimiento: ${material.expirationDate.format(dateFormatter)}",
+                    text = stringResource(R.string.ui_materials_screen_303, material.expirationDate.format(dateFormatter)),
                     fontSize = 12.sp,
                     color = expirationColor,
                     fontWeight = if (isExpired || isNearExpiration) FontWeight.Bold else FontWeight.Normal
@@ -575,12 +579,12 @@ fun MaterialCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar",
+                        contentDescription = stringResource(R.string.ui_materials_screen_304),
                         tint = BiodontosDark,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Editar", fontSize = 12.sp, color = BiodontosDark)
+                    Text(stringResource(R.string.ui_materials_screen_304), fontSize = 12.sp, color = BiodontosDark)
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -594,12 +598,12 @@ fun MaterialCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Desactivar",
+                            contentDescription = stringResource(R.string.ui_materials_screen_305),
                             tint = BiodontosErrorRed,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Desactivar", fontSize = 12.sp, color = BiodontosErrorRed)
+                        Text(stringResource(R.string.ui_materials_screen_305), fontSize = 12.sp, color = BiodontosErrorRed)
                     }
                 } else {
                     OutlinedButton(
@@ -610,12 +614,12 @@ fun MaterialCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Check,
-                            contentDescription = "Reactivar",
+                            contentDescription = stringResource(R.string.ui_materials_screen_306),
                             tint = Esmeralda,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Reactivar", fontSize = 12.sp, color = Esmeralda)
+                        Text(stringResource(R.string.ui_materials_screen_306), fontSize = 12.sp, color = Esmeralda)
                     }
                 }
             }
@@ -661,7 +665,7 @@ private fun RegulatoryTag(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "$label: ",
+                text = stringResource(R.string.ui_materials_screen_307, label),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = BiodontosGreyText

@@ -58,7 +58,7 @@ class LoginViewModelTest {
         val state = viewModel.state.value
         assertEquals(false, state.isLoading)
         assertNotNull(state.error)
-        assertEquals("Credenciales inválidas", state.error)
+        assertEquals("Correo o contraseña incorrectos. Verifica tus datos.", state.error)
     }
 
     @Test

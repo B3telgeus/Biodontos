@@ -360,4 +360,26 @@ class BookAppointmentAdversarialTest {
             bookAppointmentUseCase(any(), any(), any(), any(), any())
         }
     }
+
+    @Test
+    fun `when availability query returns empty slots on date switch, confirm booking is blocked`() = runTest(testDispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val emptyDate = testToday.plusDays(2)
+        coEvery { getAvailableSlotsUseCase(DoctorId("doc-1"), emptyDate) } returns Result.success(emptyList())
+
+        viewModel.onEvent(BookAppointmentUiEvent.SelectDate(emptyDate))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.slots.isEmpty())
+        assertNull(viewModel.uiState.value.selectedSlot)
+
+        viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) {
+            bookAppointmentUseCase(any(), any(), any(), any(), any())
+        }
+    }
 }

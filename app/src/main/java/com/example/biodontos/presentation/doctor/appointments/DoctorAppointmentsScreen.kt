@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.doctor.appointments
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -204,7 +208,7 @@ fun DoctorAppointmentsScreen(
                                 modifier = Modifier.heightIn(min = 48.dp)
                             ) {
                                 Text(
-                                    text = "Reintentar",
+                                    text = stringResource(R.string.ui_doctor_appointments_screen_175),
                                     color = BiodontosDark,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp
@@ -252,7 +256,7 @@ fun DoctorAppointmentsScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No hay bloques de horario disponibles para este día.",
+                                text = stringResource(R.string.ui_doctor_appointments_screen_176),
                                 fontSize = 14.sp,
                                 color = BiodontosGreyText
                             )
@@ -325,7 +329,7 @@ fun DoctorAppointmentsScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No hay citas registradas en este filtro.",
+                                text = stringResource(R.string.ui_doctor_appointments_screen_177),
                                 fontSize = 14.sp,
                                 color = BiodontosGreyText
                             )
@@ -405,11 +409,11 @@ fun DoctorAppointmentsScreen(
         AlertDialog(
             onDismissRequest = { onEvent(DoctorAppointmentsUiEvent.DismissCancelAppointment) },
             title = {
-                Text("¿Cancelar cita odontológica?", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_doctor_appointments_screen_178), fontWeight = FontWeight.Bold)
             },
             text = {
                 Text(
-                    "Se cancelará la cita de ${appt.patientName} programada para las ${formatTimeOnly(appt.startTime)}. El espacio quedará libre nuevamente en el cronograma."
+                    stringResource(R.string.ui_doctor_appointments_screen_179, appt.patientName, formatTimeOnly(appt.startTime))
                 )
             },
             confirmButton = {
@@ -420,13 +424,13 @@ fun DoctorAppointmentsScreen(
                     if (state.isCancelling) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
                     } else {
-                        Text("Confirmar Cancelación", color = BiodontosWhite)
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_180), color = BiodontosWhite)
                     }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { onEvent(DoctorAppointmentsUiEvent.DismissCancelAppointment) }) {
-                    Text("Mantener Cita", color = BiodontosDark)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_181), color = BiodontosDark)
                 }
             }
         )
@@ -455,21 +459,21 @@ private fun DoctorAppointmentsHeader(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Regresar",
+                    contentDescription = stringResource(R.string.ui_doctor_appointments_screen_182),
                     tint = BiodontosDark
                 )
             }
             Spacer(modifier = Modifier.width(6.dp))
             Column {
                 Text(
-                    text = "CALENDARIO CLÍNICO",
+                    text = stringResource(R.string.ui_doctor_appointments_screen_183),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosGreyText,
                     letterSpacing = 1.2.sp
                 )
                 Text(
-                    text = "Agenda y Horarios",
+                    text = stringResource(R.string.ui_doctor_appointments_screen_184),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
@@ -491,7 +495,7 @@ private fun DoctorAppointmentsHeader(
                     modifier = Modifier.size(14.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Mi Horario", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.ui_doctor_appointments_screen_185), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(modifier = Modifier.width(6.dp))
@@ -510,7 +514,7 @@ private fun DoctorAppointmentsHeader(
                 } else {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Actualizar",
+                        contentDescription = stringResource(R.string.ui_doctor_appointments_screen_186),
                         tint = BiodontosDark
                     )
                 }
@@ -591,7 +595,7 @@ private fun DoctorDayStrip(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Semana anterior",
+                        contentDescription = stringResource(R.string.ui_doctor_appointments_screen_187),
                         modifier = Modifier.size(16.dp),
                         tint = BiodontosDark
                     )
@@ -602,7 +606,7 @@ private fun DoctorDayStrip(
                         onClick = { onDateSelected(today) },
                         modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 4.dp)
                     ) {
-                        Text("Hoy", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_188), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
                     }
                 }
 
@@ -612,7 +616,7 @@ private fun DoctorDayStrip(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Semana siguiente",
+                        contentDescription = stringResource(R.string.ui_doctor_appointments_screen_189),
                         modifier = Modifier.size(16.dp),
                         tint = BiodontosDark
                     )
@@ -867,12 +871,12 @@ private fun DoctorSlotOccupiedCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.DateRange,
-                        contentDescription = "Reagendar",
+                        contentDescription = stringResource(R.string.ui_doctor_appointments_screen_190),
                         modifier = Modifier.size(13.dp),
                         tint = BiodontosDark
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Reagendar", fontSize = 11.sp, color = BiodontosDark, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_190), fontSize = 11.sp, color = BiodontosDark, fontWeight = FontWeight.SemiBold)
                 }
 
                 Spacer(modifier = Modifier.width(6.dp))
@@ -883,12 +887,12 @@ private fun DoctorSlotOccupiedCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Cancelar",
+                        contentDescription = stringResource(R.string.ui_doctor_appointments_screen_191),
                         modifier = Modifier.size(13.dp),
                         tint = StatusCancelled
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Cancelar", fontSize = 11.sp, color = StatusCancelled, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_191), fontSize = 11.sp, color = StatusCancelled, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -933,7 +937,7 @@ private fun DoctorSlotAvailableCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Espacio Libre • Toca para agendar",
+                        text = stringResource(R.string.ui_doctor_appointments_screen_192),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = BiodontosDark
@@ -941,7 +945,7 @@ private fun DoctorSlotAvailableCard(
                 }
 
                 Text(
-                    text = "${slot.durationMinutes} min",
+                    text = stringResource(R.string.ui_doctor_appointments_screen_193, slot.durationMinutes),
                     fontSize = 11.sp,
                     color = BiodontosGreyText
                 )
@@ -965,7 +969,7 @@ private fun DoctorSlotPastCard(slot: DoctorTimelineSlot) {
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                text = "Horario finalizado",
+                text = stringResource(R.string.ui_doctor_appointments_screen_194),
                 fontSize = 11.sp,
                 color = BiodontosGreyText
             )
@@ -1009,14 +1013,14 @@ private fun DoctorDayOffView(
             }
 
             Text(
-                text = "Día no laborable configurado",
+                text = stringResource(R.string.ui_doctor_appointments_screen_195),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark
             )
 
             Text(
-                text = "No tienes horas de atención configuradas para este día de la semana. Puedes activar este día y definir tu horario en cualquier momento.",
+                text = stringResource(R.string.ui_doctor_appointments_screen_196),
                 fontSize = 13.sp,
                 color = BiodontosGreyText,
                 textAlign = TextAlign.Center
@@ -1029,7 +1033,7 @@ private fun DoctorDayOffView(
             ) {
                 Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(14.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Personalizar Disponibilidad", fontSize = 13.sp)
+                Text(stringResource(R.string.ui_doctor_appointments_screen_197), fontSize = 13.sp)
             }
         }
     }
@@ -1086,7 +1090,7 @@ private fun DoctorAppointmentCard(
                             color = BiodontosGreyText
                         )
                         Text(
-                            text = "Hora: ${formatTimeOnly(item.startTime)}",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_198, formatTimeOnly(item.startTime)),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = BiodontosDark.copy(alpha = 0.8f)
@@ -1140,7 +1144,7 @@ private fun DoctorAppointmentCard(
                 ) {
                     Icon(imageVector = Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(13.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Reagendar", fontSize = 11.sp)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_190), fontSize = 11.sp)
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -1153,7 +1157,7 @@ private fun DoctorAppointmentCard(
                 ) {
                     Icon(imageVector = Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(13.dp), tint = StatusCancelled)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Cancelar", fontSize = 11.sp, color = StatusCancelled)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_191), fontSize = 11.sp, color = StatusCancelled)
                 }
             }
         }
@@ -1195,14 +1199,14 @@ private fun DoctorAvailabilityDialog(
                 ) {
                     Column {
                         Text(
-                            text = "DISPONIBILIDAD SEMANAL",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_199),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosGreyText,
                             letterSpacing = 1.1.sp
                         )
                         Text(
-                            text = "Personalizar Horario",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_200),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark
@@ -1210,7 +1214,7 @@ private fun DoctorAvailabilityDialog(
                     }
 
                     IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = BiodontosDark, modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_operative_consent_dialog_89), tint = BiodontosDark, modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -1222,7 +1226,7 @@ private fun DoctorAvailabilityDialog(
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
                 ) {
-                    Text("⚡ Aplicar horario de Lun a todos los días hábiles", fontSize = 11.sp, color = BiodontosDark)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_201), fontSize = 11.sp, color = BiodontosDark)
                 }
 
                 // Lista de días de la semana
@@ -1253,7 +1257,7 @@ private fun DoctorAvailabilityDialog(
                         onClick = onDismiss,
                         modifier = Modifier.heightIn(min = 48.dp)
                     ) {
-                        Text("Cancelar", color = BiodontosGreyText)
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosGreyText)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -1268,7 +1272,7 @@ private fun DoctorAvailabilityDialog(
                         if (isSaving) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
                         } else {
-                            Text("Guardar Horario", color = BiodontosWhite)
+                            Text(stringResource(R.string.ui_doctor_appointments_screen_202), color = BiodontosWhite)
                         }
                     }
                 }
@@ -1337,7 +1341,7 @@ private fun DayAvailabilityItemRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Inicio", fontSize = 10.sp, color = BiodontosGreyText)
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_203), fontSize = 10.sp, color = BiodontosGreyText)
                         TimeSelectorButton(
                             currentTime = config.startTime,
                             isError = isInvalidRange,
@@ -1348,7 +1352,7 @@ private fun DayAvailabilityItemRow(
                     }
 
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Fin", fontSize = 10.sp, color = BiodontosGreyText)
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_204), fontSize = 10.sp, color = BiodontosGreyText)
                         TimeSelectorButton(
                             currentTime = config.endTime,
                             isError = isInvalidRange,
@@ -1361,7 +1365,7 @@ private fun DayAvailabilityItemRow(
 
                 if (isInvalidRange) {
                     Text(
-                        text = "⚠️ La hora de fin debe ser posterior a la de inicio",
+                        text = stringResource(R.string.ui_doctor_appointments_screen_205),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFFD32F2F),
@@ -1371,7 +1375,7 @@ private fun DayAvailabilityItemRow(
 
                 // Selector de duración de slots (15, 30, 45, 60 min)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Duración de cada cita", fontSize = 10.sp, color = BiodontosGreyText)
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_206), fontSize = 10.sp, color = BiodontosGreyText)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -1391,7 +1395,7 @@ private fun DayAvailabilityItemRow(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "$mins m",
+                                    text = stringResource(R.string.ui_doctor_appointments_screen_207, mins),
                                     fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) BiodontosWhite else BiodontosDark
@@ -1525,14 +1529,14 @@ private fun QuickBookingDialog(
                 ) {
                     Column {
                         Text(
-                            text = "RESERVA RÁPIDA",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_208),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosGreyText,
                             letterSpacing = 1.1.sp
                         )
                         Text(
-                            text = "Agendar en Espacio Libre",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_209),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark
@@ -1540,7 +1544,7 @@ private fun QuickBookingDialog(
                     }
 
                     IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = BiodontosDark, modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_operative_consent_dialog_89), tint = BiodontosDark, modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -1552,20 +1556,20 @@ private fun QuickBookingDialog(
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(text = dateFormatted, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
-                        Text(text = "Horario: $startFormatted - $endFormatted (${slot.durationMinutes} minutos)", fontSize = 11.sp, color = BiodontosGreyText)
+                        Text(text = stringResource(R.string.ui_doctor_appointments_screen_210, startFormatted, endFormatted, slot.durationMinutes), fontSize = 11.sp, color = BiodontosGreyText)
                     }
                 }
 
                 // Buscador de Paciente
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(text = "Buscar Paciente", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
+                    Text(text = stringResource(R.string.ui_doctor_appointments_screen_211), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
                     OutlinedTextField(
                         value = patientSearchQuery,
                         onValueChange = {
                             patientSearchQuery = it
                             dropdownExpanded = true
                         },
-                        placeholder = { Text("Buscar por nombre o documento...", fontSize = 12.sp) },
+                        placeholder = { Text(stringResource(R.string.ui_doctor_appointments_screen_212), fontSize = 12.sp) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -1581,7 +1585,7 @@ private fun QuickBookingDialog(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Limpiar búsqueda",
+                                        contentDescription = stringResource(R.string.ui_doctor_appointments_screen_213),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -1595,10 +1599,10 @@ private fun QuickBookingDialog(
 
                 // Selector de Paciente
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(text = "Paciente Seleccionado", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
+                    Text(text = stringResource(R.string.ui_doctor_appointments_screen_214), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
 
                     if (patients.isEmpty()) {
-                        Text("No hay pacientes registrados en el sistema.", fontSize = 12.sp, color = StatusCancelled)
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_215), fontSize = 12.sp, color = StatusCancelled)
                     } else {
                         val currentPatient = patients.find { it.id == selectedPatientId } ?: filteredPatients.firstOrNull() ?: patients.first()
 
@@ -1624,7 +1628,7 @@ private fun QuickBookingDialog(
                             ) {
                                 if (filteredPatients.isEmpty()) {
                                     DropdownMenuItem(
-                                        text = { Text("No se encontraron pacientes coincidentes", fontSize = 12.sp, color = BiodontosGreyText) },
+                                        text = { Text(stringResource(R.string.ui_doctor_appointments_screen_216), fontSize = 12.sp, color = BiodontosGreyText) },
                                         onClick = {}
                                     )
                                 } else {
@@ -1633,7 +1637,7 @@ private fun QuickBookingDialog(
                                             text = {
                                                 Column {
                                                     Text(pat.fullName, fontWeight = FontWeight.Bold)
-                                                    Text("Doc: ${pat.dniCedula}", fontSize = 11.sp, color = BiodontosGreyText)
+                                                    Text(stringResource(R.string.ui_doctor_appointments_screen_217, pat.dniCedula), fontSize = 11.sp, color = BiodontosGreyText)
                                                 }
                                             },
                                             onClick = {
@@ -1650,7 +1654,7 @@ private fun QuickBookingDialog(
 
                 // Motivo del Procedimiento
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(text = "Motivo de la Cita", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
+                    Text(text = stringResource(R.string.ui_doctor_appointments_screen_218), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
                     OutlinedTextField(
                         value = reason,
                         onValueChange = { reason = it },
@@ -1670,7 +1674,7 @@ private fun QuickBookingDialog(
                         onClick = onDismiss,
                         modifier = Modifier.heightIn(min = 48.dp)
                     ) {
-                        Text("Cancelar", color = BiodontosGreyText)
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosGreyText)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -1689,7 +1693,7 @@ private fun QuickBookingDialog(
                         if (isBooking) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
                         } else {
-                            Text("Confirmar Cita", color = BiodontosWhite)
+                            Text(stringResource(R.string.ui_doctor_appointments_screen_219), color = BiodontosWhite)
                         }
                     }
                 }
@@ -1744,7 +1748,7 @@ private fun RescheduleAppointmentDialog(
                 ) {
                     Column {
                         Text(
-                            text = "REAGENDAR CITA",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_220),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiodontosGreyText,
@@ -1759,12 +1763,12 @@ private fun RescheduleAppointmentDialog(
                     }
 
                     IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = BiodontosDark, modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_operative_consent_dialog_89), tint = BiodontosDark, modifier = Modifier.size(20.dp))
                     }
                 }
 
                 Text(
-                    text = "Selecciona la nueva fecha y uno de los bloques libres disponibles:",
+                    text = stringResource(R.string.ui_doctor_appointments_screen_221),
                     fontSize = 12.sp,
                     color = BiodontosGreyText
                 )
@@ -1794,7 +1798,7 @@ private fun RescheduleAppointmentDialog(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Semana anterior",
+                                contentDescription = stringResource(R.string.ui_doctor_appointments_screen_187),
                                 modifier = Modifier.size(16.dp),
                                 tint = if (weekOffset > 0) BiodontosDark else BiodontosGreyText.copy(alpha = 0.4f)
                             )
@@ -1809,7 +1813,7 @@ private fun RescheduleAppointmentDialog(
                                 },
                                 modifier = Modifier.heightIn(min = 48.dp)
                             ) {
-                                Text("Hoy", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
+                                Text(stringResource(R.string.ui_doctor_appointments_screen_188), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
                             }
                         }
 
@@ -1819,7 +1823,7 @@ private fun RescheduleAppointmentDialog(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = "Semana siguiente",
+                                contentDescription = stringResource(R.string.ui_doctor_appointments_screen_189),
                                 modifier = Modifier.size(16.dp),
                                 tint = BiodontosDark
                             )
@@ -1882,7 +1886,7 @@ private fun RescheduleAppointmentDialog(
 
                 // Grid de Bloques Libres
                 Text(
-                    text = "Bloques Disponibles",
+                    text = stringResource(R.string.ui_doctor_appointments_screen_222),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = BiodontosDark
@@ -1896,7 +1900,7 @@ private fun RescheduleAppointmentDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No hay espacios libres disponibles en esta fecha.",
+                            text = stringResource(R.string.ui_doctor_appointments_screen_223),
                             fontSize = 12.sp,
                             color = BiodontosGreyText
                         )
@@ -1943,7 +1947,7 @@ private fun RescheduleAppointmentDialog(
                         onClick = onDismiss,
                         modifier = Modifier.heightIn(min = 48.dp)
                     ) {
-                        Text("Cancelar", color = BiodontosGreyText)
+                        Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosGreyText)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -1964,7 +1968,7 @@ private fun RescheduleAppointmentDialog(
                         if (isRescheduling) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
                         } else {
-                            Text("Confirmar Cambio", color = BiodontosWhite)
+                            Text(stringResource(R.string.ui_doctor_appointments_screen_224), color = BiodontosWhite)
                         }
                     }
                 }

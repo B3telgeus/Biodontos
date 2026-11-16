@@ -8,6 +8,7 @@ import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.data.repository.AnamnesisRepositoryImpl
 import com.example.biodontos.data.repository.AppointmentRepositoryImpl
 import com.example.biodontos.data.repository.AuthRepositoryImpl
+import com.example.biodontos.data.repository.AvatarRepositoryImpl
 import com.example.biodontos.data.repository.BillingRepositoryImpl
 import com.example.biodontos.data.repository.ClinicalAuditRepositoryImpl
 import com.example.biodontos.data.repository.ClinicalRecordRepositoryImpl
@@ -22,6 +23,7 @@ import com.example.biodontos.data.repository.PeriodontalRepositoryImpl
 import com.example.biodontos.domain.repository.AnamnesisRepository
 import com.example.biodontos.domain.repository.AppointmentRepository
 import com.example.biodontos.domain.repository.AuthRepository
+import com.example.biodontos.domain.repository.AvatarRepository
 import com.example.biodontos.domain.repository.BillingRepository
 import com.example.biodontos.domain.repository.ClinicalAuditRepository
 import com.example.biodontos.domain.repository.ClinicalRecordRepository
@@ -95,6 +97,8 @@ interface AppContainer {
     val clinicalAuditRepository: ClinicalAuditRepository
     val clinicClock: ClinicClock
     val admissionDraftDao: com.example.biodontos.data.local.dao.AdmissionDraftDao?
+        get() = null
+    val avatarRepository: AvatarRepository?
         get() = null
 
     val loginUseCase: LoginUseCase
@@ -215,7 +219,18 @@ class DefaultAppContainer(private val context: Context? = null) : AppContainer {
     }
 
     override val doctorRepository: DoctorRepository by lazy {
-        DoctorRepositoryImpl()
+        DoctorRepositoryImpl(
+            supabaseClient = com.example.biodontos.core.network.SupabaseClient.client,
+            ioDispatcher = Dispatchers.IO
+        )
+    }
+
+    override val avatarRepository: AvatarRepository by lazy {
+        AvatarRepositoryImpl(
+            context = context,
+            supabaseClient = com.example.biodontos.core.network.SupabaseClient.client,
+            ioDispatcher = Dispatchers.IO
+        )
     }
 
     override val billingRepository: BillingRepository by lazy {

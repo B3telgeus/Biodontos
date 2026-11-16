@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 
+@Suppress("SpreadOperator")
 sealed interface UiText {
     data class DynamicString(val value: String) : UiText
 

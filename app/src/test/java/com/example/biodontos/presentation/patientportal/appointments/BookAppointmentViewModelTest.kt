@@ -377,6 +377,20 @@ class BookAppointmentViewModelTest {
             rescheduleAppointmentUseCase(any(), any(), any())
         }
     }
+
+    @Test
+    fun `when doctor has no configured availability, slots is empty without errorMessage`() = runTest {
+        coEvery { getAvailableSlotsUseCase(DoctorId("doc-1"), any()) } returns Result.success(emptyList())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.isSlotsLoading)
+        assertNull(state.errorMessage)
+        assertTrue(state.slots.isEmpty())
+    }
 }
 
 

@@ -21,11 +21,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.*
 
 @Composable
@@ -72,7 +74,7 @@ fun SignaturePad(
                     color = Esmeralda.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        text = "✓ Firmado",
+                        text = stringResource(R.string.ui_signature_pad_170),
                         color = Esmeralda,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
@@ -97,10 +99,11 @@ fun SignaturePad(
                     shape = RoundedCornerShape(12.dp)
                 )
         ) {
+            val padContentDescription = stringResource(R.string.cd_signature_pad)
             Canvas(
                 modifier = Modifier
                     .fillMaxSize()
-                    .semantics { contentDescription = "Panel de firma digital" }
+                    .semantics { contentDescription = padContentDescription }
                     .pointerInput(Unit) {
                         detectDragGestures(
                             onDragStart = { offset ->
@@ -164,7 +167,7 @@ fun SignaturePad(
 
             if (strokes.isEmpty() && currentStroke.isEmpty() && !isConfirmed) {
                 Text(
-                    text = "Firme aquí",
+                    text = stringResource(R.string.ui_signature_pad_171),
                     color = BiodontosGreyText.copy(alpha = 0.5f),
                     modifier = Modifier.align(Alignment.Center),
                     fontSize = 16.sp,
@@ -190,9 +193,9 @@ fun SignaturePad(
                 },
                 colors = ButtonDefaults.textButtonColors(contentColor = BiodontosGreyText)
             ) {
-                Icon(Icons.Default.Refresh, contentDescription = "Limpiar", modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.ui_signature_pad_172), modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Limpiar", fontSize = 13.sp)
+                Text(stringResource(R.string.ui_signature_pad_172), fontSize = 13.sp)
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -214,9 +217,9 @@ fun SignaturePad(
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
             ) {
-                Icon(Icons.Default.Check, contentDescription = "Aceptar", modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Check, contentDescription = stringResource(R.string.ui_signature_pad_173), modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Confirmar Firma", fontSize = 13.sp)
+                Text(stringResource(R.string.ui_signature_pad_174), fontSize = 13.sp)
             }
         }
     }

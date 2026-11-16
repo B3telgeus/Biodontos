@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.auth.patient
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -59,7 +63,7 @@ fun PatientSignUpScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Registro de Paciente",
+                        text = stringResource(R.string.ui_patient_sign_up_screen_145),
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
                     )
@@ -68,7 +72,7 @@ fun PatientSignUpScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás",
+                            contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
                             tint = BiodontosDark
                         )
                     }
@@ -138,13 +142,13 @@ fun PatientSignUpScreen(
                         1 -> {
                             // --- PASO 1: INFORMACIÓN PERSONAL ---
                             Text(
-                                text = "¡Vamos a crear tu perfil!",
+                                text = stringResource(R.string.ui_patient_sign_up_screen_146),
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosDark
                             )
                             Text(
-                                text = "Paso 1 de 3: Ingresa tus datos personales.",
+                                text = stringResource(R.string.ui_patient_sign_up_screen_147),
                                 fontSize = 14.sp,
                                 color = BiodontosGreyText
                             )
@@ -166,7 +170,7 @@ fun PatientSignUpScreen(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Nos tomamos la seguridad de tus datos en serio. Tu perfil estará a salvo.",
+                                        text = stringResource(R.string.ui_patient_sign_up_screen_148),
                                         fontSize = 12.sp,
                                         color = BiodontosGreyText
                                     )
@@ -181,7 +185,7 @@ fun PatientSignUpScreen(
                                 OutlinedTextField(
                                     value = state.firstName,
                                     onValueChange = onFirstNameChange,
-                                    label = { Text("Nombres *") },
+                                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_9)) },
                                     modifier = Modifier.weight(1f),
                                     singleLine = true,
                                     isError = state.firstNameError != null,
@@ -192,7 +196,7 @@ fun PatientSignUpScreen(
                                 OutlinedTextField(
                                     value = state.lastName,
                                     onValueChange = onLastNameChange,
-                                    label = { Text("Apellidos *") },
+                                    label = { Text(stringResource(R.string.ui_doctor_registration_screen_113)) },
                                     modifier = Modifier.weight(1f),
                                     singleLine = true,
                                     isError = state.lastNameError != null,
@@ -206,7 +210,7 @@ fun PatientSignUpScreen(
                             OutlinedTextField(
                                 value = state.dniCedula,
                                 onValueChange = onDniChange,
-                                label = { Text("DNI / Cédula de Identidad *") },
+                                label = { Text(stringResource(R.string.ui_patient_sign_up_screen_149)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
@@ -220,7 +224,7 @@ fun PatientSignUpScreen(
                             OutlinedTextField(
                                 value = state.phone,
                                 onValueChange = onPhoneChange,
-                                label = { Text("Teléfono Móvil (opcional)") },
+                                label = { Text(stringResource(R.string.ui_patient_sign_up_screen_150)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
@@ -234,13 +238,13 @@ fun PatientSignUpScreen(
                         2 -> {
                             // --- PASO 2: CREDENCIALES DE ACCESO ---
                             Text(
-                                text = "Tu llave de acceso",
+                                text = stringResource(R.string.ui_patient_sign_up_screen_151),
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BiodontosDark
                             )
                             Text(
-                                text = "Paso 2 de 3: Configura el acceso con tu correo y contraseña segura.",
+                                text = stringResource(R.string.ui_patient_sign_up_screen_152),
                                 fontSize = 14.sp,
                                 color = BiodontosGreyText
                             )
@@ -249,7 +253,7 @@ fun PatientSignUpScreen(
                             OutlinedTextField(
                                 value = state.email,
                                 onValueChange = onEmailChange,
-                                label = { Text("Correo Electrónico *") },
+                                label = { Text(stringResource(R.string.ui_patient_sign_up_screen_153)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -263,7 +267,7 @@ fun PatientSignUpScreen(
                             OutlinedTextField(
                                 value = state.password,
                                 onValueChange = onPasswordChange,
-                                label = { Text("Contraseña (mín. 6 caracteres) *") },
+                                label = { Text(stringResource(R.string.ui_doctor_registration_screen_116)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -288,7 +292,7 @@ fun PatientSignUpScreen(
                             OutlinedTextField(
                                 value = state.confirmPassword,
                                 onValueChange = onConfirmPasswordChange,
-                                label = { Text("Confirmar Contraseña *") },
+                                label = { Text(stringResource(R.string.ui_doctor_registration_screen_117)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -311,14 +315,14 @@ fun PatientSignUpScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Siempre protegeremos tu información",
+                                    text = stringResource(R.string.ui_patient_sign_up_screen_154),
                                     fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = BiodontosDark
                                 )
                             }
                             Text(
-                                text = "Paso 3 de 3: Revisa y acepta nuestra política de tratamiento de datos:",
+                                text = stringResource(R.string.ui_patient_sign_up_screen_155),
                                 fontSize = 14.sp,
                                 color = BiodontosGreyText
                             )
@@ -330,7 +334,7 @@ fun PatientSignUpScreen(
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Text(
-                                        text = "Finalidad del tratamiento: Los datos personales recopilados (nombre, documento, correo, datos de contacto) serán utilizados exclusivamente para la gestión de agendas odontológicas, asignación de citas, historial clínico y notificaciones de atención en Biodontos.\n\nSeguridad y confidencialidad: Nos comprometemos a proteger tu información mediante protocolos de seguridad cifrados. Tus datos nunca serán compartidos con terceros con fines comerciales.",
+                                        text = stringResource(R.string.ui_patient_sign_up_screen_156),
                                         fontSize = 13.sp,
                                         color = BiodontosDark,
                                         lineHeight = 18.sp
@@ -349,7 +353,7 @@ fun PatientSignUpScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Acepto los Términos de Servicio y la Política de Privacidad",
+                                    text = stringResource(R.string.ui_patient_sign_up_screen_157),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = BiodontosDark

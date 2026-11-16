@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.patients
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -85,7 +89,7 @@ fun PatientListScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Directorio de Pacientes",
+                        text = stringResource(R.string.ui_patient_list_screen_560),
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
                     )
@@ -108,7 +112,7 @@ fun PatientListScreen(
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Actualizar pacientes",
+                                contentDescription = stringResource(R.string.ui_patient_list_screen_561),
                                 tint = BiodontosDark
                             )
                         }
@@ -119,7 +123,7 @@ fun PatientListScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Mi Perfil",
+                            contentDescription = stringResource(R.string.ui_doctor_home_screen_238),
                             tint = BiodontosDark
                         )
                     }
@@ -132,9 +136,9 @@ fun PatientListScreen(
                 containerColor = BiodontosDark,
                 contentColor = BiodontosWhite
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Ingreso Clínico")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_patient_list_screen_562))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Ingreso Clínico", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_patient_list_screen_562), fontWeight = FontWeight.Bold)
             }
         }
     ) { padding ->
@@ -154,11 +158,11 @@ fun PatientListScreen(
                 OutlinedTextField(
                     value = state.searchQuery,
                     onValueChange = onSearchQueryChange,
-                    placeholder = { Text("Buscar paciente por nombre o DNI...") },
+                    placeholder = { Text(stringResource(R.string.ui_doctor_documents_screen_227)) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Buscar",
+                            contentDescription = stringResource(R.string.ui_doctor_documents_screen_228),
                             tint = BiodontosGreyText
                         )
                     },
@@ -167,7 +171,7 @@ fun PatientListScreen(
                             IconButton(onClick = { onSearchQueryChange("") }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Limpiar",
+                                    contentDescription = stringResource(R.string.ui_signature_pad_172),
                                     tint = BiodontosGreyText
                                 )
                             }
@@ -239,7 +243,7 @@ fun PatientListScreen(
                             Text(text = state.error, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Medium)
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(onClick = onRetry) {
-                                Text("Reintentar")
+                                Text(stringResource(R.string.ui_doctor_appointments_screen_175))
                             }
                         }
                     } else if (state.filteredPatients.isEmpty()) {
@@ -322,7 +326,7 @@ fun PatientItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "DNI: ${patient.dniCedula} ${if (patient.phone.isNotBlank()) "· Tel: ${patient.phone}" else ""}",
+                    text = stringResource(R.string.ui_patient_list_screen_563, patient.dniCedula, if (patient.phone.isNotBlank()) "· Tel: ${patient.phone}" else ""),
                     style = MaterialTheme.typography.bodySmall,
                     color = BiodontosGreyText
                 )
@@ -377,7 +381,7 @@ fun PatientItem(
                                 )
                                 Spacer(modifier = Modifier.width(3.dp))
                                 Text(
-                                    text = "Alergia: ${patient.allergiesDescription.ifBlank { "Crítica" }}",
+                                    text = stringResource(R.string.ui_patient_list_screen_564, patient.allergiesDescription.ifBlank { "Crítica" }),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFC62828)

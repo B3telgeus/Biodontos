@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.admission
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -79,25 +83,25 @@ fun OperativeConsentDialog(
                 ) {
                     Column {
                         Text(
-                            text = "CONSULTORIO DRA. ERIKA LINEY BEJARANO BELTRÁN",
+                            text = stringResource(R.string.ui_operative_consent_dialog_86),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = Zafiro
                         )
                         Text(
-                            text = "CONSENTIMIENTO INFORMADO DE OPERATORIA DENTAL",
+                            text = stringResource(R.string.ui_operative_consent_dialog_87),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 17.sp,
                             color = BiodontosDark
                         )
                         Text(
-                            text = "Versión: 2 | Fecha: JUNIO DE 2019 (Res. 1995/1999 MinSalud)",
+                            text = stringResource(R.string.ui_operative_consent_dialog_88),
                             fontSize = 11.sp,
                             color = BiodontosGreyText
                         )
                     }
                     IconButton(onClick = onDismiss) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar")
+                        Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_operative_consent_dialog_89))
                     }
                 }
 
@@ -118,7 +122,7 @@ fun OperativeConsentDialog(
                         ) {
                             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
-                                    text = "¿Quién declara y firma el consentimiento legal?",
+                                    text = stringResource(R.string.ui_operative_consent_dialog_90),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp,
                                     color = BiodontosDark
@@ -135,7 +139,7 @@ fun OperativeConsentDialog(
                                             selected = state.operativeConsentSignerType == "PATIENT",
                                             onClick = { onUpdateSigner("PATIENT", "", "") }
                                         )
-                                        Text("Paciente Titular (${state.firstName} ${state.firstLastName})", fontSize = 13.sp)
+                                        Text(stringResource(R.string.ui_operative_consent_dialog_91, state.firstName, state.firstLastName), fontSize = 13.sp)
                                     }
 
                                     Row(
@@ -156,7 +160,7 @@ fun OperativeConsentDialog(
                                                 onUpdateSigner("GUARDIAN", defaultRep, state.operativeConsentRepresentativeId)
                                             }
                                         )
-                                        Text("Acudiente / Representante Legal", fontSize = 13.sp)
+                                        Text(stringResource(R.string.ui_operative_consent_dialog_92), fontSize = 13.sp)
                                     }
                                 }
 
@@ -165,7 +169,7 @@ fun OperativeConsentDialog(
                                         OutlinedTextField(
                                             value = state.operativeConsentRepresentativeName,
                                             onValueChange = { onUpdateSigner("GUARDIAN", it, state.operativeConsentRepresentativeId) },
-                                            label = { Text("Nombre Representante") },
+                                            label = { Text(stringResource(R.string.ui_operative_consent_dialog_93)) },
                                             modifier = Modifier.weight(1.3f),
                                             colors = biodontosTextFieldColors(),
                                             shape = RoundedCornerShape(10.dp)
@@ -173,7 +177,7 @@ fun OperativeConsentDialog(
                                         OutlinedTextField(
                                             value = state.operativeConsentRepresentativeId,
                                             onValueChange = { onUpdateSigner("GUARDIAN", state.operativeConsentRepresentativeName, it) },
-                                            label = { Text("C.C. Representante") },
+                                            label = { Text(stringResource(R.string.ui_operative_consent_dialog_94)) },
                                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                             modifier = Modifier.weight(1f),
                                             colors = biodontosTextFieldColors(),
@@ -183,7 +187,7 @@ fun OperativeConsentDialog(
                                 }
 
                                 Text(
-                                    text = "Yo, ${if (state.operativeConsentSignerType == "GUARDIAN") state.operativeConsentRepresentativeName.ifBlank { "el acudiente" } else "${state.firstName} ${state.firstLastName}"} mayor de edad, identificado(a) con C.C ${if (state.operativeConsentSignerType == "GUARDIAN") state.operativeConsentRepresentativeId.ifBlank { "N/D" } else state.dniCedula} actuando en calidad de ${if (state.operativeConsentSignerType == "GUARDIAN") "representante legal de ${state.firstName} ${state.firstLastName}" else "paciente"}, en pleno uso de mis facultades mentales, libre y conscientemente autorizo al profesional ERIKA LINEY BEJARANO BELTRAN en calidad de Odontólogo y a profesionales y/o procedimientos adicionales que considere necesarios para el tratamiento propuesto:",
+                                    text = stringResource(R.string.ui_operative_consent_dialog_95, if (state.operativeConsentSignerType == "GUARDIAN") state.operativeConsentRepresentativeName.ifBlank { "el acudiente" } else "${state.firstName} ${state.firstLastName}", if (state.operativeConsentSignerType == "GUARDIAN") state.operativeConsentRepresentativeId.ifBlank { "N/D" } else state.dniCedula, if (state.operativeConsentSignerType == "GUARDIAN") "representante legal de ${state.firstName} ${state.firstLastName}" else "paciente"),
                                     fontSize = 12.sp,
                                     lineHeight = 17.sp,
                                     color = BiodontosGreyText
@@ -197,8 +201,8 @@ fun OperativeConsentDialog(
                         OutlinedTextField(
                             value = state.operativeConsentProposedTreatment,
                             onValueChange = onUpdateTreatment,
-                            label = { Text("Tratamiento propuesto que consiste en: *") },
-                            placeholder = { Text("Ej: Restauraciones con resina compuesta en piezas dentales 16, 26 y profilaxis general.") },
+                            label = { Text(stringResource(R.string.ui_operative_consent_dialog_96)) },
+                            placeholder = { Text(stringResource(R.string.ui_operative_consent_dialog_97)) },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2,
                             colors = biodontosTextFieldColors(),
@@ -216,13 +220,13 @@ fun OperativeConsentDialog(
                         ) {
                             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text(
-                                    text = "RESTAURACIONES Y RIESGOS INFORMADOS:",
+                                    text = stringResource(R.string.ui_operative_consent_dialog_98),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     color = BiodontosDark
                                 )
                                 Text(
-                                    text = "1. Hipersensibilidad después de realizadas las obturaciones.\n" +
+                                    text = stringResource(R.string.ui_operative_consent_dialog_99) +
                                             "2. Fractura de obturaciones por falta de cuidado o fuerzas masticatorias.\n" +
                                             "3. Variaciones sutiles de color respecto al diente natural.\n" +
                                             "4. Posible exposición pulpar que requiera tratamiento de conducto, núcleo y corona.\n" +
@@ -234,7 +238,7 @@ fun OperativeConsentDialog(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "RECOMENDACIONES: No ingerir alimentos 1 hora post-obturación; evitar bebidas oscuras durante 24h si es resina estética; evitar alimentos duros/crocantes; mantener higiene estricta.",
+                                    text = stringResource(R.string.ui_operative_consent_dialog_100),
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 11.sp,
                                     color = Zafiro
@@ -257,7 +261,7 @@ fun OperativeConsentDialog(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Intervenciones por Diente (FDI) y Fechas",
+                                        text = stringResource(R.string.ui_operative_consent_dialog_101),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp,
                                         color = BiodontosDark
@@ -270,7 +274,7 @@ fun OperativeConsentDialog(
                                         OutlinedTextField(
                                             value = newToothInput,
                                             onValueChange = { newToothInput = it },
-                                            label = { Text("Pieza FDI") },
+                                            label = { Text(stringResource(R.string.ui_operative_consent_dialog_102)) },
                                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                             modifier = Modifier.width(90.dp),
                                             colors = biodontosTextFieldColors(),
@@ -289,14 +293,14 @@ fun OperativeConsentDialog(
                                         ) {
                                             Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Añadir", fontSize = 12.sp)
+                                            Text(stringResource(R.string.ui_operative_consent_dialog_103), fontSize = 12.sp)
                                         }
                                     }
                                 }
 
                                 if (state.operativeConsentProcedures.isEmpty()) {
                                     Text(
-                                        text = "No se han agregado piezas dentales específicas. Añada los dientes FDI a intervenir.",
+                                        text = stringResource(R.string.ui_operative_consent_dialog_104),
                                         fontSize = 12.sp,
                                         color = BiodontosGreyText,
                                         modifier = Modifier.padding(vertical = 8.dp)
@@ -312,7 +316,7 @@ fun OperativeConsentDialog(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = "Diente FDI #${proc.toothNumber} — Fecha: ${proc.procedureDate}",
+                                                text = stringResource(R.string.ui_operative_consent_dialog_105, proc.toothNumber, proc.procedureDate),
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 13.sp,
                                                 color = BiodontosDark
@@ -323,7 +327,7 @@ fun OperativeConsentDialog(
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Delete,
-                                                    contentDescription = "Eliminar",
+                                                    contentDescription = stringResource(R.string.ui_clinical_admission_screen_76),
                                                     tint = BiodontosErrorRed,
                                                     modifier = Modifier.size(18.dp)
                                                 )
@@ -338,7 +342,7 @@ fun OperativeConsentDialog(
                     // 5. Exoneración y Cierre Legal
                     item {
                         Text(
-                            text = "Comprendo perfectamente las implicaciones del presente documento y dejo constancia de que los espacios en blanco fueron llenados en mi presencia antes de mi firma. Siempre y cuando cumpla las recomendaciones dadas por el profesional y asista a control periódico, libero de responsabilidad por riesgos imprevisibles.",
+                            text = stringResource(R.string.ui_operative_consent_dialog_106),
                             fontSize = 11.sp,
                             lineHeight = 15.sp,
                             color = BiodontosGreyText
@@ -395,7 +399,7 @@ fun OperativeConsentDialog(
                             .height(48.dp),
                         shape = RoundedCornerShape(24.dp)
                     ) {
-                        Text("Cancelar / Salir", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ui_operative_consent_dialog_107), fontWeight = FontWeight.Bold)
                     }
 
                     Button(
@@ -414,7 +418,7 @@ fun OperativeConsentDialog(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Guardar y Firmar Consentimiento", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.ui_operative_consent_dialog_108), fontWeight = FontWeight.Bold)
                         }
                     }
                 }

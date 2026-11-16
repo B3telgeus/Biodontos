@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.patients
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -84,12 +88,12 @@ fun PatientRegistrationScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Nuevo Paciente") },
+                title = { Text(stringResource(R.string.ui_patient_registration_screen_565)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás"
+                            contentDescription = stringResource(R.string.ui_doctor_registration_screen_110)
                         )
                     }
                 }
@@ -109,7 +113,7 @@ fun PatientRegistrationScreen(
             OutlinedTextField(
                 value = state.dniCedula,
                 onValueChange = onDniChange,
-                label = { Text("DNI / Cédula") },
+                label = { Text(stringResource(R.string.ui_patient_registration_screen_566)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 isError = state.dniError != null,
@@ -120,7 +124,7 @@ fun PatientRegistrationScreen(
             OutlinedTextField(
                 value = state.firstName,
                 onValueChange = onFirstNameChange,
-                label = { Text("Nombre") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_316)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 isError = state.firstNameError != null,
@@ -131,7 +135,7 @@ fun PatientRegistrationScreen(
             OutlinedTextField(
                 value = state.lastName,
                 onValueChange = onLastNameChange,
-                label = { Text("Apellidos") },
+                label = { Text(stringResource(R.string.ui_doctor_profile_screen_318)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 isError = state.lastNameError != null,
@@ -142,7 +146,7 @@ fun PatientRegistrationScreen(
             OutlinedTextField(
                 value = state.phone,
                 onValueChange = onPhoneChange,
-                label = { Text("Teléfono de Contacto (opcional)") },
+                label = { Text(stringResource(R.string.ui_doctor_registration_screen_115)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = biodontosTextFieldColors()
@@ -162,7 +166,7 @@ fun PatientRegistrationScreen(
                     checked = state.consentSigned,
                     onCheckedChange = null
                 )
-                Text("Consentimiento firmado", modifier = Modifier.padding(start = 8.dp))
+                Text(stringResource(R.string.ui_doctor_documents_screen_233), modifier = Modifier.padding(start = 8.dp))
             }
 
             Row(
@@ -179,15 +183,15 @@ fun PatientRegistrationScreen(
                     checked = state.hasCriticalAllergies,
                     onCheckedChange = null
                 )
-                Text("¿Tiene alergias críticas?", modifier = Modifier.padding(start = 8.dp))
+                Text(stringResource(R.string.ui_patient_registration_screen_567), modifier = Modifier.padding(start = 8.dp))
             }
 
             if (state.hasCriticalAllergies) {
                 OutlinedTextField(
                     value = state.allergiesDescription,
                     onValueChange = onAllergiesDescriptionChange,
-                    label = { Text("Especificar Alergias *") },
-                    placeholder = { Text("Ej: Penicilina, Látex, AINEs...") },
+                    label = { Text(stringResource(R.string.ui_patient_registration_screen_568)) },
+                    placeholder = { Text(stringResource(R.string.ui_patient_registration_screen_569)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = biodontosTextFieldColors()
@@ -224,7 +228,7 @@ fun PatientRegistrationScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Atrás",
+                        text = stringResource(R.string.ui_doctor_registration_screen_110),
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                     )
                 }
@@ -249,7 +253,7 @@ fun PatientRegistrationScreen(
                         )
                     } else {
                         Text(
-                            text = "Guardar Paciente",
+                            text = stringResource(R.string.ui_patient_registration_screen_570),
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
                     }

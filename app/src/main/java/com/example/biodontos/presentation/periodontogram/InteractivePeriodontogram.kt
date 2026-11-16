@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.periodontogram
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -70,14 +74,14 @@ fun InteractivePeriodontogram(
     ) {
         // --- Header: Selector de Dientes FDI ---
         Text(
-            text = "Periodontometría de 6 Sitios (FDI)",
+            text = stringResource(R.string.ui_interactive_periodontogram_571),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark
             )
         )
         Text(
-            text = "Seleccione la pieza dental para registrar bolsas y recesión gingival.",
+            text = stringResource(R.string.ui_interactive_periodontogram_572),
             style = MaterialTheme.typography.bodySmall.copy(color = BiodontosGreyText)
         )
 
@@ -145,7 +149,7 @@ fun InteractivePeriodontogram(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Pieza FDI: $selectedToothNumber",
+                text = stringResource(R.string.ui_patient_detail_screen_525, selectedToothNumber),
                 fontWeight = FontWeight.Bold,
                 color = BiodontosDark,
                 style = MaterialTheme.typography.titleSmall
@@ -156,13 +160,13 @@ fun InteractivePeriodontogram(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Warning,
-                            contentDescription = "Alerta Bolsa",
+                            contentDescription = stringResource(R.string.ui_interactive_periodontogram_573),
                             tint = Carmesi,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "$deepPocketsCount bolsa(s) ≥ 4mm",
+                            text = stringResource(R.string.ui_interactive_periodontogram_574, deepPocketsCount),
                             color = Carmesi,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -171,7 +175,7 @@ fun InteractivePeriodontogram(
                 }
                 if (bopCount > 0) {
                     Text(
-                        text = "🩸 Sangrado: $bopCount sitio(s)",
+                        text = stringResource(R.string.ui_interactive_periodontogram_575, bopCount),
                         color = Carmesi,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold
@@ -184,7 +188,7 @@ fun InteractivePeriodontogram(
 
         // --- SECCIÓN 1: VESTIBULAR (MV, V, DV) ---
         Text(
-            text = "CARA VESTIBULAR",
+            text = stringResource(R.string.ui_interactive_periodontogram_576),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Bold,
                 color = Zafiro,
@@ -220,7 +224,7 @@ fun InteractivePeriodontogram(
 
         // --- SECCIÓN 2: LINGUAL / PALATINO (ML, L, DL) ---
         Text(
-            text = "CARA LINGUAL / PALATINA",
+            text = stringResource(R.string.ui_interactive_periodontogram_577),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Bold,
                 color = Zafiro,
@@ -268,7 +272,7 @@ fun InteractivePeriodontogram(
             // Movilidad (0..3)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Movilidad Dental (Grado 0-3):",
+                    text = stringResource(R.string.ui_interactive_periodontogram_578),
                     style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -302,7 +306,7 @@ fun InteractivePeriodontogram(
             // Furca (0..4)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Afectación Furca (0-4):",
+                    text = stringResource(R.string.ui_interactive_periodontogram_579),
                     style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -373,7 +377,7 @@ private fun SiteMeasurementCard(
 
         // Profundidad de Bolsa (PD)
         Text(
-            text = "PB: ${measurement.pocketDepthMm.toInt()} mm",
+            text = stringResource(R.string.ui_interactive_periodontogram_580, measurement.pocketDepthMm.toInt()),
             fontWeight = FontWeight.ExtraBold,
             color = if (isDeep) Carmesi else BiodontosDark,
             fontSize = 15.sp
@@ -384,7 +388,7 @@ private fun SiteMeasurementCard(
             horizontalArrangement = Arrangement.Center
         ) {
             SmallStepperButton(
-                text = "-",
+                text = stringResource(R.string.ui_interactive_periodontogram_581),
                 enabled = measurement.pocketDepthMm > 0f,
                 onClick = {
                     onChanged(measurement.copy(pocketDepthMm = (measurement.pocketDepthMm - 1f).coerceAtLeast(0f)))
@@ -392,7 +396,7 @@ private fun SiteMeasurementCard(
             )
             Spacer(modifier = Modifier.width(6.dp))
             SmallStepperButton(
-                text = "+",
+                text = stringResource(R.string.ui_interactive_periodontogram_582),
                 enabled = measurement.pocketDepthMm < 15f,
                 onClick = {
                     onChanged(measurement.copy(pocketDepthMm = measurement.pocketDepthMm + 1f))
@@ -404,7 +408,7 @@ private fun SiteMeasurementCard(
 
         // Recesión Gingival (GR)
         Text(
-            text = "RG: ${measurement.gingivalRecessionMm.toInt()} mm",
+            text = stringResource(R.string.ui_interactive_periodontogram_583, measurement.gingivalRecessionMm.toInt()),
             color = BiodontosGreyText,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold
@@ -415,7 +419,7 @@ private fun SiteMeasurementCard(
             horizontalArrangement = Arrangement.Center
         ) {
             SmallStepperButton(
-                text = "-",
+                text = stringResource(R.string.ui_interactive_periodontogram_581),
                 enabled = measurement.gingivalRecessionMm > 0f,
                 onClick = {
                     onChanged(measurement.copy(gingivalRecessionMm = (measurement.gingivalRecessionMm - 1f).coerceAtLeast(0f)))
@@ -423,7 +427,7 @@ private fun SiteMeasurementCard(
             )
             Spacer(modifier = Modifier.width(6.dp))
             SmallStepperButton(
-                text = "+",
+                text = stringResource(R.string.ui_interactive_periodontogram_582),
                 enabled = measurement.gingivalRecessionMm < 10f,
                 onClick = {
                     onChanged(measurement.copy(gingivalRecessionMm = measurement.gingivalRecessionMm + 1f))
@@ -435,7 +439,7 @@ private fun SiteMeasurementCard(
 
         // CAL Calculado
         Text(
-            text = "CAL: ${measurement.clinicalAttachmentLossMm.toInt()} mm",
+            text = stringResource(R.string.ui_interactive_periodontogram_584, measurement.clinicalAttachmentLossMm.toInt()),
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             color = if (measurement.clinicalAttachmentLossMm >= 4f) Carmesi else Zafiro

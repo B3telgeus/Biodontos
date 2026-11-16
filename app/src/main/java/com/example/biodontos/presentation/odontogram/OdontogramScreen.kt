@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.odontogram
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -45,10 +49,10 @@ fun OdontogramScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Odontograma FDI Interactivo", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.ui_odontogram_screen_347), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ui_doctor_registration_screen_110))
                     }
                 }
             )
@@ -126,7 +130,7 @@ fun OdontogramScreen(
 
                     // Maxilar Superior
                     Text(
-                        "Maxilar Superior (Cuadrantes 1 y 2 / 5 y 6)",
+                        stringResource(R.string.ui_odontogram_screen_348),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -151,7 +155,7 @@ fun OdontogramScreen(
 
                     // Mandíbula Inferior
                     Text(
-                        "Mandíbula Inferior (Cuadrantes 4 y 3 / 8 y 7)",
+                        stringResource(R.string.ui_odontogram_screen_349),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -252,12 +256,12 @@ fun ToothSelectionDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    "Diente $toothNumber - Superficie ${surface.name}",
+                    stringResource(R.string.ui_odontogram_screen_350, toothNumber, surface.name),
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center
                 )
 
-                Text("Seleccionar Condición", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.ui_odontogram_screen_351), style = MaterialTheme.typography.labelMedium)
 
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -278,7 +282,7 @@ fun ToothSelectionDialog(
                 OutlinedTextField(
                     value = comment,
                     onValueChange = onCommentChange,
-                    label = { Text("Comentarios de tratamiento") },
+                    label = { Text(stringResource(R.string.ui_odontogram_screen_352)) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isSaving
                 )
@@ -288,7 +292,7 @@ fun ToothSelectionDialog(
                 }
 
                 TextButton(onClick = onDismiss, enabled = !isSaving) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.ui_doctor_appointments_screen_191))
                 }
             }
         }

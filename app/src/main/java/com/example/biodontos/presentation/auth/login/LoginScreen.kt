@@ -1,5 +1,9 @@
 package com.example.biodontos.presentation.auth.login
 
+import com.example.biodontos.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -82,7 +86,7 @@ fun LoginScreen(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Atrás",
+                contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
                 tint = BiodontosDark
             )
         }
@@ -105,21 +109,21 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "¡Hola!",
+                        text = stringResource(R.string.ui_login_screen_123),
                         fontSize = 48.sp,
                         fontWeight = FontWeight.Black,
                         color = BiodontosDark
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Inicia Sesión",
+                        text = stringResource(R.string.ui_login_screen_124),
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiodontosDark
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Tu salud dental, organizada fácilmente con Biodontos.",
+                        text = stringResource(R.string.ui_login_screen_125),
                         fontSize = 18.sp,
                         color = BiodontosGreyText,
                         lineHeight = 24.sp
@@ -161,14 +165,14 @@ fun LoginScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "BIODONTOS",
+                    text = stringResource(R.string.ui_login_screen_126),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Black,
                     color = BiodontosDark
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "¡Bienvenido de vuelta!",
+                    text = stringResource(R.string.ui_login_screen_127),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = BiodontosDark
@@ -242,7 +246,7 @@ private fun LoginFormCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "¡Bienvenido de vuelta!",
+                text = stringResource(R.string.ui_login_screen_127),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -281,7 +285,7 @@ private fun LoginFormCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Email,
-                                contentDescription = "Email",
+                                contentDescription = stringResource(R.string.ui_login_screen_128),
                                 tint = Color.White,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -299,13 +303,13 @@ private fun LoginFormCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Editar correo",
+                                contentDescription = stringResource(R.string.ui_login_screen_129),
                                 tint = Color.White.copy(alpha = 0.9f),
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "Cambiar",
+                                text = stringResource(R.string.ui_login_screen_130),
                                 color = Color.White,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
@@ -329,7 +333,7 @@ private fun LoginFormCard(
                 // Campo Contraseña en posición principal superior
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Contraseña",
+                        text = stringResource(R.string.ui_login_screen_131),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
@@ -338,7 +342,7 @@ private fun LoginFormCard(
                     OutlinedTextField(
                         value = state.password,
                         onValueChange = onPasswordChange,
-                        placeholder = { Text("Ingresa tu contraseña", color = Color.Gray) },
+                        placeholder = { Text(stringResource(R.string.ui_login_screen_132), color = Color.Gray) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Lock,
@@ -383,7 +387,7 @@ private fun LoginFormCard(
                     ) {
                         val passLen = state.password.length
                         Text(
-                            text = "$passLen ${if (passLen == 1) "carácter" else "caracteres"}",
+                            text = stringResource(R.string.ui_login_screen_133, passLen, if (passLen == 1) "carácter" else "caracteres"),
                             color = Color.White.copy(alpha = 0.85f),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
@@ -396,7 +400,7 @@ private fun LoginFormCard(
                             val count = state.password.length
                             if (count == 0) {
                                 Text(
-                                    text = "Mín. 6 caracteres",
+                                    text = stringResource(R.string.ui_login_screen_134),
                                     color = Color.White.copy(alpha = 0.5f),
                                     fontSize = 11.sp
                                 )
@@ -415,7 +419,7 @@ private fun LoginFormCard(
                                 }
                                 if (count > maxVisible) {
                                     Text(
-                                        text = "+${count - maxVisible}",
+                                        text = stringResource(R.string.ui_login_screen_135, count - maxVisible),
                                         color = dotColor,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold
@@ -429,7 +433,7 @@ private fun LoginFormCard(
                 // Email Input en posición principal
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Email",
+                        text = stringResource(R.string.ui_login_screen_128),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
@@ -438,7 +442,7 @@ private fun LoginFormCard(
                     OutlinedTextField(
                         value = state.email,
                         onValueChange = onEmailChange,
-                        placeholder = { Text("Ingresa tu Email", color = Color.Gray) },
+                        placeholder = { Text(stringResource(R.string.ui_login_screen_136), color = Color.Gray) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Email,
@@ -472,7 +476,7 @@ private fun LoginFormCard(
                 // Password Input
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Contraseña",
+                        text = stringResource(R.string.ui_login_screen_131),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
@@ -481,7 +485,7 @@ private fun LoginFormCard(
                     OutlinedTextField(
                         value = state.password,
                         onValueChange = onPasswordChange,
-                        placeholder = { Text("Ingresa tu contraseña", color = Color.Gray) },
+                        placeholder = { Text(stringResource(R.string.ui_login_screen_132), color = Color.Gray) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Lock,
@@ -555,7 +559,7 @@ private fun LoginFormCard(
                     )
                 } else {
                     Text(
-                        text = "Iniciar sesión",
+                        text = stringResource(R.string.ui_login_screen_137),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -566,7 +570,7 @@ private fun LoginFormCard(
 
             // Forgot password Link
             Text(
-                text = "Olvidé mi contraseña",
+                text = stringResource(R.string.ui_login_screen_138),
                 fontSize = 14.sp,
                 color = Color.White.copy(alpha = 0.9f),
                 textDecoration = TextDecoration.Underline,
@@ -582,12 +586,12 @@ private fun LoginFormCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "¿No tienes una cuenta? ",
+                    text = stringResource(R.string.ui_login_screen_139),
                     fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = "Crea una cuenta",
+                    text = stringResource(R.string.ui_login_screen_140),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,

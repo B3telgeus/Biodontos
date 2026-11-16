@@ -1,5 +1,7 @@
 package com.example.biodontos.presentation.auth.splash
 
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -135,7 +137,7 @@ fun SplashContent(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_launcher_tooth),
-                        contentDescription = "Biodontos Logo",
+                        contentDescription = stringResource(R.string.ui_splash_screen_167),
                         modifier = Modifier
                             .size(86.dp)
                             .clip(CircleShape),
@@ -148,7 +150,7 @@ fun SplashContent(
 
             // Título Institucional
             Text(
-                text = "BIODONTOS",
+                text = stringResource(R.string.ui_login_screen_126),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 4.sp,
@@ -160,7 +162,7 @@ fun SplashContent(
 
             // Subtítulo Clínico
             Text(
-                text = "PLATAFORMA ODONTOLÓGICA INTEGRAL",
+                text = stringResource(R.string.ui_splash_screen_168),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 2.sp,
@@ -187,7 +189,7 @@ fun SplashContent(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Sistema Clínico Interactivo FDI",
+                        text = stringResource(R.string.ui_splash_screen_169),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = Color(0xFFCBD5E1),
                             fontWeight = FontWeight.Medium
