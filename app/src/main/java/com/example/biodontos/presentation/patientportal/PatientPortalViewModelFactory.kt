@@ -2,6 +2,7 @@ package com.example.biodontos.presentation.patientportal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.biodontos.BiodontosApp
 import com.example.biodontos.presentation.patientportal.appointments.BookAppointmentViewModel
@@ -84,6 +85,11 @@ object PatientPortalViewModelFactory {
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BiodontosApp
             val c = app.container
+            val savedStateHandle = try {
+                extras.createSavedStateHandle()
+            } catch (_: Exception) {
+                null
+            }
             return BookAppointmentViewModel(
                 doctorId = doctorId,
                 rescheduleAppointmentId = rescheduleAppointmentId,
@@ -92,7 +98,8 @@ object PatientPortalViewModelFactory {
                 getAvailableSlotsUseCase = c.getAvailableSlotsUseCase,
                 bookAppointmentUseCase = c.bookAppointmentUseCase,
                 rescheduleAppointmentUseCase = c.rescheduleAppointmentUseCase,
-                clinicClock = c.clinicClock
+                clinicClock = c.clinicClock,
+                savedStateHandle = savedStateHandle
             ) as T
         }
     }

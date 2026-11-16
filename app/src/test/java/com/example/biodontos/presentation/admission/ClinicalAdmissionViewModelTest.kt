@@ -1181,4 +1181,46 @@ class ClinicalAdmissionViewModelTest {
         assertTrue(vm.state.value.isFinished)
         assertNotNull(vm.state.value.successMessage)
     }
+
+    @Test
+    fun `SavedStateHandle restores currentStep and patientId without storing large payloads`() = runTest {
+        val handle = androidx.lifecycle.SavedStateHandle(
+            mapOf(
+                ClinicalAdmissionViewModel.KEY_PATIENT_ID to "pat-restored",
+                ClinicalAdmissionViewModel.KEY_CLINICAL_RECORD_ID to "rec-restored",
+                ClinicalAdmissionViewModel.KEY_CURRENT_STEP to 3
+            )
+        )
+
+        val vm = ClinicalAdmissionViewModel(
+            patientRepository = patientRepository,
+            clinicalRecordRepository = clinicalRecordRepository,
+            anamnesisRepository = anamnesisRepository,
+            odontogramRepository = odontogramRepository,
+            periodontalRepository = periodontalRepository,
+            evolutionRepository = evolutionRepository,
+            materialRepository = materialRepository,
+            informedConsentRepository = informedConsentRepository,
+            appointmentRepository = appointmentRepository,
+            guardianRepository = guardianRepository,
+            savedStateHandle = handle
+        )
+        advanceUntilIdle()
+
+        assertEquals(3, vm.state.value.currentStep)
+        assertEquals("pat-restored", vm.state.value.patientId)
+        assertEquals("rec-restored", vm.state.value.clinicalRecordId)
+
+        vm.onEvent(ClinicalAdmissionEvent.ConfirmConsentSignature("sig_vector_large_payload"))
+        advanceUntilIdle()
+
+        assertEquals(
+            setOf(
+                ClinicalAdmissionViewModel.KEY_PATIENT_ID,
+                ClinicalAdmissionViewModel.KEY_CLINICAL_RECORD_ID,
+                ClinicalAdmissionViewModel.KEY_CURRENT_STEP
+            ),
+            handle.keys()
+        )
+    }
 }

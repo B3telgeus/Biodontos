@@ -28,7 +28,7 @@ val BiodontosLightGrey = Color(0xFFF0F2F4)
 val BiodontosGrayLight = Color(0xFFE2E4E8)
 val BiodontosBorder = Color(0xFFB9B9C3)
 val BiodontosWhite = Color(0xFFFFFFFF)
-val BiodontosErrorRed = Color(0xFFDC2626)
+val BiodontosErrorRed = Color(0xFFB91C1C)
 val BiodontosErrorBg = Color(0xFFFFF1F1)
 
 // Tokens específicos del Portal de Pacientes (Figma 07_Home_Paciente)

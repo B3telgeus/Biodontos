@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.admission
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.biodontos.R
@@ -10,6 +11,8 @@ import com.example.biodontos.data.local.dao.AdmissionDraftDao
 import com.example.biodontos.data.local.entity.AdmissionDraftEntity
 import com.example.biodontos.domain.model.*
 import com.example.biodontos.domain.repository.*
+import com.example.biodontos.domain.usecase.clinical.SaveAdmissionEvolutionAndCloseUseCase
+import com.example.biodontos.domain.usecase.clinical.ScheduleAdmissionFollowUpUseCase
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import com.example.biodontos.domain.usecase.materials.BuildEvolutionMaterialUsageUseCase
 import com.example.biodontos.domain.usecase.materials.GetMaterialsUseCase
@@ -43,9 +46,20 @@ class ClinicalAdmissionViewModel(
     private val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase =
         BuildEvolutionMaterialUsageUseCase(SystemClinicClock()),
     private val admissionDraftDao: AdmissionDraftDao? = null,
+    private val saveAdmissionEvolutionAndCloseUseCase: SaveAdmissionEvolutionAndCloseUseCase =
+        SaveAdmissionEvolutionAndCloseUseCase(evolutionRepository, clinicalRecordRepository),
+    private val scheduleAdmissionFollowUpUseCase: ScheduleAdmissionFollowUpUseCase =
+        ScheduleAdmissionFollowUpUseCase(appointmentRepository),
+    private val savedStateHandle: SavedStateHandle? = null
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ClinicalAdmissionState())
+    private val _state = MutableStateFlow(
+        ClinicalAdmissionState(
+            patientId = savedStateHandle?.get<String>(KEY_PATIENT_ID).orEmpty(),
+            clinicalRecordId = savedStateHandle?.get<String>(KEY_CLINICAL_RECORD_ID).orEmpty(),
+            currentStep = (savedStateHandle?.get<Int>(KEY_CURRENT_STEP) ?: 1).coerceIn(1, 7)
+        )
+    )
     val state: StateFlow<ClinicalAdmissionState> = _state.asStateFlow()
 
     private val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
@@ -56,7 +70,29 @@ class ClinicalAdmissionViewModel(
         if (!initialPatientId.isNullOrBlank()) {
             loadExistingPatientData(initialPatientId)
         }
+        setupSavedStateSync()
         setupDraftAutoSave()
+    }
+
+    private fun setupSavedStateSync() {
+        val handle = savedStateHandle ?: return
+        viewModelScope.launch {
+            _state.collect { s ->
+                if (s.patientId.isNotBlank()) {
+                    handle[KEY_PATIENT_ID] = s.patientId
+                }
+                if (s.clinicalRecordId.isNotBlank()) {
+                    handle[KEY_CLINICAL_RECORD_ID] = s.clinicalRecordId
+                }
+                handle[KEY_CURRENT_STEP] = s.currentStep
+            }
+        }
+    }
+
+    companion object {
+        const val KEY_PATIENT_ID = "admission_patient_id"
+        const val KEY_CLINICAL_RECORD_ID = "admission_clinical_record_id"
+        const val KEY_CURRENT_STEP = "admission_current_step"
     }
 
     private fun setupDraftAutoSave() {
@@ -927,41 +963,14 @@ class ClinicalAdmissionViewModel(
                 materialsUsed = s.usedMaterials
             )
 
-            val saveResult = try {
-                val candidateResult = evolutionRepository.saveEvolution(
-                    evolution = evolution,
-                    closeRecord = s.closeRecordOnFinish,
-                    closureSummary = s.closureSummary.ifBlank { "Tratamiento de ingreso concluido." },
-                    closureSignatureUrl = s.evolutionPatientSignature.ifBlank { null }
-                )
-                if (candidateResult.isSuccess) {
-                    val evo = candidateResult.getOrNull()
-                    if (evo !is Evolution) {
-                        evolutionRepository.saveEvolution(evolution)
-                    } else {
-                        candidateResult
-                    }
-                } else {
-                    val exception = candidateResult.exceptionOrNull()
-                    if (exception == null) {
-                        evolutionRepository.saveEvolution(evolution)
-                    } else {
-                        candidateResult
-                    }
-                }
-            } catch (_: Throwable) {
-                evolutionRepository.saveEvolution(evolution)
-            }
+            val saveResult = saveAdmissionEvolutionAndCloseUseCase(
+                evolution = evolution,
+                closeRecord = s.closeRecordOnFinish,
+                closureSummary = s.closureSummary.ifBlank { "Tratamiento de ingreso concluido." },
+                closureSignatureUrl = s.evolutionPatientSignature.ifBlank { null }
+            )
 
             saveResult.onSuccess {
-                if (s.closeRecordOnFinish) {
-                    clinicalRecordRepository.closeRecord(
-                        recordId = s.clinicalRecordId,
-                        doctorId = validDoctorId,
-                        summary = s.closureSummary.ifBlank { "Tratamiento de ingreso concluido." },
-                        signatureUrl = s.evolutionPatientSignature
-                    )
-                }
                 _state.update { it.copy(isLoading = false, currentStep = 7) }
             }.onFailure { err ->
                 val msg = "Error en evolución: ${err.toUserFriendlyMessage()}"
@@ -975,72 +984,13 @@ class ClinicalAdmissionViewModel(
         val validDoctorId = requireValidDoctorId() ?: return
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
-            var scheduledTimeNote = ""
-
-            if (s.nextAppointmentDate.isNotBlank()) {
-                var targetTime = s.nextAppointmentTime.ifBlank { "10:00" }.trim()
-                if (targetTime.length == 5) {
-                    targetTime = "$targetTime:00"
-                }
-
-                val busySlots = appointmentRepository.getDoctorBusySlots(validDoctorId, s.nextAppointmentDate)
-                    .getOrDefault(emptyList())
-
-                val requestedIso = "${s.nextAppointmentDate}T$targetTime"
-                val isBusy = busySlots.any { busy ->
-                    busy.startsWith("${s.nextAppointmentDate}T${targetTime.take(5)}") || busy == requestedIso
-                }
-
-                val candidateTimes = listOf(
-                    "08:00:00", "08:30:00", "09:00:00", "09:30:00", "10:00:00", "10:30:00",
-                    "11:00:00", "11:30:00", "12:00:00", "14:00:00", "14:30:00", "15:00:00",
-                    "15:30:00", "16:00:00", "16:30:00", "17:00:00"
-                )
-
-                if (isBusy) {
-                    val availableTime = candidateTimes.firstOrNull { candidate ->
-                        val iso = "${s.nextAppointmentDate}T$candidate"
-                        busySlots.none { busy -> busy.startsWith(iso.take(16)) }
-                    }
-                    availableTime?.let { targetTime = it }
-                }
-
-                var appointmentCreated = false
-                val appointmentToTry = Appointment(
-                    patientId = s.patientId,
-                    doctorId = validDoctorId,
-                    startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T$targetTime"),
-                    reason = s.nextAppointmentReason.ifBlank { "Control y seguimiento post-tratamiento" },
-                    status = AppointmentStatus.SCHEDULED,
-                    isConfirmed = false
-                )
-
-                val primaryResult = appointmentRepository.createAppointment(appointmentToTry)
-                if (primaryResult.isSuccess) {
-                    appointmentCreated = true
-                    scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${targetTime.take(5)}."
-                } else {
-                    val fallbackTime = candidateTimes.firstNotNullOfOrNull { candidate ->
-                        if (candidate == targetTime) {
-                            null
-                        } else {
-                            val fallbackAppt = appointmentToTry.copy(
-                                startTime = Appointment.parseDateTime("${s.nextAppointmentDate}T$candidate")
-                            )
-                            val fallbackResult = appointmentRepository.createAppointment(fallbackAppt)
-                            candidate.takeIf { fallbackResult.isSuccess }
-                        }
-                    }
-                    if (fallbackTime != null) {
-                        appointmentCreated = true
-                        scheduledTimeNote = " Cita agendada para el ${s.nextAppointmentDate} a las ${fallbackTime.take(5)}."
-                    }
-                }
-
-                if (!appointmentCreated) {
-                    scheduledTimeNote = " (Nota: No se pudo agendar la próxima cita automáticamente por conflicto de horario)."
-                }
-            }
+            val scheduledTimeNote = scheduleAdmissionFollowUpUseCase(
+                patientId = s.patientId,
+                doctorId = validDoctorId,
+                nextAppointmentDate = s.nextAppointmentDate,
+                nextAppointmentTime = s.nextAppointmentTime,
+                nextAppointmentReason = s.nextAppointmentReason
+            )
 
             if (s.patientId.isNotBlank()) {
                 try {

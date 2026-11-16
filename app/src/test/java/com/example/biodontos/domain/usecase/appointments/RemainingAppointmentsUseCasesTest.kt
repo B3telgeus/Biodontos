@@ -9,26 +9,19 @@ import com.example.biodontos.domain.repository.AppointmentRepository
 import com.example.biodontos.domain.repository.DoctorRepository
 import com.example.biodontos.domain.scheduling.AppointmentModificationPolicy
 import com.example.biodontos.domain.scheduling.ClinicClock
-import com.example.biodontos.domain.usecase.appointment.BookAppointmentUseCase as LegacyBookAppointmentUseCase
-import com.example.biodontos.domain.usecase.appointment.CancelAppointmentUseCase as LegacyCancelAppointmentUseCase
-import com.example.biodontos.domain.usecase.appointment.ConfirmAppointmentUseCase as LegacyConfirmAppointmentUseCase
-import com.example.biodontos.domain.usecase.appointment.GetDoctorAppointmentsUseCase as LegacyGetDoctorAppointmentsUseCase
-import com.example.biodontos.domain.usecase.appointment.GetDoctorBusySlotsUseCase as LegacyGetDoctorBusySlotsUseCase
-import com.example.biodontos.domain.usecase.appointment.GetPatientAppointmentsUseCase as LegacyGetPatientAppointmentsUseCase
-import com.example.biodontos.domain.usecase.appointment.RescheduleAppointmentUseCase as LegacyRescheduleAppointmentUseCase
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
 
 class RemainingAppointmentsUseCasesTest {
 
@@ -121,36 +114,34 @@ class RemainingAppointmentsUseCasesTest {
     }
 
     @Test
-    fun `singular appointment use cases delegate properly to repository`() = runTest {
+    fun `consolidated appointment use cases delegate and validate properly`() = runTest {
         val sampleAppt = Appointment(
             id = "appt-10",
             patientId = "pat-10",
             doctorId = "doc-10",
-            startTime = testNow.plusDays(2)
+            startTime = testNow.plusDays(2),
+            status = AppointmentStatus.CONFIRMED
         )
 
-        coEvery { appointmentRepository.createAppointment(sampleAppt) } returns Result.success(sampleAppt)
+        coEvery { appointmentRepository.getAppointmentById("appt-10") } returns Result.success(sampleAppt)
         coEvery { appointmentRepository.cancelAppointment("appt-10", "Viaje") } returns Result.success(Unit)
         coEvery { appointmentRepository.updateConfirmationStatus("appt-10", true) } returns Result.success(Unit)
-        coEvery { appointmentRepository.getAppointmentsByDoctorId("doc-10") } returns Result.success(listOf(sampleAppt))
         coEvery { appointmentRepository.getDoctorBusySlots("doc-10", "2026-10-22") } returns Result.success(listOf("10:00:00"))
         coEvery { appointmentRepository.getAppointmentsByPatientId("pat-10") } returns Result.success(listOf(sampleAppt))
-        coEvery {
-            appointmentRepository.rescheduleAppointment("appt-10", "2026-10-25T10:00:00", "2026-10-25T10:30:00")
-        } returns Result.success(Unit)
 
-        assertTrue(LegacyBookAppointmentUseCase(appointmentRepository)(sampleAppt).isSuccess)
-        assertTrue(LegacyCancelAppointmentUseCase(appointmentRepository)("appt-10", "Viaje").isSuccess)
-        assertTrue(LegacyConfirmAppointmentUseCase(appointmentRepository)("appt-10").isSuccess)
-        assertEquals(1, LegacyGetDoctorAppointmentsUseCase(appointmentRepository)("doc-10").getOrDefault(emptyList()).size)
-        assertEquals(1, LegacyGetDoctorBusySlotsUseCase(appointmentRepository)("doc-10", "2026-10-22").getOrDefault(emptyList()).size)
-        assertEquals(1, LegacyGetPatientAppointmentsUseCase(appointmentRepository)("pat-10").getOrDefault(emptyList()).size)
-        assertTrue(
-            LegacyRescheduleAppointmentUseCase(appointmentRepository)(
-                "appt-10",
-                "2026-10-25T10:00:00",
-                "2026-10-25T10:30:00"
-            ).isSuccess
-        )
+        val cancelUseCase = CancelAppointmentUseCase(appointmentRepository, modificationPolicy, clinicClock)
+        assertTrue(cancelUseCase("appt-10", "Viaje").isRight())
+
+        val confirmUseCase = ConfirmAppointmentUseCase(appointmentRepository)
+        assertTrue(confirmUseCase("appt-10").isSuccess)
+        assertTrue(confirmUseCase("   ").isFailure)
+
+        val busySlotsUseCase = GetDoctorBusySlotsUseCase(appointmentRepository)
+        assertEquals(1, busySlotsUseCase("doc-10", "2026-10-22").getOrDefault(emptyList()).size)
+        assertTrue(busySlotsUseCase("", "2026-10-22").isFailure)
+
+        val patientApptsUseCase = GetPatientAppointmentsUseCase(appointmentRepository)
+        assertEquals(1, patientApptsUseCase("pat-10").getOrDefault(emptyList()).size)
+        assertTrue(patientApptsUseCase(" ").isFailure)
     }
 }

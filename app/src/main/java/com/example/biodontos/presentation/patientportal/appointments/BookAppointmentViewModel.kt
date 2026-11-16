@@ -1,5 +1,6 @@
 package com.example.biodontos.presentation.patientportal.appointments
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.biodontos.domain.model.AppointmentError
@@ -28,17 +29,24 @@ class BookAppointmentViewModel(
     private val getAvailableSlotsUseCase: GetAvailableSlotsUseCase,
     private val bookAppointmentUseCase: BookAppointmentUseCase,
     private val rescheduleAppointmentUseCase: RescheduleAppointmentUseCase,
-    private val clinicClock: ClinicClock
+    private val clinicClock: ClinicClock,
+    private val savedStateHandle: SavedStateHandle? = null
 ) : ViewModel() {
 
     private val initialDate: LocalDate = clinicClock.now().toLocalDate()
     private val datesList: List<LocalDate> = (0..13).map { initialDate.plusDays(it.toLong()) }
+    private val restoredDate: LocalDate = savedStateHandle?.get<String>(KEY_SELECTED_DATE)
+        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        ?: initialDate
+    private val restoredReason: String = savedStateHandle?.get<String>(KEY_SELECTED_REASON)
+        ?: "Control de rutina"
 
     private val _uiState = MutableStateFlow(
         BookAppointmentUiState(
             doctorId = doctorId,
             rescheduleAppointmentId = rescheduleAppointmentId,
-            selectedDate = initialDate,
+            selectedDate = restoredDate,
+            selectedReason = restoredReason,
             availableDates = datesList,
             isLoading = true
         )
@@ -55,6 +63,7 @@ class BookAppointmentViewModel(
     fun onEvent(event: BookAppointmentUiEvent) {
         when (event) {
             is BookAppointmentUiEvent.SelectDate -> {
+                savedStateHandle?.set(KEY_SELECTED_DATE, event.date.toString())
                 _uiState.update { it.copy(selectedDate = event.date, selectedSlot = null, errorMessage = null) }
                 loadSlotsForDate(event.date)
             }
@@ -62,6 +71,7 @@ class BookAppointmentViewModel(
                 _uiState.update { it.copy(selectedSlot = event.slot) }
             }
             is BookAppointmentUiEvent.SelectReason -> {
+                savedStateHandle?.set(KEY_SELECTED_REASON, event.reason)
                 _uiState.update { it.copy(selectedReason = event.reason) }
             }
             is BookAppointmentUiEvent.CustomReasonChanged -> {
@@ -263,5 +273,10 @@ class BookAppointmentViewModel(
                 }
             )
         }
+    }
+
+    companion object {
+        const val KEY_SELECTED_DATE = "booking_selected_date"
+        const val KEY_SELECTED_REASON = "booking_selected_reason"
     }
 }

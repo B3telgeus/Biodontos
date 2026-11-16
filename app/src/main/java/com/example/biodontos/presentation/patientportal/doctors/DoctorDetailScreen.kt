@@ -43,6 +43,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -144,7 +146,8 @@ fun DoctorDetailScreen(
                     text = stringResource(R.string.ui_doctor_detail_screen_377),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BiodontosDark
+                    color = BiodontosDark,
+                    modifier = Modifier.semantics { heading() }
                 )
             }
 
@@ -198,7 +201,9 @@ fun DoctorDetailScreen(
                     // Tarjeta Principal (Hero)
                     item {
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics(mergeDescendants = true) {},
                             shape = RoundedCornerShape(32.dp),
                             colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

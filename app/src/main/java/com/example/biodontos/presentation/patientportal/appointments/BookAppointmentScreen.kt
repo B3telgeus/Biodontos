@@ -48,6 +48,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -187,7 +189,8 @@ fun BookAppointmentScreen(
                     text = titleText,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BiodontosDark
+                    color = BiodontosDark,
+                    modifier = Modifier.semantics { heading() }
                 )
             }
 
@@ -202,7 +205,9 @@ fun BookAppointmentScreen(
                 state.doctor?.let { doctor ->
                     item {
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics(mergeDescendants = true) {},
                             shape = RoundedCornerShape(24.dp),
                             colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
                             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)

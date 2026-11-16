@@ -28,11 +28,16 @@ val envProperties = Properties().apply {
     }
 }
 
-val supabaseUrl = envProperties.getProperty("SUPABASE_URL", "https://xiuhvuudloifnuaiqpkh.supabase.co")
-val supabaseKey = envProperties.getProperty(
-    "SUPABASE_KEY",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpdWh2dXVkbG9pZm51YWlxcGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNDUwMjMsImV4cCI6MjA5MzcyMTAyM30.ztml4G__ODxWWSwABiB4v44MUguOziJx_fjqFZlWAWk"
-)
+val supabaseUrl = envProperties.getProperty("SUPABASE_URL")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("SUPABASE_URL")?.takeIf { it.isNotBlank() }
+    ?: throw GradleException(
+        "Falta SUPABASE_URL. Configura SUPABASE_URL en .env o local.properties (consulta .env.example)."
+    )
+val supabaseKey = envProperties.getProperty("SUPABASE_KEY")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("SUPABASE_KEY")?.takeIf { it.isNotBlank() }
+    ?: throw GradleException(
+        "Falta SUPABASE_KEY. Configura SUPABASE_KEY en .env o local.properties (consulta .env.example)."
+    )
 
 android {
     namespace = "com.example.biodontos"
@@ -75,6 +80,9 @@ android {
     lint {
         disable += "NullSafeMutableLiveData"
         abortOnError = false
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
 }
 

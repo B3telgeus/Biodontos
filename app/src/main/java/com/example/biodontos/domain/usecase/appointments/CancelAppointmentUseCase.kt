@@ -14,7 +14,8 @@ class CancelAppointmentUseCase(
     private val clinicClock: ClinicClock
 ) {
     suspend operator fun invoke(
-        appointmentId: String
+        appointmentId: String,
+        reason: String? = null
     ): Either<AppointmentError, Unit> {
         val now = clinicClock.now()
 
@@ -27,7 +28,11 @@ class CancelAppointmentUseCase(
             return canModifyResult
         }
 
-        val cancelResult = appointmentRepository.cancelAppointment(appointmentId)
+        val cancelResult = if (reason != null) {
+            appointmentRepository.cancelAppointment(appointmentId, reason)
+        } else {
+            appointmentRepository.cancelAppointment(appointmentId)
+        }
 
         return cancelResult.fold(
             onSuccess = { Unit.right() },

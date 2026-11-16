@@ -391,6 +391,41 @@ class BookAppointmentViewModelTest {
         assertNull(state.errorMessage)
         assertTrue(state.slots.isEmpty())
     }
+
+    @Test
+    fun `SavedStateHandle restores and updates selectedDate and selectedReason safely`() = runTest {
+        val restoredDate = testToday.plusDays(3)
+        coEvery { getAvailableSlotsUseCase(DoctorId("doc-1"), restoredDate) } returns Result.success(listOf(testSlot))
+        val handle = androidx.lifecycle.SavedStateHandle(
+            mapOf(
+                BookAppointmentViewModel.KEY_SELECTED_DATE to restoredDate.toString(),
+                BookAppointmentViewModel.KEY_SELECTED_REASON to "Limpieza dental"
+            )
+        )
+
+        val viewModel = BookAppointmentViewModel(
+            doctorId = "doc-1",
+            rescheduleAppointmentId = null,
+            getCurrentPatientUseCase = getCurrentPatientUseCase,
+            doctorRepository = doctorRepository,
+            getAvailableSlotsUseCase = getAvailableSlotsUseCase,
+            bookAppointmentUseCase = bookAppointmentUseCase,
+            rescheduleAppointmentUseCase = rescheduleAppointmentUseCase,
+            clinicClock = clinicClock,
+            savedStateHandle = handle
+        )
+        advanceUntilIdle()
+
+        assertEquals(restoredDate, viewModel.uiState.value.selectedDate)
+        assertEquals("Limpieza dental", viewModel.uiState.value.selectedReason)
+
+        val nextDate = testToday.plusDays(4)
+        coEvery { getAvailableSlotsUseCase(DoctorId("doc-1"), nextDate) } returns Result.success(emptyList())
+        viewModel.onEvent(BookAppointmentUiEvent.SelectDate(nextDate))
+        advanceUntilIdle()
+
+        assertEquals(nextDate.toString(), handle.get<String>(BookAppointmentViewModel.KEY_SELECTED_DATE))
+    }
 }
 
 

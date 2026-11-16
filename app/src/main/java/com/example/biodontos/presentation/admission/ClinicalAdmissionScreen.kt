@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -118,7 +120,8 @@ fun ClinicalAdmissionContent(
                             text = stringResource(R.string.ui_clinical_admission_screen_1),
                             fontWeight = FontWeight.Bold,
                             color = BiodontosDark,
-                            fontSize = 18.sp
+                            fontSize = 18.sp,
+                            modifier = Modifier.semantics { heading() }
                         )
                         Text(
                             text = stringResource(R.string.ui_clinical_admission_screen_2, state.currentStep, getStepTitle(state.currentStep)),

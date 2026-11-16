@@ -34,6 +34,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -112,7 +114,8 @@ fun LoginScreen(
                         text = stringResource(R.string.ui_login_screen_123),
                         fontSize = 48.sp,
                         fontWeight = FontWeight.Black,
-                        color = BiodontosDark
+                        color = BiodontosDark,
+                        modifier = Modifier.semantics { heading() }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -168,7 +171,8 @@ fun LoginScreen(
                     text = stringResource(R.string.ui_login_screen_126),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Black,
-                    color = BiodontosDark
+                    color = BiodontosDark,
+                    modifier = Modifier.semantics { heading() }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(

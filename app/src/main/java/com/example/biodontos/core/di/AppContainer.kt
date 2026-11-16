@@ -37,9 +37,9 @@ import com.example.biodontos.domain.repository.PatientRepository
 import com.example.biodontos.domain.repository.PeriodontalRepository
 import com.example.biodontos.domain.scheduling.AppointmentModificationPolicy
 import com.example.biodontos.domain.scheduling.ClinicClock
-import com.example.biodontos.domain.usecase.appointment.ConfirmAppointmentUseCase
-import com.example.biodontos.domain.usecase.appointment.GetDoctorBusySlotsUseCase
-import com.example.biodontos.domain.usecase.appointment.GetPatientAppointmentsUseCase
+import com.example.biodontos.domain.usecase.appointments.ConfirmAppointmentUseCase
+import com.example.biodontos.domain.usecase.appointments.GetDoctorBusySlotsUseCase
+import com.example.biodontos.domain.usecase.appointments.GetPatientAppointmentsUseCase
 import com.example.biodontos.domain.usecase.appointments.BookAppointmentUseCase
 import com.example.biodontos.domain.usecase.appointments.CancelAppointmentUseCase
 import com.example.biodontos.domain.usecase.appointments.GetAvailableSlotsUseCase
@@ -58,6 +58,8 @@ import com.example.biodontos.domain.usecase.billing.GetDoctorRecentPaymentsUseCa
 import com.example.biodontos.domain.usecase.billing.GetPatientTreatmentsUseCase
 import com.example.biodontos.domain.usecase.billing.GetPaymentSummaryUseCase
 import com.example.biodontos.domain.usecase.billing.RecordPaymentUseCase
+import com.example.biodontos.domain.usecase.clinical.SaveAdmissionEvolutionAndCloseUseCase
+import com.example.biodontos.domain.usecase.clinical.ScheduleAdmissionFollowUpUseCase
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
@@ -151,6 +153,10 @@ interface AppContainer {
     val saveMaterialUseCase: SaveMaterialUseCase
     val setMaterialActiveUseCase: SetMaterialActiveUseCase
     val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase
+    val saveAdmissionEvolutionAndCloseUseCase: SaveAdmissionEvolutionAndCloseUseCase
+        get() = SaveAdmissionEvolutionAndCloseUseCase(evolutionRepository, clinicalRecordRepository)
+    val scheduleAdmissionFollowUpUseCase: ScheduleAdmissionFollowUpUseCase
+        get() = ScheduleAdmissionFollowUpUseCase(appointmentRepository)
 }
 
 class DefaultAppContainer(private val context: Context? = null) : AppContainer {
@@ -426,5 +432,13 @@ class DefaultAppContainer(private val context: Context? = null) : AppContainer {
 
     override val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase by lazy {
         BuildEvolutionMaterialUsageUseCase(clinicClock)
+    }
+
+    override val saveAdmissionEvolutionAndCloseUseCase: SaveAdmissionEvolutionAndCloseUseCase by lazy {
+        SaveAdmissionEvolutionAndCloseUseCase(evolutionRepository, clinicalRecordRepository)
+    }
+
+    override val scheduleAdmissionFollowUpUseCase: ScheduleAdmissionFollowUpUseCase by lazy {
+        ScheduleAdmissionFollowUpUseCase(appointmentRepository)
     }
 }

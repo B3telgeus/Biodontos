@@ -278,14 +278,14 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 viewModel.events.collect { event ->
                     when (event) {
                         is LoginEvent.LoginSuccess -> {
-                            if (event.session.role == UserRole.PATIENT) {
-                                navController.navigate(PatientHome) {
-                                    popUpTo(Login) { inclusive = true }
-                                }
+                            val destination: Any = if (event.session.role == UserRole.PATIENT) {
+                                PatientHome
                             } else {
-                                navController.navigate(DoctorHome) {
-                                    popUpTo(Login) { inclusive = true }
-                                }
+                                DoctorHome
+                            }
+                            navController.navigate(destination) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                                launchSingleTop = true
                             }
                         }
                     }
@@ -314,7 +314,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                     when (event) {
                         is DoctorRegistrationEvent.RegisteredSuccess -> {
                             navController.navigate(DoctorHome) {
-                                popUpTo(DoctorRegistration) { inclusive = true }
+                                popUpTo(navController.graph.id) { inclusive = true }
+                                launchSingleTop = true
                             }
                         }
                     }
@@ -420,7 +421,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                     onNavigateToBooking = { doctorId -> navController.navigate(BookAppointment(doctorId)) },
                     onNavigateToLogin = {
                         navController.navigate(Login) {
-                            popUpTo(PatientHome) { inclusive = true }
+                            popUpTo(navController.graph.id) { inclusive = true }
+                            launchSingleTop = true
                         }
                     },
                     isExpanded = isExpanded
@@ -443,7 +445,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 },
                 onLogoutClick = {
                     navController.navigate(Login) {
-                        popUpTo(DoctorSearch) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             ) {
@@ -483,7 +486,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 },
                 onLogoutClick = {
                     navController.navigate(Login) {
-                        popUpTo(MyAppointments) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             ) {
@@ -562,7 +566,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 },
                 onLogoutClick = {
                     navController.navigate(Login) {
-                        popUpTo(PatientPayments) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             ) {
@@ -604,7 +609,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                     },
                     onNavigateToLogin = {
                         navController.navigate(Login) {
-                            popUpTo(DoctorHome) { inclusive = true }
+                            popUpTo(navController.graph.id) { inclusive = true }
+                            launchSingleTop = true
                         }
                     }
                 )
@@ -629,7 +635,8 @@ fun BiodontosNavGraph(navController: NavHostController) {
                 },
                 onLogoutClick = {
                     navController.navigate(Login) {
-                        popUpTo(PatientList) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             ) {
@@ -736,7 +743,8 @@ onFilterSelected = viewModel::onFilterSelected,
                 },
                 onLogoutClick = {
                     navController.navigate(Login) {
-                        popUpTo(DoctorAppointments) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             ) {
@@ -766,7 +774,8 @@ onFilterSelected = viewModel::onFilterSelected,
                 },
                 onLogoutClick = {
                     navController.navigate(Login) {
-                        popUpTo(DoctorDocuments) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             ) {
@@ -799,7 +808,8 @@ onFilterSelected = viewModel::onFilterSelected,
                 },
                 onLogoutClick = {
                     navController.navigate(Login) {
-                        popUpTo(DoctorMaterials) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             ) {
@@ -867,7 +877,8 @@ onFilterSelected = viewModel::onFilterSelected,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLogin = {
                     navController.navigate(Login) {
-                        popUpTo(DoctorProfile) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
