@@ -60,5 +60,8 @@ class AccessibilityAndContrastTest {
             "El especialista aún no ha configurado horarios disponibles.",
             context.getString(R.string.doctor_availability_empty)
         )
+
+        val uiText = com.example.biodontos.core.ui.UiText.StringResource(R.string.cd_tooth_fdi, 21)
+        assertEquals("Diente FDI 21", uiText.asString(context))
     }
 }

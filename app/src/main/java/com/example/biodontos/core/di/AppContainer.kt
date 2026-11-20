@@ -182,7 +182,11 @@ class DefaultAppContainer(private val context: Context? = null) : AppContainer {
     }
 
     override val patientRepository: PatientRepository by lazy {
-        PatientRepositoryImpl()
+        PatientRepositoryImpl(
+            supabaseClient = com.example.biodontos.core.network.SupabaseClient.client,
+            ioDispatcher = Dispatchers.IO,
+            patientDao = database?.patientDao()
+        )
     }
 
     override val guardianRepository: GuardianRepository by lazy {
@@ -213,7 +217,11 @@ class DefaultAppContainer(private val context: Context? = null) : AppContainer {
     }
 
     override val materialRepository: MaterialRepository by lazy {
-        MaterialRepositoryImpl()
+        MaterialRepositoryImpl(
+            supabaseClient = com.example.biodontos.core.network.SupabaseClient.client,
+            ioDispatcher = Dispatchers.IO,
+            materialDao = database?.materialDao()
+        )
     }
 
     override val informedConsentRepository: InformedConsentRepository by lazy {

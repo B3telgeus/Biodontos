@@ -19,6 +19,8 @@ class SaveAdmissionEvolutionAndCloseUseCase(
             ?: "Tratamiento de ingreso concluido."
         val effectiveSignature = closureSignatureUrl?.ifBlank { null }
 
+        var usedLegacySingleArgFallback = false
+
         val saveResult = try {
             val candidateResult = evolutionRepository.saveEvolution(
                 evolution = evolution,
@@ -29,6 +31,7 @@ class SaveAdmissionEvolutionAndCloseUseCase(
             if (candidateResult.isSuccess) {
                 val evo = candidateResult.getOrNull()
                 if (evo !is Evolution) {
+                    usedLegacySingleArgFallback = true
                     evolutionRepository.saveEvolution(evolution)
                 } else {
                     candidateResult
@@ -36,6 +39,7 @@ class SaveAdmissionEvolutionAndCloseUseCase(
             } else {
                 val exception = candidateResult.exceptionOrNull()
                 if (exception == null) {
+                    usedLegacySingleArgFallback = true
                     evolutionRepository.saveEvolution(evolution)
                 } else {
                     candidateResult
@@ -44,11 +48,15 @@ class SaveAdmissionEvolutionAndCloseUseCase(
         } catch (e: CancellationException) {
             throw e
         } catch (_: Throwable) {
+            usedLegacySingleArgFallback = true
             evolutionRepository.saveEvolution(evolution)
         }
 
+        // The 4-argument saveEvolution RPC (save_evolution_with_materials) already closes the clinical
+        // record atomically inside PostgreSQL. Only invoke clinicalRecordRepository.closeRecord when
+        // falling back to the legacy 1-argument saveEvolution stub.
         saveResult.onSuccess {
-            if (closeRecord && clinicalRecordRepository != null && evolution.recordId.isNotBlank()) {
+            if (usedLegacySingleArgFallback && closeRecord && clinicalRecordRepository != null && evolution.recordId.isNotBlank()) {
                 clinicalRecordRepository.closeRecord(
                     recordId = evolution.recordId,
                     doctorId = evolution.doctorId,

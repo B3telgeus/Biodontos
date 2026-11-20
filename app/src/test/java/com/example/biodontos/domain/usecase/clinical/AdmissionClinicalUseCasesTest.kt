@@ -20,7 +20,7 @@ class AdmissionClinicalUseCasesTest {
     private val appointmentRepository: AppointmentRepository = mockk()
 
     @Test
-    fun `SaveAdmissionEvolutionAndCloseUseCase delegates atomic persistence to evolutionRepository and closes record when requested`() = runTest {
+    fun `SaveAdmissionEvolutionAndCloseUseCase delegates atomic persistence and closure to evolutionRepository RPC without redundant closeRecord call`() = runTest {
         val sampleEvo = Evolution(
             id = "evo-1",
             recordId = "rec-1",
@@ -55,13 +55,9 @@ class AdmissionClinicalUseCasesTest {
                 closureSignatureUrl = "sig_pat"
             )
         }
-        coVerify(exactly = 1) {
-            clinicalRecordRepository.closeRecord(
-                recordId = "rec-1",
-                doctorId = "12345678-1234-1234-1234-123456789abc",
-                summary = "Resumen final",
-                signatureUrl = "sig_pat"
-            )
+        // Atomic RPC already closed the record in PostgreSQL; no second network call should happen
+        coVerify(exactly = 0) {
+            clinicalRecordRepository.closeRecord(any(), any(), any(), any())
         }
     }
 
