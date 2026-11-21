@@ -13,6 +13,7 @@ supabase/migrations/
 ├── 20261001000000_base_schema.sql
 ├── 20261013_patient_portal.sql
 ├── 20261020000000_materials_and_atomic_evolutions.sql
+├── 20261121000000_add_clinical_consent_form_columns.sql
 └── README.md
 ```
 
@@ -23,6 +24,7 @@ supabase/migrations/
 | **1** | `20261001000000_base_schema.sql` | Esquema base con 15 tablas clínicas, helper `is_doctor()`, trigger en `auth.users` (`handle_new_user()`), índices y RLS. | Extensión `pgcrypto` y esquema `auth` de Supabase. |
 | **2** | `20261013_patient_portal.sql` | Portal del paciente: columnas de perfil doctor, tabla `doctor_availability`, índice anti-colisión de citas, RPCs de agendamiento y RLS. | Tablas `doctors`, `patients`, `appointments`, función `is_doctor()`. |
 | **3** | `20261020000000_materials_and_atomic_evolutions.sql` | Control INVIMA (`clinical_materials`), consumo de materiales (`evolution_materials_used`), bucket `doctor-avatars` y RPC transaccional `save_evolution_with_materials`. | Tablas `doctors`, `clinical_records`, `evolutions`, función `is_doctor()`. |
+| **4** | `20261121000000_add_clinical_consent_form_columns.sql` | Extensión de columnas e índices para consentimientos clínicos especializados (Blanqueamiento, Odontología General, Rehabilitación Oral). | Tablas `informed_consents`, `informed_consent_procedures`. |
 
 ---
 
@@ -89,6 +91,28 @@ supabase/migrations/
 
 ---
 
+### 4. `20261121000000_add_clinical_consent_form_columns.sql` (Formularios Clínicos de Consentimiento)
+- **Propósito**: Extender el esquema para soportar los tres nuevos formularios de consentimiento informado clínico (Odontología General, Blanqueamiento Dental y Rehabilitación Oral) manteniendo plena compatibilidad con registros existentes.
+- **Modificaciones en `public.informed_consents`**:
+  - `consent_type text NOT NULL DEFAULT 'GENERAL_ADMISSION'`: Clasificación con restricción CHECK (`chk_informed_consents_consent_type`).
+  - `patient_city text DEFAULT 'Bogotá D.C.'`: Lugar de suscripción legal del consentimiento.
+  - `selected_procedures jsonb NOT NULL DEFAULT '[]'::jsonb`: Lista JSON de procedimientos autorizados.
+  - `acknowledged_risks jsonb NOT NULL DEFAULT '[]'::jsonb`: Lista JSON de riesgos informados y aceptados.
+  - `relevant_medical_conditions text`: Antecedentes y condiciones clínicas relevantes.
+  - `occlusion_test_accepted boolean NOT NULL DEFAULT false`: Aceptación de prueba oclusal.
+  - `aesthetic_color_accepted boolean NOT NULL DEFAULT false`: Aceptación estética de color y anatomía.
+  - `initial_color_guide text`: Guía inicial de color (VITA/estándar).
+  - `final_color_guide text`: Guía final de color alcanzada.
+  - `specific_notes text`: Notas y acuerdos clínicos específicos.
+- **Modificaciones en `public.informed_consent_procedures`**:
+  - `procedure_name text`: Denominación del procedimiento dental específico.
+  - `doctor_signature_url text`: Firma del profesional responsable del procedimiento individual.
+- **Índices**:
+  - `idx_informed_consents_patient_type` sobre `(patient_id, consent_type)` para consultas por paciente y especialidad.
+  - `idx_informed_consents_type` sobre `(consent_type)` para filtrado por tipo de formulario.
+
+---
+
 ## 3. Guía de Ejecución
 
 ### Aplicación con Supabase CLI
@@ -105,3 +129,4 @@ Si se aplican los scripts a través del panel de Supabase SQL Editor o cliente `
 1. Ejecutar `20261001000000_base_schema.sql`
 2. Ejecutar `20261013_patient_portal.sql`
 3. Ejecutar `20261020000000_materials_and_atomic_evolutions.sql`
+4. Ejecutar `20261121000000_add_clinical_consent_form_columns.sql`
