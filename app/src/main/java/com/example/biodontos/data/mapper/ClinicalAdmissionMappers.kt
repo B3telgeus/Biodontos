@@ -249,18 +249,28 @@ fun InformedConsentDto.toDomain(procedures: List<InformedConsentProcedure> = emp
         id = id ?: "",
         patientId = patientId,
         doctorId = doctorId,
+        consentType = com.example.biodontos.domain.model.ConsentType.fromCode(consentType),
         documentVersion = documentVersion,
         versionDate = versionDate,
         treatmentSummary = treatmentSummary,
         representativeName = representativeName,
         representativeId = representativeId,
+        patientCity = patientCity,
         patientSignatureUrl = patientSignatureUrl,
         guardianSignatureUrl = guardianSignatureUrl,
         doctorSignatureUrl = doctorSignatureUrl,
         doctorLicenseNumber = doctorLicenseNumber,
         signedAt = signedAt,
         status = status,
-        procedures = procedures
+        procedures = procedures,
+        selectedProcedures = selectedProcedures,
+        acknowledgedRisks = acknowledgedRisks,
+        relevantMedicalConditions = relevantMedicalConditions ?: "",
+        occlusionTestAccepted = occlusionTestAccepted,
+        aestheticColorAccepted = aestheticColorAccepted,
+        initialColorGuide = initialColorGuide ?: "",
+        finalColorGuide = finalColorGuide ?: "",
+        specificNotes = specificNotes ?: ""
     )
 
 fun InformedConsent.toDto(): InformedConsentDto = InformedConsentDto(
@@ -272,12 +282,22 @@ fun InformedConsent.toDto(): InformedConsentDto = InformedConsentDto(
     treatmentSummary = treatmentSummary,
     representativeName = representativeName,
     representativeId = representativeId,
+    patientCity = patientCity,
     patientSignatureUrl = patientSignatureUrl,
     guardianSignatureUrl = guardianSignatureUrl,
     doctorSignatureUrl = doctorSignatureUrl,
     doctorLicenseNumber = doctorLicenseNumber,
     signedAt = signedAt,
-    status = status
+    status = status,
+    consentType = consentType.code,
+    selectedProcedures = selectedProcedures,
+    acknowledgedRisks = acknowledgedRisks,
+    relevantMedicalConditions = relevantMedicalConditions.ifBlank { null },
+    occlusionTestAccepted = occlusionTestAccepted,
+    aestheticColorAccepted = aestheticColorAccepted,
+    initialColorGuide = initialColorGuide.ifBlank { null },
+    finalColorGuide = finalColorGuide.ifBlank { null },
+    specificNotes = specificNotes.ifBlank { null }
 )
 
 fun InformedConsentProcedureDto.toDomain(): InformedConsentProcedure = InformedConsentProcedure(
@@ -285,7 +305,9 @@ fun InformedConsentProcedureDto.toDomain(): InformedConsentProcedure = InformedC
     consentId = consentId,
     toothNumber = toothNumber,
     procedureDate = procedureDate,
-    patientSignatureUrl = patientSignatureUrl
+    patientSignatureUrl = patientSignatureUrl,
+    procedureName = procedureName ?: "",
+    doctorSignatureUrl = doctorSignatureUrl
 )
 
 fun InformedConsentProcedure.toDto(consentId: String = this.consentId): InformedConsentProcedureDto =
@@ -294,5 +316,7 @@ fun InformedConsentProcedure.toDto(consentId: String = this.consentId): Informed
         consentId = consentId,
         toothNumber = toothNumber,
         procedureDate = procedureDate,
-        patientSignatureUrl = patientSignatureUrl
+        patientSignatureUrl = patientSignatureUrl,
+        procedureName = procedureName.ifBlank { null },
+        doctorSignatureUrl = doctorSignatureUrl
     )

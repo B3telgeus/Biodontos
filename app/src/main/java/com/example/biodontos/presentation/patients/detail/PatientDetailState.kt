@@ -5,6 +5,7 @@ import com.example.biodontos.domain.model.Anamnesis
 import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.ClinicalMaterial
 import com.example.biodontos.domain.model.ClinicalRecord
+import com.example.biodontos.domain.model.ConsentType
 import com.example.biodontos.domain.model.Evolution
 import com.example.biodontos.domain.model.EvolutionMaterialUsed
 import com.example.biodontos.domain.model.InformedConsent
@@ -16,6 +17,7 @@ import com.example.biodontos.domain.model.history.ActivityFilter
 import com.example.biodontos.domain.model.history.ActivityType
 import com.example.biodontos.domain.model.history.PatientActivity
 import com.example.biodontos.domain.model.history.PatientHistorySummary
+import com.example.biodontos.domain.usecase.clinical.ConsentRequirementStatus
 import java.time.YearMonth
 
 enum class PatientDetailTab(val label: String) {
@@ -62,6 +64,7 @@ data class PatientDetailState(
     val clinicalRecord: ClinicalRecord? = null,
     val anamnesis: Anamnesis? = null,
     val consent: InformedConsent? = null,
+    val consents: List<InformedConsent> = emptyList(),
     val evolutions: List<Evolution> = emptyList(),
     val treatments: List<Treatment> = emptyList(),
     val payments: List<Payment> = emptyList(),
@@ -81,6 +84,11 @@ data class PatientDetailState(
     val newEvolutionMaterials: List<EvolutionMaterialUsed> = emptyList(),
     val selectedCatalogMaterial: ClinicalMaterial? = null,
     val isSavingEvolution: Boolean = false,
+    val showClinicalConsentDialog: Boolean = false,
+    val activeConsentType: ConsentType = ConsentType.GENERAL_ODONTOLOGY,
+    val evolutionConsentStatus: ConsentRequirementStatus = ConsentRequirementStatus.NotRequired,
+    val isSavingConsent: Boolean = false,
+    val preselectedToothForConsent: Int? = null,
 
     val showNewAppointmentDialog: Boolean = false,
     val newAppointmentDate: String = "",

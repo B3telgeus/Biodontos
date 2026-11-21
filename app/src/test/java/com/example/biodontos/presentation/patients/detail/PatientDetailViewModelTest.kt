@@ -3,6 +3,7 @@ package com.example.biodontos.presentation.patients.detail
 import com.example.biodontos.MainDispatcherRule
 import com.example.biodontos.domain.model.Anamnesis
 import com.example.biodontos.domain.model.ClinicalMaterial
+import com.example.biodontos.domain.model.ConsentType
 import com.example.biodontos.domain.model.MaterialError
 import com.example.biodontos.domain.model.ClinicalRecord
 import com.example.biodontos.domain.model.CopAmount
@@ -15,6 +16,7 @@ import com.example.biodontos.domain.model.Treatment
 import com.example.biodontos.domain.model.billing.TreatmentStatus
 import com.example.biodontos.domain.model.history.ActivityType
 import com.example.biodontos.domain.model.history.PatientActivity
+import com.example.biodontos.domain.usecase.clinical.ConsentRequirementStatus
 import com.example.biodontos.domain.repository.AnamnesisRepository
 import com.example.biodontos.domain.repository.AppointmentRepository
 import com.example.biodontos.domain.repository.BillingRepository
@@ -84,8 +86,11 @@ class PatientDetailViewModelTest {
             id = "cons-111",
             patientId = testPatientId,
             doctorId = "doc-999",
+            consentType = ConsentType.GENERAL_ODONTOLOGY,
             treatmentSummary = "Operatoria dental",
             status = "SIGNED",
+            patientSignatureUrl = "data:image/png;base64,sample",
+            doctorSignatureUrl = "data:image/png;base64,sample_doc",
             signedAt = "2026-10-02T10:00:00Z"
         )
         val testMaterial = ClinicalMaterial(
@@ -288,5 +293,45 @@ class PatientDetailViewModelTest {
         assertEquals(2.5, snap.quantityUsed, 0.001)
         assertEquals(valid.name, snap.materialNameSnapshot)
         assertEquals(valid.manufacturingDate.toString(), snap.manufacturingDateSnapshot)
+    }
+
+    @Test
+    fun `Typing evolution description for bleaching triggers Missing ConsentRequirementStatus for BLEACHING`() = runTest {
+        viewModel.openNewEvolutionDialog()
+        viewModel.onNewEvolutionDescriptionChange("Sesión de aclaramiento dental con gel")
+
+        val status = viewModel.state.value.evolutionConsentStatus
+        assertTrue(status is ConsentRequirementStatus.Missing)
+        val missing = status as ConsentRequirementStatus.Missing
+        assertEquals(ConsentType.BLEACHING, missing.requiredType)
+    }
+
+    @Test
+    fun `Opening and saving clinical consent saves via repository and resolves Missing status to Satisfied`() = runTest {
+        val bleachingConsent = InformedConsent(
+            id = "cons-bleach-1",
+            patientId = testPatientId,
+            doctorId = "1995-ODONT-COL",
+            consentType = ConsentType.BLEACHING,
+            treatmentSummary = "Blanqueamiento dental",
+            status = "SIGNED",
+            patientSignatureUrl = "data:image/png;base64,pat",
+            doctorSignatureUrl = "data:image/png;base64,doc"
+        )
+        coEvery { informedConsentRepository.saveConsent(any()) } returns Result.success(bleachingConsent)
+
+        viewModel.openNewEvolutionDialog()
+        viewModel.onNewEvolutionDescriptionChange("Sesión de blanqueamiento")
+        assertTrue(viewModel.state.value.evolutionConsentStatus is ConsentRequirementStatus.Missing)
+
+        viewModel.openClinicalConsentDialog(ConsentType.BLEACHING)
+        assertTrue(viewModel.state.value.showClinicalConsentDialog)
+        assertEquals(ConsentType.BLEACHING, viewModel.state.value.activeConsentType)
+
+        viewModel.onSaveClinicalConsent(bleachingConsent)
+
+        assertFalse(viewModel.state.value.showClinicalConsentDialog)
+        coVerify(exactly = 1) { informedConsentRepository.saveConsent(any()) }
+        assertTrue(viewModel.state.value.evolutionConsentStatus is ConsentRequirementStatus.Satisfied)
     }
 }

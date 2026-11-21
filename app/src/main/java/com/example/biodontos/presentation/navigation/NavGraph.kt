@@ -705,7 +705,10 @@ onFilterSelected = viewModel::onFilterSelected,
                 onNewPaymentAmountChange = viewModel::onNewPaymentAmountChange,
                 onNewPaymentMethodChange = viewModel::onNewPaymentMethodChange,
                 onSavePayment = viewModel::savePayment,
-                onRefreshTimeline = viewModel::refreshTimeline
+                onRefreshTimeline = viewModel::refreshTimeline,
+                onOpenClinicalConsentDialog = viewModel::openClinicalConsentDialog,
+                onDismissClinicalConsentDialog = viewModel::dismissClinicalConsentDialog,
+                onSaveClinicalConsent = viewModel::onSaveClinicalConsent
             )
         }
 

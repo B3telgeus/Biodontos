@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Warning
@@ -65,6 +66,7 @@ fun QuickCreateActivityBottomSheet(
     onCreateAppointment: () -> Unit,
     onCreateTreatmentBudget: () -> Unit,
     onCreatePayment: () -> Unit,
+    onCreateConsent: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
@@ -98,6 +100,13 @@ fun QuickCreateActivityBottomSheet(
                 icon = Icons.Default.Edit,
                 onClick = onCreateEvolution,
                 modifier = Modifier.testTag(TestTags.Patients.QUICK_SHEET_EVOLUTION)
+            )
+            QuickActionOptionRow(
+                title = "Emitir Consentimiento Informado",
+                subtitle = "Diligenciar y firmar formulario legal (Blanqueamiento, Operatoria o Rehabilitación)",
+                icon = Icons.Default.Check,
+                onClick = onCreateConsent,
+                modifier = Modifier.testTag(TestTags.Patients.QUICK_SHEET_CONSENT)
             )
             QuickActionOptionRow(
                 title = "Agendar Cita",

@@ -72,6 +72,15 @@ class InformedConsentRepositoryImpl : InformedConsentRepository {
         }
     }
 
+    override suspend fun getConsentsByPatientAndType(
+        patientId: String,
+        consentType: com.example.biodontos.domain.model.ConsentType
+    ): Result<List<InformedConsent>> {
+        return getConsentsByPatientId(patientId).map { consents ->
+            consents.filter { it.consentType == consentType }
+        }
+    }
+
     override suspend fun saveConsent(consent: InformedConsent): Result<InformedConsent> {
         return try {
             val dto = consent.toDto()
