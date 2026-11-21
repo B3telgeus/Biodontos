@@ -912,6 +912,7 @@ class ClinicalAdmissionViewModel(
                 patientId = s.patientId,
                 doctorId = validDoctorId,
                 treatmentSummary = s.treatmentPlanDescription.ifBlank { "Tratamiento Integral de Odontología" },
+                patientCity = s.locality.ifBlank { s.birthPlace.ifBlank { "Bogotá D.C." } },
                 patientSignatureUrl = s.consentPatientSignature.ifBlank { null },
                 doctorLicenseNumber = s.doctorLicense,
                 status = if (s.consentSigned) "SIGNED" else "PENDING"
@@ -1031,6 +1032,7 @@ class ClinicalAdmissionViewModel(
                 } else null,
                 doctorSignatureUrl = s.operativeConsentDoctorSignature.ifBlank { "${documentCode}_sig_doctor" },
                 doctorLicenseNumber = s.doctorLicense,
+                patientCity = s.locality.ifBlank { s.birthPlace.ifBlank { "Bogotá D.C." } },
                 signedAt = today,
                 status = "SIGNED",
                 procedures = s.operativeConsentProcedures

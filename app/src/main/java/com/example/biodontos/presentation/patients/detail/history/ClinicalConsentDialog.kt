@@ -50,7 +50,13 @@ fun ClinicalConsentDialog(
     var signerType by remember { mutableStateOf("PATIENT") }
     var representativeName by remember { mutableStateOf("") }
     var representativeId by remember { mutableStateOf("") }
-    var patientCity by remember { mutableStateOf("Bogotá D.C.") }
+    var patientCity by remember {
+        mutableStateOf(
+            patient?.locality?.takeIf { it.isNotBlank() }
+                ?: patient?.birthPlace?.takeIf { it.isNotBlank() }
+                ?: "Bogotá D.C."
+        )
+    }
 
     var treatmentSummary by remember {
         mutableStateOf(
