@@ -211,30 +211,45 @@ class ClinicalAdmissionMappersTest {
             consentId = "cons-1",
             toothNumber = 36,
             procedureDate = "2026-10-20",
-            patientSignatureUrl = "https://sig.test/pat.png"
+            patientSignatureUrl = "https://sig.test/pat.png",
+            procedureName = "Resina compuesta",
+            doctorSignatureUrl = "https://sig.test/doc.png"
         )
         val procDomain = procDto.toDomain()
         assertEquals("proc-1", procDomain.id)
         assertEquals(36, procDomain.toothNumber)
+        assertEquals("Resina compuesta", procDomain.procedureName)
+        assertEquals("https://sig.test/doc.png", procDomain.doctorSignatureUrl)
 
         val backProcDto = procDomain.toDto("cons-1")
         assertEquals("cons-1", backProcDto.consentId)
         assertEquals(36, backProcDto.toothNumber)
+        assertEquals("Resina compuesta", backProcDto.procedureName)
 
         val consentDto = InformedConsentDto(
             id = "cons-1",
             patientId = "pat-1",
             doctorId = "doc-1",
             treatmentSummary = "Exodoncia simple",
-            status = "SIGNED"
+            status = "SIGNED",
+            consentType = "GENERAL_ODONTOLOGY",
+            selectedProcedures = listOf("Resinas", "Ionómero"),
+            acknowledgedRisks = listOf("Sensibilidad postoperatoria"),
+            occlusionTestAccepted = true
         )
         val consentDomain = consentDto.toDomain(listOf(procDomain))
         assertEquals("cons-1", consentDomain.id)
         assertEquals("Exodoncia simple", consentDomain.treatmentSummary)
+        assertEquals(com.example.biodontos.domain.model.ConsentType.GENERAL_ODONTOLOGY, consentDomain.consentType)
+        assertEquals(listOf("Resinas", "Ionómero"), consentDomain.selectedProcedures)
+        assertEquals(true, consentDomain.occlusionTestAccepted)
         assertEquals(1, consentDomain.procedures.size)
 
         val backConsentDto = consentDomain.toDto()
         assertEquals("cons-1", backConsentDto.id)
         assertEquals("SIGNED", backConsentDto.status)
+        assertEquals("GENERAL_ODONTOLOGY", backConsentDto.consentType)
+        assertEquals(listOf("Resinas", "Ionómero"), backConsentDto.selectedProcedures)
+        assertEquals(true, backConsentDto.occlusionTestAccepted)
     }
 }

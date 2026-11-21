@@ -59,7 +59,9 @@ import com.example.biodontos.domain.usecase.billing.GetPatientTreatmentsUseCase
 import com.example.biodontos.domain.usecase.billing.GetPaymentSummaryUseCase
 import com.example.biodontos.domain.usecase.billing.RecordPaymentUseCase
 import com.example.biodontos.domain.usecase.clinical.SaveAdmissionEvolutionAndCloseUseCase
+import com.example.biodontos.domain.usecase.clinical.SaveInformedConsentUseCase
 import com.example.biodontos.domain.usecase.clinical.ScheduleAdmissionFollowUpUseCase
+import com.example.biodontos.domain.usecase.clinical.ValidateEvolutionConsentRequirementUseCase
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorAvailabilityUseCase
 import com.example.biodontos.domain.usecase.doctor.GetDoctorDetailUseCase
@@ -157,6 +159,10 @@ interface AppContainer {
         get() = SaveAdmissionEvolutionAndCloseUseCase(evolutionRepository, clinicalRecordRepository)
     val scheduleAdmissionFollowUpUseCase: ScheduleAdmissionFollowUpUseCase
         get() = ScheduleAdmissionFollowUpUseCase(appointmentRepository)
+    val validateEvolutionConsentRequirementUseCase: ValidateEvolutionConsentRequirementUseCase
+        get() = ValidateEvolutionConsentRequirementUseCase()
+    val saveInformedConsentUseCase: SaveInformedConsentUseCase
+        get() = SaveInformedConsentUseCase(informedConsentRepository)
 }
 
 class DefaultAppContainer(private val context: Context? = null) : AppContainer {

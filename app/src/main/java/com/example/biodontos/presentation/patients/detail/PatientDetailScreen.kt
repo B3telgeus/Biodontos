@@ -98,6 +98,7 @@ import com.example.biodontos.core.designsystem.components.DateBadge
 import com.example.biodontos.domain.model.Anamnesis
 import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.ClinicalMaterial
+import com.example.biodontos.domain.model.ConsentType
 import com.example.biodontos.domain.model.Evolution
 import com.example.biodontos.domain.model.EvolutionMaterialUsed
 import com.example.biodontos.domain.model.InformedConsent
@@ -106,7 +107,9 @@ import com.example.biodontos.domain.model.Treatment
 import com.example.biodontos.domain.model.billing.TreatmentStatus
 import com.example.biodontos.domain.model.history.ActivityType
 import com.example.biodontos.domain.model.history.PatientActivity
+import com.example.biodontos.domain.usecase.clinical.ConsentRequirementStatus
 import com.example.biodontos.presentation.patients.detail.history.ClarificationNoteDialog
+import com.example.biodontos.presentation.patients.detail.history.ClinicalConsentDialog
 import com.example.biodontos.presentation.patients.detail.history.EvolutionMaterialsSnapshotCard
 import com.example.biodontos.presentation.patients.detail.history.NewPaymentDialog
 import com.example.biodontos.presentation.patients.detail.history.NewTreatmentBudgetDialog
@@ -172,7 +175,10 @@ fun PatientDetailScreen(
     onNewPaymentAmountChange: (String) -> Unit = {},
     onNewPaymentMethodChange: (String) -> Unit = {},
     onSavePayment: () -> Unit = {},
-    onRefreshTimeline: () -> Unit = {}
+    onRefreshTimeline: () -> Unit = {},
+    onOpenClinicalConsentDialog: (ConsentType, Int?) -> Unit = { _, _ -> },
+    onDismissClinicalConsentDialog: () -> Unit = {},
+    onSaveClinicalConsent: (InformedConsent) -> Unit = {}
 ) {
     val patient = state.patient
     val snackbarHostState = remember { SnackbarHostState() }
@@ -455,6 +461,7 @@ fun PatientDetailScreen(
             onCreateAppointment = onOpenNewAppointmentDialog,
             onCreateTreatmentBudget = onOpenNewTreatmentDialog,
             onCreatePayment = { onOpenNewPaymentDialog(null) },
+            onCreateConsent = { onOpenClinicalConsentDialog(ConsentType.GENERAL_ODONTOLOGY, null) },
             onDismiss = onDismissQuickActionSheet
         )
     }
@@ -536,6 +543,8 @@ fun PatientDetailScreen(
             catalog = state.materialsCatalog,
             selectedMaterial = state.selectedCatalogMaterial,
             isSaving = state.isSavingEvolution,
+            consentStatus = state.evolutionConsentStatus,
+            onOpenConsentForm = { type, tooth -> onOpenClinicalConsentDialog(type, tooth) },
             onDescriptionChange = onEvolutionDescriptionChange,
             onToothChange = onEvolutionToothChange,
             onCostChange = onEvolutionCostChange,
@@ -545,6 +554,16 @@ fun PatientDetailScreen(
             onRemoveMaterial = onRemoveMaterial,
             onSave = onSaveEvolution,
             onDismiss = onDismissNewEvolutionDialog
+        )
+    }
+
+    if (state.showClinicalConsentDialog) {
+        ClinicalConsentDialog(
+            patient = state.patient,
+            initialConsentType = state.activeConsentType,
+            preselectedTooth = state.preselectedToothForConsent,
+            onDismiss = onDismissClinicalConsentDialog,
+            onSaveConsent = onSaveClinicalConsent
         )
     }
 
@@ -940,6 +959,8 @@ private fun NewEvolutionDialog(
     catalog: List<ClinicalMaterial>,
     selectedMaterial: ClinicalMaterial?,
     isSaving: Boolean,
+    consentStatus: ConsentRequirementStatus = ConsentRequirementStatus.NotRequired,
+    onOpenConsentForm: (ConsentType, Int?) -> Unit = { _, _ -> },
     onDescriptionChange: (String) -> Unit,
     onToothChange: (Int?) -> Unit,
     onCostChange: (String) -> Unit,
@@ -964,6 +985,94 @@ private fun NewEvolutionDialog(
                     .imePadding(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                item {
+                    when (consentStatus) {
+                        is ConsentRequirementStatus.Missing -> {
+                            Surface(
+                                color = Ambar.copy(alpha = 0.14f),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.Patients.EVOLUTION_CONSENT_BANNER)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = Ambar,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Consentimiento Requerido (${consentStatus.requiredType.label})",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = BiodontosDark
+                                        )
+                                    }
+                                    Text(
+                                        text = consentStatus.reason,
+                                        fontSize = 11.sp,
+                                        color = BiodontosDark,
+                                        lineHeight = 14.sp
+                                    )
+                                    OutlinedButton(
+                                        onClick = { onOpenConsentForm(consentStatus.requiredType, tooth) },
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Zafiro),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag(TestTags.Patients.EVOLUTION_CONSENT_ACTION_BUTTON)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Diligenciar y Firmar Consentimiento",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        is ConsentRequirementStatus.Satisfied -> {
+                            Surface(
+                                color = Esmeralda.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.Patients.EVOLUTION_CONSENT_BANNER)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Esmeralda,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Consentimiento firmado y vigente (${consentStatus.type.label})",
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 12.sp,
+                                        color = Esmeralda
+                                    )
+                                }
+                            }
+                        }
+                        ConsentRequirementStatus.NotRequired -> Unit
+                    }
+                }
                 item {
                     OutlinedTextField(
                         value = description,

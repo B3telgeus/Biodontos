@@ -7,10 +7,12 @@ import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.ClinicalHistoryError
 import com.example.biodontos.domain.model.ClinicalMaterial
+import com.example.biodontos.domain.model.ConsentType
 import com.example.biodontos.domain.model.CopAmount
 import com.example.biodontos.domain.model.DomainError
 import com.example.biodontos.domain.model.Evolution
 import com.example.biodontos.domain.model.EvolutionMaterialUsed
+import com.example.biodontos.domain.model.InformedConsent
 import com.example.biodontos.domain.model.PatientId
 import com.example.biodontos.domain.model.Payment
 import com.example.biodontos.domain.model.Treatment
@@ -29,6 +31,8 @@ import com.example.biodontos.domain.repository.InformedConsentRepository
 import com.example.biodontos.domain.repository.MaterialRepository
 import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.domain.repository.PatientRepository
+import com.example.biodontos.domain.usecase.clinical.SaveInformedConsentUseCase
+import com.example.biodontos.domain.usecase.clinical.ValidateEvolutionConsentRequirementUseCase
 import com.example.biodontos.domain.usecase.history.AddEvolutionClarificationUseCase
 import com.example.biodontos.domain.usecase.history.GetPatientActivityTimelineUseCase
 import com.example.biodontos.domain.usecase.history.UpdateTreatmentStatusUseCase
@@ -76,7 +80,11 @@ class PatientDetailViewModel(
         UpdateTreatmentStatusUseCase(billingRepository),
     private val getMaterialsUseCase: GetMaterialsUseCase = GetMaterialsUseCase(materialRepository),
     private val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase =
-        BuildEvolutionMaterialUsageUseCase(SystemClinicClock())
+        BuildEvolutionMaterialUsageUseCase(SystemClinicClock()),
+    private val validateEvolutionConsentRequirementUseCase: ValidateEvolutionConsentRequirementUseCase =
+        ValidateEvolutionConsentRequirementUseCase(),
+    private val saveInformedConsentUseCase: SaveInformedConsentUseCase =
+        SaveInformedConsentUseCase(informedConsentRepository)
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -119,8 +127,14 @@ class PatientDetailViewModel(
                 _state.update { it.copy(anamnesis = a) }
             }
 
-            informedConsentRepository.getConsentByPatientId(patientId).onSuccess { c ->
-                _state.update { it.copy(consent = c) }
+            informedConsentRepository.getConsentsByPatientId(patientId).onSuccess { consentsList ->
+                _state.update {
+                    it.copy(
+                        consents = consentsList,
+                        consent = consentsList.firstOrNull()
+                    )
+                }
+                recheckEvolutionConsentRequirement()
             }
 
             if (record != null && record.id.isNotBlank()) {
@@ -692,6 +706,7 @@ class PatientDetailViewModel(
                 errorMessage = null
             )
         }
+        recheckEvolutionConsentRequirement()
     }
 
     fun dismissNewEvolutionDialog() {
@@ -700,10 +715,67 @@ class PatientDetailViewModel(
 
     fun onNewEvolutionDescriptionChange(value: String) {
         _state.update { it.copy(newEvolutionDescription = value) }
+        recheckEvolutionConsentRequirement()
     }
 
     fun onNewEvolutionToothChange(tooth: Int?) {
         _state.update { it.copy(newEvolutionToothTreated = tooth) }
+        recheckEvolutionConsentRequirement()
+    }
+
+    private fun recheckEvolutionConsentRequirement() {
+        val s = _state.value
+        val status = validateEvolutionConsentRequirementUseCase(
+            description = s.newEvolutionDescription,
+            toothTreated = s.newEvolutionToothTreated,
+            consents = s.consents
+        )
+        _state.update { it.copy(evolutionConsentStatus = status) }
+    }
+
+    fun openClinicalConsentDialog(type: ConsentType = ConsentType.GENERAL_ODONTOLOGY, tooth: Int? = null) {
+        _state.update {
+            it.copy(
+                historyState = it.historyState.copy(showQuickActionSheet = false),
+                showClinicalConsentDialog = true,
+                activeConsentType = type,
+                preselectedToothForConsent = tooth ?: it.newEvolutionToothTreated,
+                errorMessage = null
+            )
+        }
+    }
+
+    fun dismissClinicalConsentDialog() {
+        _state.update { it.copy(showClinicalConsentDialog = false) }
+    }
+
+    fun onSaveClinicalConsent(consent: InformedConsent) {
+        viewModelScope.launch {
+            _state.update { it.copy(isSavingConsent = true, errorMessage = null) }
+            saveInformedConsentUseCase(consent)
+                .onSuccess { savedConsent ->
+                    val updatedConsents = _state.value.consents + savedConsent
+                    _state.update {
+                        it.copy(
+                            isSavingConsent = false,
+                            showClinicalConsentDialog = false,
+                            consents = updatedConsents,
+                            consent = savedConsent,
+                            successMessage = "Consentimiento informado guardado y firmado correctamente"
+                        )
+                    }
+                    recheckEvolutionConsentRequirement()
+                    refreshTimeline()
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isSavingConsent = false,
+                            errorMessage = error.message ?: "Error al guardar consentimiento informado"
+                        )
+                    }
+                }
+        }
     }
 
     fun onNewEvolutionCostChange(value: String) {
