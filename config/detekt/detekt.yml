@@ -62,7 +62,7 @@ style:
     active: false
   UnusedPrivateMember:
     active: true
-    ignoreAnnotated: ['Preview']
+    ignoreAnnotated: ['Preview', 'BiodontosPreviews']
   UnusedParameter:
     active: false
   NewLineAtEndOfFile:

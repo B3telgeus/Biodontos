@@ -77,6 +77,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -93,6 +94,7 @@ import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.StatusCancelled
 import com.example.biodontos.core.designsystem.StatusConfirmed
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.components.DateBadge
 import com.example.biodontos.domain.model.Patient
 import com.example.biodontos.presentation.doctor.home.DoctorAppointmentItem
@@ -155,6 +157,7 @@ fun DoctorAppointmentsScreen(
                 .fillMaxSize()
                 .background(BiodontosScreenGradient)
                 .padding(paddingValues)
+                .testTag(TestTags.Doctor.APPT_ROOT)
         ) {
             Column(
                 modifier = Modifier
@@ -162,7 +165,6 @@ fun DoctorAppointmentsScreen(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Header
                 DoctorAppointmentsHeader(
                     doctorName = state.doctorName,
                     isRefreshing = state.isRefreshing,
@@ -171,10 +173,11 @@ fun DoctorAppointmentsScreen(
                     onRefresh = { onEvent(DoctorAppointmentsUiEvent.Refresh) }
                 )
 
-                // Banner reactivo de error
                 state.errorMessage?.let { errorMsg ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.Doctor.APPT_ERROR_BANNER),
                         shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
                     ) {
@@ -205,7 +208,9 @@ fun DoctorAppointmentsScreen(
                             }
                             TextButton(
                                 onClick = { onEvent(DoctorAppointmentsUiEvent.Refresh) },
-                                modifier = Modifier.heightIn(min = 48.dp)
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .testTag(TestTags.Doctor.APPT_RETRY_BUTTON)
                             ) {
                                 Text(
                                     text = stringResource(R.string.ui_doctor_appointments_screen_175),
@@ -218,14 +223,12 @@ fun DoctorAppointmentsScreen(
                     }
                 }
 
-                // Selector de modo: Cronograma vs Lista
                 DoctorScheduleModeSelector(
                     currentMode = state.displayMode,
                     onModeSelected = { onEvent(DoctorAppointmentsUiEvent.ChangeDisplayMode(it)) }
                 )
 
                 if (state.displayMode == DoctorScheduleMode.TIMELINE) {
-                    // Navegación de semana y Tira interactiva de días (Day Strip)
                     DoctorDayStrip(
                         selectedDate = state.selectedDate,
                         today = today,
@@ -233,12 +236,12 @@ fun DoctorAppointmentsScreen(
                         onDateSelected = { onEvent(DoctorAppointmentsUiEvent.SelectDate(it)) }
                     )
 
-                    // Contenido del Cronograma
                     if (state.isLoading && !state.isRefreshing) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.APPT_LOADING),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(color = BiodontosDark)
@@ -265,7 +268,8 @@ fun DoctorAppointmentsScreen(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.APPT_LIST),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(state.timelineSlots, key = { it.startTime.toString() }) { slot ->
@@ -287,7 +291,6 @@ fun DoctorAppointmentsScreen(
                         }
                     }
                 } else {
-                    // Vista clásica de lista de citas
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -299,6 +302,7 @@ fun DoctorAppointmentsScreen(
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(if (isSelected) BiodontosDark else BiodontosInputBg)
                                     .clickable { onEvent(DoctorAppointmentsUiEvent.SelectFilter(filter)) }
+                                    .testTag(TestTags.Doctor.filterChip(filter.name))
                                     .padding(horizontal = 14.dp, vertical = 8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -316,7 +320,8 @@ fun DoctorAppointmentsScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.APPT_LOADING),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(color = BiodontosDark)
@@ -338,7 +343,8 @@ fun DoctorAppointmentsScreen(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.APPT_LIST),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(filteredList, key = { it.appointmentId }) { item ->
@@ -359,9 +365,7 @@ fun DoctorAppointmentsScreen(
         }
     }
 
-    // --- DIÁLOGOS ACTIVOS ---
 
-    // 1. Diálogo de Configuración de Horario Semanal
     if (state.showAvailabilityDialog) {
         DoctorAvailabilityDialog(
             weeklyConfig = state.weeklyAvailability,
@@ -375,7 +379,6 @@ fun DoctorAppointmentsScreen(
         )
     }
 
-    // 2. Diálogo de Reserva Rápida en Slot Libre
     state.bookingTargetSlot?.let { targetSlot ->
         QuickBookingDialog(
             slot = targetSlot,
@@ -388,7 +391,6 @@ fun DoctorAppointmentsScreen(
         )
     }
 
-    // 3. Diálogo de Reagendamiento
     state.reschedulingAppointment?.let { appt ->
         RescheduleAppointmentDialog(
             appointment = appt,
@@ -404,10 +406,10 @@ fun DoctorAppointmentsScreen(
         )
     }
 
-    // 4. Confirmación de Cancelación de Cita
     state.cancellingAppointment?.let { appt ->
         AlertDialog(
             onDismissRequest = { onEvent(DoctorAppointmentsUiEvent.DismissCancelAppointment) },
+            modifier = Modifier.testTag(TestTags.Doctor.APPT_CANCEL_DIALOG),
             title = {
                 Text(stringResource(R.string.ui_doctor_appointments_screen_178), fontWeight = FontWeight.Bold)
             },
@@ -419,7 +421,8 @@ fun DoctorAppointmentsScreen(
             confirmButton = {
                 Button(
                     onClick = { onEvent(DoctorAppointmentsUiEvent.ConfirmCancelAppointment) },
-                    colors = ButtonDefaults.buttonColors(containerColor = StatusCancelled)
+                    colors = ButtonDefaults.buttonColors(containerColor = StatusCancelled),
+                    modifier = Modifier.testTag(TestTags.Doctor.APPT_CANCEL_CONFIRM_BUTTON)
                 ) {
                     if (state.isCancelling) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
@@ -437,7 +440,6 @@ fun DoctorAppointmentsScreen(
     }
 }
 
-// --- SUBCOMPONENTES ---
 
 @Composable
 private fun DoctorAppointmentsHeader(
@@ -455,7 +457,9 @@ private fun DoctorAppointmentsHeader(
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(
                 onClick = onNavigateBack,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier
+                    .size(48.dp)
+                    .testTag(TestTags.Doctor.APPT_BACK_BUTTON)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -482,12 +486,13 @@ private fun DoctorAppointmentsHeader(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Botón Configurar Horario
             OutlinedButton(
                 onClick = onOpenAvailability,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark),
-                modifier = Modifier.heightIn(min = 48.dp)
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .testTag(TestTags.Doctor.APPT_CONFIG_AVAILABILITY_BUTTON)
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
@@ -503,7 +508,9 @@ private fun DoctorAppointmentsHeader(
             IconButton(
                 onClick = onRefresh,
                 enabled = !isRefreshing,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier
+                    .size(48.dp)
+                    .testTag(TestTags.Doctor.APPT_REFRESH_BUTTON)
             ) {
                 if (isRefreshing) {
                     CircularProgressIndicator(
@@ -538,6 +545,11 @@ private fun DoctorScheduleModeSelector(
     ) {
         DoctorScheduleMode.entries.forEach { mode ->
             val isSelected = currentMode == mode
+            val modeTag = if (mode == DoctorScheduleMode.TIMELINE) {
+                TestTags.Doctor.APPT_MODE_TIMELINE_BUTTON
+            } else {
+                TestTags.Doctor.APPT_MODE_LIST_BUTTON
+            }
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -545,6 +557,7 @@ private fun DoctorScheduleModeSelector(
                     .clip(RoundedCornerShape(10.dp))
                     .background(if (isSelected) BiodontosDark else Color.Transparent)
                     .clickable { onModeSelected(mode) }
+                    .testTag(modeTag)
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -575,7 +588,6 @@ private fun DoctorDayStrip(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Cabecera del mes con flechas de semana y botón Hoy
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -591,7 +603,9 @@ private fun DoctorDayStrip(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = { onDateSelected(selectedDate.minusWeeks(1)) },
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag(TestTags.Doctor.APPT_PREV_WEEK_BUTTON)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -604,7 +618,10 @@ private fun DoctorDayStrip(
                 if (selectedDate != today) {
                     TextButton(
                         onClick = { onDateSelected(today) },
-                        modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 4.dp)
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .padding(horizontal = 4.dp)
+                            .testTag(TestTags.Doctor.APPT_TODAY_BUTTON)
                     ) {
                         Text(stringResource(R.string.ui_doctor_appointments_screen_188), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
                     }
@@ -612,7 +629,9 @@ private fun DoctorDayStrip(
 
                 IconButton(
                     onClick = { onDateSelected(selectedDate.plusWeeks(1)) },
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag(TestTags.Doctor.APPT_NEXT_WEEK_BUTTON)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -624,7 +643,6 @@ private fun DoctorDayStrip(
             }
         }
 
-        // Tira de 7 días
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -648,7 +666,8 @@ private fun DoctorDayStrip(
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = 52.dp)
-                        .clickable { onDateSelected(date) },
+                        .clickable { onDateSelected(date) }
+                        .testTag(TestTags.Doctor.dayChip(date.toString())),
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isSelected) BiodontosDark else BiodontosWhite
@@ -675,7 +694,6 @@ private fun DoctorDayStrip(
                             color = if (isSelected) BiodontosWhite else if (isToday) BiodontosDark else BiodontosDark.copy(alpha = 0.8f)
                         )
 
-                        // Indicador de citas agendadas
                         Box(
                             modifier = Modifier
                                 .size(5.dp)
@@ -708,10 +726,11 @@ private fun DoctorTimelineSlotRow(
     val endTimeFormatted = formatTimeOnly(slot.endTime)
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.Doctor.timelineSlot(slot.startTime.toString())),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Gutter de Hora
         Column(
             modifier = Modifier.width(68.dp),
             verticalArrangement = Arrangement.Center
@@ -731,7 +750,6 @@ private fun DoctorTimelineSlotRow(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Tarjeta de Contenido del Bloque
         when (val status = slot.status) {
             is DoctorSlotStatus.Occupied -> {
                 DoctorSlotOccupiedCard(
@@ -766,7 +784,9 @@ private fun DoctorSlotOccupiedCard(
     val haptic = LocalHapticFeedback.current
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.Doctor.appointmentItem(appointment.appointmentId)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -825,7 +845,6 @@ private fun DoctorSlotOccupiedCard(
                     }
                 }
 
-                // Badge de confirmación
                 Box(
                     modifier = Modifier
                         .heightIn(min = 48.dp)
@@ -838,6 +857,7 @@ private fun DoctorSlotOccupiedCard(
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onToggleConfirm()
                         }
+                        .testTag(TestTags.Doctor.appointmentConfirmChip(appointment.appointmentId))
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -859,7 +879,6 @@ private fun DoctorSlotOccupiedCard(
                 }
             }
 
-            // Acciones de Cita (Reagendar / Cancelar)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -867,7 +886,9 @@ private fun DoctorSlotOccupiedCard(
             ) {
                 TextButton(
                     onClick = onReschedule,
-                    modifier = Modifier.heightIn(min = 48.dp)
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag(TestTags.Doctor.appointmentRescheduleButton(appointment.appointmentId))
                 ) {
                     Icon(
                         imageVector = Icons.Default.DateRange,
@@ -883,7 +904,9 @@ private fun DoctorSlotOccupiedCard(
 
                 TextButton(
                     onClick = onCancel,
-                    modifier = Modifier.heightIn(min = 48.dp)
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag(TestTags.Doctor.appointmentCancelButton(appointment.appointmentId))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -985,7 +1008,8 @@ private fun DoctorDayOffView(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 24.dp),
+            .padding(vertical = 24.dp)
+            .testTag(TestTags.Doctor.APPT_DAY_OFF_VIEW),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -1050,7 +1074,9 @@ private fun DoctorAppointmentCard(
     val haptic = LocalHapticFeedback.current
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.Doctor.appointmentItem(item.appointmentId)),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -1110,6 +1136,7 @@ private fun DoctorAppointmentCard(
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onToggleConfirm()
                         }
+                        .testTag(TestTags.Doctor.appointmentConfirmChip(item.appointmentId))
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -1131,7 +1158,6 @@ private fun DoctorAppointmentCard(
                 }
             }
 
-            // Acciones Reagendar y Cancelar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
@@ -1140,7 +1166,9 @@ private fun DoctorAppointmentCard(
                     onClick = onReschedule,
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark),
-                    modifier = Modifier.heightIn(min = 48.dp)
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag(TestTags.Doctor.appointmentRescheduleButton(item.appointmentId))
                 ) {
                     Icon(imageVector = Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(13.dp))
                     Spacer(modifier = Modifier.width(4.dp))
@@ -1153,7 +1181,9 @@ private fun DoctorAppointmentCard(
                     onClick = onCancel,
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusCancelled),
-                    modifier = Modifier.heightIn(min = 48.dp)
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag(TestTags.Doctor.appointmentCancelButton(item.appointmentId))
                 ) {
                     Icon(imageVector = Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(13.dp), tint = StatusCancelled)
                     Spacer(modifier = Modifier.width(4.dp))
@@ -1164,7 +1194,6 @@ private fun DoctorAppointmentCard(
     }
 }
 
-// --- DIÁLOGOS DE GESTIÓN ---
 
 @Composable
 private fun DoctorAvailabilityDialog(
@@ -1185,6 +1214,7 @@ private fun DoctorAvailabilityDialog(
                 .fillMaxWidth()
                 .imePadding()
                 .padding(vertical = 16.dp)
+                .testTag(TestTags.Doctor.APPT_AVAILABILITY_DIALOG)
         ) {
             Column(
                 modifier = Modifier
@@ -1218,18 +1248,17 @@ private fun DoctorAvailabilityDialog(
                     }
                 }
 
-                // Botón rápido para copiar Lunes a Viernes
                 OutlinedButton(
                     onClick = onCopyWeekdays,
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
+                        .testTag(TestTags.Doctor.APPT_AVAILABILITY_COPY_WEEKDAYS_BUTTON)
                 ) {
                     Text(stringResource(R.string.ui_doctor_appointments_screen_201), fontSize = 11.sp, color = BiodontosDark)
                 }
 
-                // Lista de días de la semana
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1247,7 +1276,6 @@ private fun DoctorAvailabilityDialog(
                     }
                 }
 
-                // Botones de acción
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
@@ -1267,7 +1295,9 @@ private fun DoctorAvailabilityDialog(
                         enabled = !isSaving && !hasInvalidDays,
                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.heightIn(min = 48.dp)
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .testTag(TestTags.Doctor.APPT_AVAILABILITY_SAVE_BUTTON)
                     ) {
                         if (isSaving) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
@@ -1335,7 +1365,6 @@ private fun DayAvailabilityItemRow(
             }
 
             if (config.isActive) {
-                // Selector de horas inicio y fin
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1373,7 +1402,6 @@ private fun DayAvailabilityItemRow(
                     )
                 }
 
-                // Selector de duración de slots (15, 30, 45, 60 min)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(stringResource(R.string.ui_doctor_appointments_screen_206), fontSize = 10.sp, color = BiodontosGreyText)
                     Row(
@@ -1459,7 +1487,7 @@ private fun TimeSelectorButton(
                         .heightIn(max = 320.dp)
                 ) {
                     LazyColumn(modifier = Modifier.padding(12.dp)) {
-                        items(timeOptions) { time ->
+                        items(timeOptions, key = { it.toString() }) { time ->
                             val label = time.format(DateTimeFormatter.ofPattern("hh:mm a", Locale.forLanguageTag("es-CO")))
                             Text(
                                 text = label,
@@ -1515,6 +1543,7 @@ private fun QuickBookingDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .imePadding()
+                .testTag(TestTags.Doctor.APPT_QUICK_BOOK_DIALOG)
         ) {
             Column(
                 modifier = Modifier
@@ -1548,7 +1577,6 @@ private fun QuickBookingDialog(
                     }
                 }
 
-                // Resumen del bloque
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -1560,7 +1588,6 @@ private fun QuickBookingDialog(
                     }
                 }
 
-                // Buscador de Paciente
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(text = stringResource(R.string.ui_doctor_appointments_screen_211), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
                     OutlinedTextField(
@@ -1591,13 +1618,14 @@ private fun QuickBookingDialog(
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.Doctor.APPT_QUICK_BOOK_SEARCH_FIELD),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true
                     )
                 }
 
-                // Selector de Paciente
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(text = stringResource(R.string.ui_doctor_appointments_screen_214), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
 
@@ -1652,19 +1680,19 @@ private fun QuickBookingDialog(
                     }
                 }
 
-                // Motivo del Procedimiento
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(text = stringResource(R.string.ui_doctor_appointments_screen_218), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BiodontosDark)
                     OutlinedTextField(
                         value = reason,
                         onValueChange = { reason = it },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.Doctor.APPT_QUICK_BOOK_REASON_FIELD),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true
                     )
                 }
 
-                // Acciones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
@@ -1688,7 +1716,9 @@ private fun QuickBookingDialog(
                         enabled = !isBooking && selectedPatientId.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.heightIn(min = 48.dp)
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .testTag(TestTags.Doctor.APPT_QUICK_BOOK_CONFIRM_BUTTON)
                     ) {
                         if (isBooking) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
@@ -1734,6 +1764,7 @@ private fun RescheduleAppointmentDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .imePadding()
+                .testTag(TestTags.Doctor.APPT_RESCHEDULE_DIALOG)
         ) {
             Column(
                 modifier = Modifier
@@ -1773,7 +1804,6 @@ private fun RescheduleAppointmentDialog(
                     color = BiodontosGreyText
                 )
 
-                // Navegación de semana
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1831,7 +1861,6 @@ private fun RescheduleAppointmentDialog(
                     }
                 }
 
-                // Selector de Fecha Destino (7 días)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -1884,7 +1913,6 @@ private fun RescheduleAppointmentDialog(
                     }
                 }
 
-                // Grid de Bloques Libres
                 Text(
                     text = stringResource(R.string.ui_doctor_appointments_screen_222),
                     fontSize = 12.sp,
@@ -1937,7 +1965,6 @@ private fun RescheduleAppointmentDialog(
                     }
                 }
 
-                // Acciones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
@@ -1963,7 +1990,9 @@ private fun RescheduleAppointmentDialog(
                         enabled = !isRescheduling && selectedStartTime != null,
                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.heightIn(min = 48.dp)
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .testTag(TestTags.Doctor.APPT_RESCHEDULE_CONFIRM_BUTTON)
                     ) {
                         if (isRescheduling) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
@@ -1977,7 +2006,6 @@ private fun RescheduleAppointmentDialog(
     }
 }
 
-// Utilidad para formatear horas
 private fun formatTimeOnly(dateTime: LocalDateTime): String {
     val formatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.forLanguageTag("es-CO"))
     return runCatching { dateTime.format(formatter) }

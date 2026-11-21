@@ -20,7 +20,6 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-// Figma Tokens Biodontos
 val BiodontosDark = Color(0xFF151A24)
 val BiodontosInputBg = Color(0xFFE7EAF1)
 val BiodontosGreyText = Color(0xFF575F6E)
@@ -31,7 +30,6 @@ val BiodontosWhite = Color(0xFFFFFFFF)
 val BiodontosErrorRed = Color(0xFFB91C1C)
 val BiodontosErrorBg = Color(0xFFFFF1F1)
 
-// Tokens específicos del Portal de Pacientes (Figma 07_Home_Paciente)
 val BiodontosSlateBlue = Color(0xFF5B6B8E)
 val BiodontosCardTop = Color(0xFFF7F8FA)
 val BiodontosScreenBgTop = Color(0xFFE9E9EB)

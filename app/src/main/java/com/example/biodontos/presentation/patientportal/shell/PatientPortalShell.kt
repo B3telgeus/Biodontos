@@ -125,13 +125,11 @@ fun PatientPortalShell(
             .background(BiodontosScreenGradient)
     ) {
         if (isExpandedScreen) {
-            // Layout Tablet / Horizontal (Estilo Figma)
             Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .safeDrawingPadding()
             ) {
-                // Navigation Rail Izquierdo Oscuro #151A24
                 NavigationRail(
                     containerColor = BiodontosDark,
                     contentColor = BiodontosWhite,
@@ -175,7 +173,6 @@ fun PatientPortalShell(
                             }
                         }
 
-                        // Botón de salir al fondo del rail
                         Box(
                             modifier = Modifier
                                 .padding(bottom = 16.dp)
@@ -195,7 +192,6 @@ fun PatientPortalShell(
                     }
                 }
 
-                // Área de contenido principal
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -206,7 +202,6 @@ fun PatientPortalShell(
                 }
             }
         } else {
-            // Layout Móvil / Vertical con opción de Cerrar sesión
             Scaffold(
                 containerColor = Color.Transparent,
                 bottomBar = {

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -44,6 +45,7 @@ fun SignaturePad(
 
     Column(
         modifier = modifier
+            .testTag(TestTags.Components.SIGNATURE_PAD_ROOT)
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(BiodontosWhite)
@@ -71,7 +73,8 @@ fun SignaturePad(
             if (isConfirmed) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = Esmeralda.copy(alpha = 0.15f)
+                    color = Esmeralda.copy(alpha = 0.15f),
+                    modifier = Modifier.testTag(TestTags.Components.SIGNATURE_PAD_CONFIRMED_BADGE)
                 ) {
                     Text(
                         text = stringResource(R.string.ui_signature_pad_170),
@@ -86,7 +89,6 @@ fun SignaturePad(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Canvas de Firma
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -103,6 +105,7 @@ fun SignaturePad(
             Canvas(
                 modifier = Modifier
                     .fillMaxSize()
+                    .testTag(TestTags.Components.SIGNATURE_PAD_CANVAS)
                     .semantics { contentDescription = padContentDescription }
                     .pointerInput(Unit) {
                         detectDragGestures(
@@ -123,7 +126,6 @@ fun SignaturePad(
                         )
                     }
             ) {
-                // Línea guía inferior para firmar
                 val lineY = size.height * 0.82f
                 drawLine(
                     color = BiodontosBorder.copy(alpha = 0.5f),
@@ -132,7 +134,6 @@ fun SignaturePad(
                     strokeWidth = 2f
                 )
 
-                // Dibuja trazos previos
                 for (stroke in strokes) {
                     if (stroke.size > 1) {
                         val path = Path().apply {
@@ -149,7 +150,6 @@ fun SignaturePad(
                     }
                 }
 
-                // Dibuja trazo actual en movimiento
                 if (currentStroke.size > 1) {
                     val path = Path().apply {
                         moveTo(currentStroke[0].x, currentStroke[0].y)
@@ -178,7 +178,6 @@ fun SignaturePad(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Controles de Limpieza y Confirmación
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
@@ -191,7 +190,8 @@ fun SignaturePad(
                     isConfirmed = false
                     onSignatureConfirmed("")
                 },
-                colors = ButtonDefaults.textButtonColors(contentColor = BiodontosGreyText)
+                colors = ButtonDefaults.textButtonColors(contentColor = BiodontosGreyText),
+                modifier = Modifier.testTag(TestTags.Components.SIGNATURE_PAD_CLEAR_BUTTON)
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.ui_signature_pad_172), modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
@@ -204,7 +204,6 @@ fun SignaturePad(
                 onClick = {
                     if (strokes.isNotEmpty()) {
                         isConfirmed = true
-                        // Serialización simple del vector de firma para persistencia legal
                         val signatureDigest = "sig_vector_${strokes.size}_points_${strokes.sumOf { it.size }}_${System.currentTimeMillis()}"
                         onSignatureConfirmed(signatureDigest)
                     }
@@ -215,7 +214,8 @@ fun SignaturePad(
                     contentColor = BiodontosWhite
                 ),
                 shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                modifier = Modifier.testTag(TestTags.Components.SIGNATURE_PAD_CONFIRM_BUTTON)
             ) {
                 Icon(Icons.Default.Check, contentDescription = stringResource(R.string.ui_signature_pad_173), modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))

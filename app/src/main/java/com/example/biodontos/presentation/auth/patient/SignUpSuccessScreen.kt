@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 
 @Composable
@@ -50,7 +52,8 @@ fun SignUpSuccessScreen(
             .fillMaxSize()
             .background(backgroundBrush)
             .safeDrawingPadding()
-            .padding(24.dp),
+            .padding(24.dp)
+            .testTag(TestTags.Auth.SIGNUP_SUCCESS_ROOT),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -78,7 +81,6 @@ fun SignUpSuccessScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Diente central con botón superpuesto o debajo
             Box(
                 contentAlignment = Alignment.Center
             ) {
@@ -91,7 +93,9 @@ fun SignUpSuccessScreen(
                 BiodontosPillButton(
                     text = stringResource(R.string.ui_login_screen_137),
                     onClick = onLoginClick,
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .testTag(TestTags.Auth.SIGNUP_SUCCESS_LOGIN_BUTTON)
                 )
             }
         }

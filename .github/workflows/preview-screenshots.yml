@@ -1,0 +1,158 @@
+name: Preview Screenshots
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - '**/*.kt'
+      - '**/*.xml'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: preview-screenshots
+  cancel-in-progress: true
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ci-placeholder.supabase.co' }}
+  SUPABASE_KEY: ${{ secrets.SUPABASE_KEY || 'ci-placeholder-anon-key' }}
+
+jobs:
+  capture:
+    name: Capture Preview Screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Build Debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug
+
+      - name: Clean previous preview captures
+        run: rm -rf .hotswan/preview-captures
+
+      - name: Run emulator and capture previews
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            adb wait-for-device
+            until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do
+              sleep 1
+            done
+
+            adb install -r -g app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -S -W -n com.example.biodontos/.MainActivity
+            sleep 5
+
+            # Use HotSwan :app:captureAllPreviews when the compiler plugin is enabled;
+            # otherwise fall back to deterministic ADB screencap of key app states.
+            if ./gradlew :app:tasks --all | grep -q 'captureAllPreviews'; then
+              ./gradlew :app:captureAllPreviews
+            else
+              echo "HotSwan compiler plugin not opted in yet; running ADB fallback captures."
+              mkdir -p .hotswan/preview-captures
+
+              # Enable Android System UI Demo Mode for deterministic status bar
+              adb shell settings put global sysui_demo_allowed 1 || true
+              adb shell am broadcast -a com.android.systemui.demo -e command enter || true
+              adb shell am broadcast -a com.android.systemui.demo -e command clock -e hhmm 1000 || true
+              adb shell am broadcast -a com.android.systemui.demo -e command battery -e plugged false -e level 100 || true
+
+              adb shell cmd uimode night no || true
+              sleep 2
+              adb exec-out screencap -p > .hotswan/preview-captures/main-activity-light.png
+
+              adb shell cmd uimode night yes || true
+              sleep 2
+              adb exec-out screencap -p > .hotswan/preview-captures/main-activity-dark.png
+
+              adb shell cmd uimode night no || true
+              adb shell am broadcast -a com.android.systemui.demo -e command exit || true
+
+              cat > .hotswan/preview-captures/index.html <<'HTML'
+            <!doctype html>
+            <html lang="es">
+            <head>
+              <meta charset="utf-8" />
+              <title>Biodontos Preview Captures (ADB Fallback)</title>
+              <style>
+                body { font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #0f172a; }
+                .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+                figure { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin: 0; }
+                img { width: 100%; height: auto; border-radius: 8px; }
+                figcaption { margin-top: 0.75rem; font-weight: 600; }
+              </style>
+            </head>
+            <body>
+              <h1>Biodontos Preview Captures</h1>
+              <p>Fallback ADB device captures. Enable <code>com.github.skydoves.compose.hotswan.compiler</code> in <code>app/build.gradle.kts</code> to expand all <code>@BiodontosPreviews</code> via <code>./gradlew :app:captureAllPreviews</code>.</p>
+              <div class="grid">
+                <figure><img src="main-activity-light.png" alt="MainActivity Light" /><figcaption>MainActivity (Light)</figcaption></figure>
+                <figure><img src="main-activity-dark.png" alt="MainActivity Dark" /><figcaption>MainActivity (Dark)</figcaption></figure>
+              </div>
+            </body>
+            </html>
+            HTML
+            fi
+
+      - name: Upload preview captures artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: preview-screenshots
+          path: .hotswan/preview-captures/
+          retention-days: 30
+
+  deploy:
+    name: Deploy Catalog to GitHub Pages
+    needs: capture
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download preview captures
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-screenshots
+          path: preview-captures
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: preview-captures
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

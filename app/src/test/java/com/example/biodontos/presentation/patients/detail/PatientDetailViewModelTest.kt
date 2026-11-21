@@ -185,12 +185,10 @@ class PatientDetailViewModelTest {
         viewModel.requestVoidActivity(evoActivity)
         assertEquals(1, viewModel.state.value.historyState.voidConfirmationStep)
 
-        // Short reason stays on step 1
         viewModel.onVoidReasonChange("Corto")
         viewModel.advanceVoidConfirmationStep()
         assertEquals(1, viewModel.state.value.historyState.voidConfirmationStep)
 
-        // Valid reason advances to step 2 and confirms
         viewModel.onVoidReasonChange("Registro duplicado por error de red")
         viewModel.advanceVoidConfirmationStep()
         assertEquals(2, viewModel.state.value.historyState.voidConfirmationStep)
@@ -278,7 +276,6 @@ class PatientDetailViewModelTest {
         viewModel.onSelectCatalogMaterial(expired)
         assertNotNull(viewModel.state.value.errorMessage)
 
-        // Force expired selection and try to add via use case validation
         val valid = viewModel.state.value.materialsCatalog.first()
         viewModel.onSelectCatalogMaterial(valid)
         viewModel.addMaterialToEvolution(0.0)

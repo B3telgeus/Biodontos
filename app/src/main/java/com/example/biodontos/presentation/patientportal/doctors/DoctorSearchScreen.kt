@@ -60,12 +60,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.domain.model.Doctor
@@ -126,10 +128,10 @@ fun DoctorSearchScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .testTag(TestTags.PatientPortal.DOCTOR_SEARCH_ROOT)
             .imePadding()
             .padding(16.dp)
     ) {
-        // Título de la pantalla
         Text(
             text = stringResource(R.string.ui_doctor_search_screen_386),
             fontSize = 12.sp,
@@ -146,11 +148,12 @@ fun DoctorSearchScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Barra de búsqueda con estilo redondeado Figma
         OutlinedTextField(
             value = state.searchQuery,
             onValueChange = { onEvent(DoctorSearchUiEvent.QueryChanged(it)) },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(TestTags.PatientPortal.DOCTOR_SEARCH_INPUT),
             placeholder = {
                 Text(
                     text = stringResource(R.string.ui_doctor_search_screen_388),
@@ -167,7 +170,10 @@ fun DoctorSearchScreen(
             },
             trailingIcon = {
                 if (state.searchQuery.isNotBlank()) {
-                    IconButton(onClick = { onEvent(DoctorSearchUiEvent.QueryChanged("")) }) {
+                    IconButton(
+                        onClick = { onEvent(DoctorSearchUiEvent.QueryChanged("")) },
+                        modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_SEARCH_CLEAR_BUTTON)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = stringResource(R.string.ui_doctor_appointments_screen_213),
@@ -188,17 +194,19 @@ fun DoctorSearchScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Filtro horizontal por especialidades
         LazyRow(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(TestTags.PatientPortal.DOCTOR_SEARCH_SPECIALTY_LIST),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(vertical = 4.dp)
         ) {
-            items(state.specialties) { specialty ->
+            items(state.specialties, key = { it }) { specialty ->
                 val isSelected = specialty == state.selectedSpecialty
                 Box(
                     modifier = Modifier
                         .defaultMinSize(minHeight = 48.dp)
+                        .testTag(TestTags.PatientPortal.specialtyChip(specialty))
                         .clip(RoundedCornerShape(20.dp))
                         .background(if (isSelected) BiodontosDark else BiodontosWhite)
                         .border(
@@ -226,7 +234,6 @@ fun DoctorSearchScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Contenido principal: Grilla de doctores / Carga / Error / Vacío
         when {
             state.isLoading && state.doctors.isEmpty() -> {
                 Box(
@@ -235,7 +242,10 @@ fun DoctorSearchScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = BiodontosDark)
+                    CircularProgressIndicator(
+                        color = BiodontosDark,
+                        modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_SEARCH_LOADING)
+                    )
                 }
             }
             state.errorMessage != null && state.doctors.isEmpty() -> {
@@ -246,6 +256,7 @@ fun DoctorSearchScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
+                        modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_SEARCH_ERROR),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -256,7 +267,8 @@ fun DoctorSearchScreen(
                         )
                         BiodontosPillButton(
                             text = stringResource(R.string.ui_doctor_appointments_screen_175),
-                            onClick = { onEvent(DoctorSearchUiEvent.Retry) }
+                            onClick = { onEvent(DoctorSearchUiEvent.Retry) },
+                            modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_SEARCH_RETRY_BUTTON)
                         )
                     }
                 }
@@ -269,6 +281,7 @@ fun DoctorSearchScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
+                        modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_SEARCH_EMPTY),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -283,7 +296,8 @@ fun DoctorSearchScreen(
                             onClick = {
                                 onEvent(DoctorSearchUiEvent.QueryChanged(""))
                                 onEvent(DoctorSearchUiEvent.SpecialtySelected("Todas"))
-                            }
+                            },
+                            modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_SEARCH_RESET_FILTERS_BUTTON)
                         )
                     }
                 }
@@ -293,7 +307,8 @@ fun DoctorSearchScreen(
                     columns = GridCells.Adaptive(minSize = 280.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f)
+                        .testTag(TestTags.PatientPortal.DOCTOR_SEARCH_GRID),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(bottom = 24.dp)
@@ -302,7 +317,8 @@ fun DoctorSearchScreen(
                         DoctorItemCard(
                             doctor = doctor,
                             onDoctorClick = { onEvent(DoctorSearchUiEvent.DoctorSelected(doctor.id.value)) },
-                            onBookClick = { onEvent(DoctorSearchUiEvent.BookDoctor(doctor.id.value)) }
+                            onBookClick = { onEvent(DoctorSearchUiEvent.BookDoctor(doctor.id.value)) },
+                            modifier = Modifier.testTag(TestTags.PatientPortal.doctorItem(doctor.id.value))
                         )
                     }
                 }
@@ -334,7 +350,6 @@ private fun DoctorItemCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Avatar con soporte de foto Base64 o iniciales
                 DoctorAvatar(
                     photoUrl = doctor.photoUrl,
                     firstName = doctor.firstName,
@@ -411,7 +426,9 @@ private fun DoctorItemCard(
                     text = stringResource(R.string.ui_doctor_search_screen_392),
                     variant = PillButtonVariant.DARK,
                     onClick = onBookClick,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.PatientPortal.doctorBookButton(doctor.id.value))
                 )
             }
         }

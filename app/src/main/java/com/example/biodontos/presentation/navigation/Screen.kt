@@ -29,7 +29,6 @@ object SignUpSuccess
 @Serializable
 object ForgotPassword
 
-// --- Portal de Doctores ---
 @Serializable
 object DoctorHome
 
@@ -63,7 +62,6 @@ data class PatientDetail(
 @Serializable
 data class ClinicalAdmission(val patientId: String? = null)
 
-// --- Portal de Pacientes ---
 @Serializable
 object PatientHome
 

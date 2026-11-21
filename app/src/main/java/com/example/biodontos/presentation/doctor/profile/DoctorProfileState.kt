@@ -6,7 +6,6 @@ import com.example.biodontos.domain.model.Doctor
 @Immutable
 data class DoctorProfileState(
     val doctor: Doctor? = null,
-    // Professional Profile Form Fields
     val firstName: String = "",
     val lastName: String = "",
     val specialty: String = "",
@@ -17,12 +16,10 @@ data class DoctorProfileState(
     val clinicAddress: String = "",
     val services: String = "",
     val email: String = "",
-    // Security Form Fields
     val newPassword: String = "",
     val confirmPassword: String = "",
     val isPasswordVisible: Boolean = false,
     val isConfirmPasswordVisible: Boolean = false,
-    // Status Flags
     val isLoading: Boolean = false,
     val isSavingProfile: Boolean = false,
     val isUpdatingPassword: Boolean = false,

@@ -105,36 +105,30 @@ class PatientDetailViewModel(
                 )
             }
 
-            // 1. Paciente
             patientRepository.getPatientById(patientId).onSuccess { p ->
                 _state.update { it.copy(patient = p) }
             }.onFailure { err ->
                 _state.update { it.copy(errorMessage = "Error al cargar paciente: ${err.toUserFriendlyMessage()}") }
             }
 
-            // 2. Historia clínica
             val recordResult = clinicalRecordRepository.getRecordByPatientId(patientId)
             val record = recordResult.getOrNull()
             _state.update { it.copy(clinicalRecord = record) }
 
-            // 3. Anamnesis
             anamnesisRepository.getAnamnesisByPatientId(patientId).onSuccess { a ->
                 _state.update { it.copy(anamnesis = a) }
             }
 
-            // 4. Consentimiento
             informedConsentRepository.getConsentByPatientId(patientId).onSuccess { c ->
                 _state.update { it.copy(consent = c) }
             }
 
-            // 5. Evoluciones (usando recordId si existe)
             if (record != null && record.id.isNotBlank()) {
                 evolutionRepository.getEvolutionsByRecordId(record.id).onSuccess { evos ->
                     _state.update { it.copy(evolutions = evos) }
                 }
             }
 
-            // 6. Tratamientos y Pagos
             billingRepository.getTreatmentsByPatientId(patientId).onSuccess { treats ->
                 _state.update {
                     it.copy(
@@ -151,12 +145,10 @@ class PatientDetailViewModel(
                 _state.update { it.copy(payments = pays) }
             }
 
-            // 7. Citas
             appointmentRepository.getAppointmentsByPatientId(patientId).onSuccess { appts ->
                 _state.update { it.copy(appointments = appts) }
             }
 
-            // 8. Línea de Tiempo Unificada con Trazabilidad Clínica
             loadActivityTimelineInternal()
 
             _state.update { it.copy(isLoading = false) }
@@ -235,7 +227,6 @@ class PatientDetailViewModel(
         _state.update { it.copy(errorMessage = null, successMessage = null) }
     }
 
-    // --- Filtros del Historial Clínico ---
     fun selectMonthFilter(month: YearMonth?) {
         _state.update { current ->
             val newFilter = current.historyState.filter.copy(month = month)
@@ -293,7 +284,6 @@ class PatientDetailViewModel(
         _state.update { it.copy(historyState = it.historyState.copy(showQuickActionSheet = false)) }
     }
 
-    // --- Anulación Lógica en 2 Pasos (Evolución o Pago) ---
     fun requestVoidActivity(activity: PatientActivity) {
         _state.update {
             it.copy(
@@ -384,7 +374,6 @@ class PatientDetailViewModel(
         }
     }
 
-    // --- Nota Aclaratoria de Evolución ---
     fun openClarificationDialog(evolution: Evolution) {
         _state.update {
             it.copy(
@@ -457,7 +446,6 @@ class PatientDetailViewModel(
         }
     }
 
-    // --- Cambio de Estado de Presupuesto de Tratamiento ---
     fun openTreatmentStatusDialog(treatment: Treatment) {
         val currentStatus = TreatmentStatus.fromString(treatment.status)
         val firstAllowed = currentStatus.availableTransitions().firstOrNull()
@@ -543,7 +531,6 @@ class PatientDetailViewModel(
         }
     }
 
-    // --- Control de Diálogo de Nuevo Presupuesto de Tratamiento ---
     fun openNewTreatmentDialog() {
         _state.update {
             it.copy(
@@ -612,7 +599,6 @@ class PatientDetailViewModel(
         }
     }
 
-    // --- Control de Diálogo de Registrar Pago / Abono ---
     fun openNewPaymentDialog(preselectedTreatmentId: String? = null) {
         val activeTreatments = _state.value.treatments.filter {
             TreatmentStatus.fromString(it.status) != TreatmentStatus.CANCELADO
@@ -690,7 +676,6 @@ class PatientDetailViewModel(
         }
     }
 
-    // --- Control de Diálogo de Nueva Evolución ---
     fun openNewEvolutionDialog() {
         val nonExpired = _state.value.materialsCatalog.firstOrNull { !it.isExpired() }
             ?: _state.value.materialsCatalog.firstOrNull()
@@ -833,7 +818,6 @@ class PatientDetailViewModel(
         }
     }
 
-    // --- Control de Diálogo de Nueva Cita ---
     fun openNewAppointmentDialog() {
         _state.update {
             it.copy(

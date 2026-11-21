@@ -250,7 +250,6 @@ class PatientHomeViewModelTest {
 
     @Test
     fun `onEvent Refresh triggers reload and clears previous errorMessage`() = runTest {
-        // Primero forzar error
         coEvery { appointmentRepository.getAppointmentsByPatientId(any()) } returns Result.failure(RuntimeException("Network error"))
         coEvery { billingRepository.getPaymentSummaryByPatientId(any()) } returns Result.failure(RuntimeException("Network error"))
 
@@ -258,7 +257,6 @@ class PatientHomeViewModelTest {
         advanceUntilIdle()
         assertEquals("No fue posible actualizar tu información clínica. Comprueba tu conexión.", viewModel.uiState.value.errorMessage)
 
-        // Ahora reintentar con éxito
         coEvery { appointmentRepository.getAppointmentsByPatientId(any()) } returns Result.success(emptyList())
         coEvery { billingRepository.getPaymentSummaryByPatientId(any()) } returns Result.success(
             PatientPaymentSummary(

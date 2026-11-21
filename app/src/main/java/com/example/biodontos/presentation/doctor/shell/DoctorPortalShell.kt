@@ -130,7 +130,6 @@ fun DoctorPortalShell(
             .background(BiodontosScreenGradient)
     ) {
         if (isExpandedScreen) {
-            // Layout Tablet / Landscape (#151A24 NavigationRail estilo 08_Home_Doctor.png)
             Row(
                 modifier = Modifier
                     .fillMaxSize()
@@ -176,7 +175,6 @@ fun DoctorPortalShell(
                             }
                         }
 
-                        // Botón de salir al fondo del rail
                         Box(
                             modifier = Modifier
                                 .padding(bottom = 16.dp)
@@ -196,7 +194,6 @@ fun DoctorPortalShell(
                     }
                 }
 
-                // Área de contenido
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -207,7 +204,6 @@ fun DoctorPortalShell(
                 }
             }
         } else {
-            // Layout Móvil con BottomBar y acción de Cerrar sesión
             Scaffold(
                 containerColor = Color.Transparent,
                 bottomBar = {

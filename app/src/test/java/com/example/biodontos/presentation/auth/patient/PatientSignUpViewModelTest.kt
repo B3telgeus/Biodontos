@@ -32,7 +32,6 @@ class PatientSignUpViewModelTest {
 
     @Test
     fun nextStepWithInvalidOrEmptyStep1DataFailsToAdvance() {
-        // Attempt next step with empty data
         viewModel.nextStep()
         val state = viewModel.state.value
         assertEquals(1, state.currentStep)
@@ -111,20 +110,17 @@ class PatientSignUpViewModelTest {
             )
         } returns Result.success(RegistrationOutcome.Authenticated(session))
 
-        // Step 1
         viewModel.onFirstNameChange("Juan")
         viewModel.onLastNameChange("Perez")
         viewModel.onDniChange("12345678")
         viewModel.nextStep()
 
-        // Step 2
         viewModel.onEmailChange("juan@biodontos.com")
         viewModel.onPasswordChange("password123")
         viewModel.onConfirmPasswordChange("password123")
         viewModel.nextStep()
         assertEquals(3, viewModel.state.value.currentStep)
 
-        // Step 3
         viewModel.onTermsAcceptedChange(true)
         viewModel.nextStep()
 

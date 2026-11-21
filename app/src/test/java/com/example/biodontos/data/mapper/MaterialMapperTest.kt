@@ -171,9 +171,6 @@ class MaterialMapperTest {
         assertEquals("2024-06-30", dto.manufacturingDateSnapshot)
     }
 
-    // =========================================================================
-    // ADVERSARIAL STRESS TESTS: DATE PARSING & CORRUPT INPUT RESILIENCE
-    // =========================================================================
 
     @Test
     fun `ClinicalMaterialDto toDomain handles corrupt, malformed and empty dates safely without crashing`() {
@@ -184,10 +181,10 @@ class MaterialMapperTest {
             "not-a-date",
             "2024-13-45",
             "2024-02-30",
-            "2025-02-29", // Non-leap year
-            "2024/05/10", // Slash format
-            "10-05-2024", // DD-MM-YYYY
-            "2024-5-1",   // Short month/day
+            "2025-02-29",
+            "2024/05/10",
+            "10-05-2024",
+            "2024-5-1",
             "📅2024-01-01",
             "null",
             "undefined",
@@ -216,7 +213,7 @@ class MaterialMapperTest {
             "   ",
             "\t\n",
             "invalid-exp",
-            "2026-11-31", // Nov has 30 days
+            "2026-11-31",
             "2024-00-00",
             "9999-99-99",
             "2024.12.31",
@@ -315,9 +312,6 @@ class MaterialMapperTest {
         }
     }
 
-    // =========================================================================
-    // ADVERSARIAL STRESS TESTS: RETRIEVAL & EMPTY MATERIAL NAME PROTECTION
-    // =========================================================================
 
     @Test
     fun `EvolutionMaterialUsedDto toDomain guarantees materialName is NEVER empty or blank upon retrieval`() {
@@ -345,9 +339,6 @@ class MaterialMapperTest {
         }
     }
 
-    // =========================================================================
-    // ADVERSARIAL STRESS TESTS: SNAPSHOT PRESERVATION & CATALOG ISOLATION
-    // =========================================================================
 
     @Test
     fun `snapshot preservation - mutating or deactivating catalog material does NOT alter existing snapshot`() = runTest {
@@ -376,7 +367,6 @@ class MaterialMapperTest {
         assertTrue("Build snapshot should succeed", buildResult.isRight())
         val capturedSnapshot = buildResult.getOrNull()!!
 
-        // Baseline verification
         assertEquals("mat-original-001", capturedSnapshot.materialId)
         assertEquals("Sellante Helioseal F", capturedSnapshot.materialName)
         assertEquals("Sellante Helioseal F", capturedSnapshot.materialNameSnapshot)
@@ -386,7 +376,6 @@ class MaterialMapperTest {
         assertEquals("2027-01-10", capturedSnapshot.expirationDateSnapshot)
         assertEquals(1.5, capturedSnapshot.quantityUsed, 0.001)
 
-        // Radical catalog mutation
         val mutatedCatalog = initialMaterial.copy(
             name = "Sellante Helioseal Clear (Fórmula Modificada)",
             invimaRegistration = "INVIMA-2025-999-REVISED",
@@ -395,7 +384,6 @@ class MaterialMapperTest {
             expirationDate = LocalDate.of(2028, 5, 20)
         )
 
-        // Verify snapshot was NOT mutated
         assertEquals("mat-original-001", capturedSnapshot.materialId)
         assertEquals("Sellante Helioseal F", capturedSnapshot.materialName)
         assertEquals("Sellante Helioseal F", capturedSnapshot.materialNameSnapshot)
@@ -404,14 +392,11 @@ class MaterialMapperTest {
         assertEquals("2024-01-10", capturedSnapshot.manufacturingDateSnapshot)
         assertEquals("2027-01-10", capturedSnapshot.expirationDateSnapshot)
 
-        // Deactivation in catalog
         val deactivatedCatalog = mutatedCatalog.copy(isActive = false)
 
-        // Snapshot remains untouched
         assertEquals("Sellante Helioseal F", capturedSnapshot.materialName)
         assertEquals("LOTE-HELI-A", capturedSnapshot.lotNumberSnapshot)
 
-        // Subsequent usage of deactivated material must be blocked
         val blockedResult = useCase(
             material = deactivatedCatalog,
             quantityUsed = 1.0,

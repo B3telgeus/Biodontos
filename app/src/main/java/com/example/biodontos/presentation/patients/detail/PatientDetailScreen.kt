@@ -72,6 +72,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -90,6 +91,7 @@ import com.example.biodontos.core.designsystem.Carmesi
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.Esmeralda
 import com.example.biodontos.core.designsystem.SlateLight
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.Zafiro
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.core.designsystem.components.DateBadge
@@ -139,7 +141,6 @@ fun PatientDetailScreen(
     onAppointmentReasonChange: (String) -> Unit,
     onSaveAppointment: () -> Unit,
     onClearMessages: () -> Unit,
-    // Callbacks del Módulo de Historial Clínico y Trazabilidad (con valores por defecto compatibles)
     onSelectMonthFilter: (YearMonth?) -> Unit = {},
     onToggleActivityTypeFilter: (ActivityType) -> Unit = {},
     onClearHistoryFilters: () -> Unit = {},
@@ -188,6 +189,7 @@ fun PatientDetailScreen(
     }
 
     Scaffold(
+        modifier = Modifier.testTag(TestTags.Patients.DETAIL_ROOT),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -207,7 +209,10 @@ fun PatientDetailScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.testTag(TestTags.Patients.DETAIL_BACK_BUTTON)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
@@ -216,7 +221,10 @@ fun PatientDetailScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = onNavigateToAdmission) {
+                    TextButton(
+                        onClick = onNavigateToAdmission,
+                        modifier = Modifier.testTag(TestTags.Patients.DETAIL_ADMISSION_BUTTON)
+                    ) {
                         Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.ui_doctor_documents_screen_237), fontWeight = FontWeight.Bold)
@@ -231,7 +239,8 @@ fun PatientDetailScreen(
                     ExtendedFloatingActionButton(
                         onClick = onOpenQuickActionSheet,
                         containerColor = BiodontosDark,
-                        contentColor = BiodontosWhite
+                        contentColor = BiodontosWhite,
+                        modifier = Modifier.testTag(TestTags.Patients.DETAIL_FAB)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_patient_detail_screen_500))
                         Spacer(modifier = Modifier.width(8.dp))
@@ -242,7 +251,8 @@ fun PatientDetailScreen(
                     ExtendedFloatingActionButton(
                         onClick = onOpenNewEvolutionDialog,
                         containerColor = BiodontosDark,
-                        contentColor = BiodontosWhite
+                        contentColor = BiodontosWhite,
+                        modifier = Modifier.testTag(TestTags.Patients.DETAIL_FAB)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_patient_detail_screen_501))
                         Spacer(modifier = Modifier.width(8.dp))
@@ -253,7 +263,8 @@ fun PatientDetailScreen(
                     ExtendedFloatingActionButton(
                         onClick = onOpenNewAppointmentDialog,
                         containerColor = BiodontosDark,
-                        contentColor = BiodontosWhite
+                        contentColor = BiodontosWhite,
+                        modifier = Modifier.testTag(TestTags.Patients.DETAIL_FAB)
                     ) {
                         Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.ui_patient_detail_screen_502))
                         Spacer(modifier = Modifier.width(8.dp))
@@ -272,24 +283,25 @@ fun PatientDetailScreen(
                 .imePadding()
                 .background(BiodontosLightGrey)
         ) {
-            // Persistent compact Clinical Status Bar across all tabs
             ClinicalStatusBar(
                 patient = patient,
                 anamnesis = state.anamnesis,
-                consent = state.consent
+                consent = state.consent,
+                modifier = Modifier.testTag(TestTags.Patients.DETAIL_STATUS_BAR)
             )
 
-            // Tabs de Navegación del Hub Clínico
             ScrollableTabRow(
                 selectedTabIndex = state.selectedTab.ordinal,
                 containerColor = BiodontosWhite,
                 contentColor = BiodontosDark,
-                edgePadding = 12.dp
+                edgePadding = 12.dp,
+                modifier = Modifier.testTag(TestTags.Patients.DETAIL_TAB_ROW)
             ) {
                 PatientDetailTab.entries.forEach { tab ->
                     Tab(
                         selected = state.selectedTab == tab,
                         onClick = { onTabSelected(tab) },
+                        modifier = Modifier.testTag(TestTags.Patients.detailTab(tab.name)),
                         text = {
                             Text(
                                 text = tab.label,
@@ -303,7 +315,10 @@ fun PatientDetailScreen(
 
             if (state.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = BiodontosDark)
+                    CircularProgressIndicator(
+                        color = BiodontosDark,
+                        modifier = Modifier.testTag(TestTags.Patients.DETAIL_LOADING)
+                    )
                 }
             } else if (state.selectedTab == PatientDetailTab.HISTORY) {
                 PatientHistoryTab(
@@ -320,19 +335,21 @@ fun PatientDetailScreen(
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(TestTags.Patients.DETAIL_LIST),
                     contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     when (state.selectedTab) {
                         PatientDetailTab.HISTORY -> {}
                         PatientDetailTab.SUMMARY -> {
-                            item { PatientDemographicsCard(patient = patient) }
-                            item { AnamnesisSummaryCard(anamnesis = state.anamnesis) }
-                            item { ConsentSummaryCard(consent = state.consent) }
+                            item(key = "demographics") { PatientDemographicsCard(patient = patient) }
+                            item(key = "anamnesis") { AnamnesisSummaryCard(anamnesis = state.anamnesis) }
+                            item(key = "consent") { ConsentSummaryCard(consent = state.consent) }
                         }
                         PatientDetailTab.ODONTOGRAM -> {
-                            item {
+                            item(key = "odontogram-hub") {
                                 OdontogramHubCard(
                                     dentitionType = state.clinicalRecord?.dentitionType?.name ?: "ADULT",
                                     mainDiagnosis = state.clinicalRecord?.mainDiagnosis ?: "Sin diagnóstico registrado",
@@ -343,7 +360,7 @@ fun PatientDetailScreen(
                         }
                         PatientDetailTab.EVOLUTIONS -> {
                             if (state.evolutions.isEmpty()) {
-                                item {
+                                item(key = "evolutions-empty") {
                                     Card(
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
@@ -375,14 +392,14 @@ fun PatientDetailScreen(
                             }
                         }
                         PatientDetailTab.TREATMENTS -> {
-                            item {
+                            item(key = "treatments-balance") {
                                 TreatmentsBalanceHeaderCard(
                                     totalBilled = state.totalBilled,
                                     totalPaid = state.totalPaid,
                                     balance = state.pendingBalance
                                 )
                             }
-                            item {
+                            item(key = "treatments-header") {
                                 Text(
                                     text = stringResource(R.string.ui_patient_detail_screen_505),
                                     fontWeight = FontWeight.Bold,
@@ -391,7 +408,7 @@ fun PatientDetailScreen(
                                 )
                             }
                             if (state.treatments.isEmpty()) {
-                                item {
+                                item(key = "treatments-empty") {
                                     Text(
                                         text = stringResource(R.string.ui_patient_detail_screen_506),
                                         color = BiodontosGreyText,
@@ -403,7 +420,7 @@ fun PatientDetailScreen(
                                     TreatmentItemCard(treatment = treat)
                                 }
                             }
-                            item {
+                            item(key = "appointments-header") {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = stringResource(R.string.ui_patient_detail_screen_507),
@@ -413,7 +430,7 @@ fun PatientDetailScreen(
                                 )
                             }
                             if (state.appointments.isEmpty()) {
-                                item {
+                                item(key = "appointments-empty") {
                                     Text(
                                         text = stringResource(R.string.ui_patient_detail_screen_508),
                                         color = BiodontosGreyText,
@@ -432,7 +449,6 @@ fun PatientDetailScreen(
         }
     }
 
-    // BottomSheet: Creación Rápida desde el Historial Clínico
     if (state.historyState.showQuickActionSheet) {
         QuickCreateActivityBottomSheet(
             onCreateEvolution = onOpenNewEvolutionDialog,
@@ -443,7 +459,6 @@ fun PatientDetailScreen(
         )
     }
 
-    // Diálogo: Anulación Lógica en 2 Pasos (Resolución 1995/1999)
     val voidTarget = state.historyState.voidDialogTarget
     if (voidTarget != null) {
         VoidActivityDialog(
@@ -458,7 +473,6 @@ fun PatientDetailScreen(
         )
     }
 
-    // Diálogo: Nota Aclaratoria Vinculada
     val clarificationTarget = state.historyState.clarificationTarget
     if (clarificationTarget != null) {
         ClarificationNoteDialog(
@@ -471,7 +485,6 @@ fun PatientDetailScreen(
         )
     }
 
-    // Diálogo: Actualizar Estado de Presupuesto de Tratamiento
     val statusTarget = state.historyState.statusDialogTarget
     if (statusTarget != null) {
         TreatmentStatusUpdateDialog(
@@ -486,7 +499,6 @@ fun PatientDetailScreen(
         )
     }
 
-    // Diálogo: Nuevo Presupuesto de Tratamiento
     if (state.showNewTreatmentDialog) {
         NewTreatmentBudgetDialog(
             description = state.newTreatmentDescription,
@@ -499,7 +511,6 @@ fun PatientDetailScreen(
         )
     }
 
-    // Diálogo: Registrar Pago / Abono
     if (state.showNewPaymentDialog) {
         NewPaymentDialog(
             treatments = state.treatments,
@@ -515,7 +526,6 @@ fun PatientDetailScreen(
         )
     }
 
-    // Diálogo: Nueva Evolución Clínica con Trazabilidad INVIMA
     if (state.showNewEvolutionDialog) {
         NewEvolutionDialog(
             description = state.newEvolutionDescription,
@@ -538,7 +548,6 @@ fun PatientDetailScreen(
         )
     }
 
-    // Diálogo: Agendar Cita
     if (state.showNewAppointmentDialog) {
         NewAppointmentDialog(
             date = state.newAppointmentDate,
@@ -744,14 +753,18 @@ private fun OdontogramHubCard(
                     onClick = onOpenOdontogram,
                     colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Patients.DETAIL_OPEN_ODONTOGRAM_BUTTON)
                 ) {
                     Text(stringResource(R.string.ui_patient_detail_screen_523))
                 }
                 OutlinedButton(
                     onClick = onOpenAdmission,
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Patients.DETAIL_OPEN_ADMISSION_BUTTON)
                 ) {
                     Text(stringResource(R.string.ui_patient_detail_screen_524))
                 }
@@ -763,7 +776,9 @@ private fun OdontogramHubCard(
 @Composable
 private fun EvolutionItemCard(evolution: Evolution) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.Patients.evolutionItem(evolution.id)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -859,7 +874,9 @@ private fun TreatmentsBalanceHeaderCard(
 @Composable
 private fun TreatmentItemCard(treatment: Treatment) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.Patients.treatmentItem(treatment.id)),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -885,7 +902,9 @@ private fun TreatmentItemCard(treatment: Treatment) {
 @Composable
 private fun PatientAppointmentItemCard(appointment: Appointment) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.Patients.appointmentItem(appointment.id)),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -936,6 +955,7 @@ private fun NewEvolutionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_DIALOG),
         title = { Text(stringResource(R.string.ui_patient_detail_screen_535), fontWeight = FontWeight.Bold) },
         text = {
             LazyColumn(
@@ -950,7 +970,9 @@ private fun NewEvolutionDialog(
                         onValueChange = onDescriptionChange,
                         label = { Text(stringResource(R.string.ui_patient_detail_screen_536)) },
                         placeholder = { Text(stringResource(R.string.ui_patient_detail_screen_537)) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_DESC_FIELD),
                         colors = biodontosTextFieldColors()
                     )
                 }
@@ -961,7 +983,9 @@ private fun NewEvolutionDialog(
                             onValueChange = { onToothChange(it.toIntOrNull()) },
                             label = { Text(stringResource(R.string.ui_patient_detail_screen_538)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_TOOTH_FIELD),
                             colors = biodontosTextFieldColors()
                         )
                         OutlinedTextField(
@@ -969,7 +993,9 @@ private fun NewEvolutionDialog(
                             onValueChange = onCostChange,
                             label = { Text(stringResource(R.string.ui_patient_detail_screen_539)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_COST_FIELD),
                             colors = biodontosTextFieldColors()
                         )
                         OutlinedTextField(
@@ -977,7 +1003,9 @@ private fun NewEvolutionDialog(
                             onValueChange = onPaymentChange,
                             label = { Text(stringResource(R.string.ui_patient_detail_screen_540)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_PAYMENT_FIELD),
                             colors = biodontosTextFieldColors()
                         )
                     }
@@ -1093,7 +1121,6 @@ private fun NewEvolutionDialog(
                             }
                         }
 
-                        // Selected material details card & quantity input
                         selectedMaterial?.let { selMat ->
                             val isExpired = selMat.isExpired()
                             val isNear = selMat.isNearExpiration()
@@ -1233,7 +1260,8 @@ private fun NewEvolutionDialog(
             Button(
                 onClick = onSave,
                 enabled = !isSaving,
-                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                modifier = Modifier.testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_SAVE_BUTTON)
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
@@ -1264,6 +1292,7 @@ private fun NewAppointmentDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.testTag(TestTags.Patients.DETAIL_NEW_APPT_DIALOG),
         title = { Text(stringResource(R.string.ui_patient_detail_screen_557), fontWeight = FontWeight.Bold) },
         text = {
             Column(
@@ -1274,21 +1303,27 @@ private fun NewAppointmentDialog(
                     value = date,
                     onValueChange = onDateChange,
                     label = { Text(stringResource(R.string.ui_patient_detail_screen_558)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Patients.DETAIL_NEW_APPT_DATE_FIELD),
                     colors = biodontosTextFieldColors()
                 )
                 OutlinedTextField(
                     value = time,
                     onValueChange = onTimeChange,
                     label = { Text(stringResource(R.string.ui_patient_detail_screen_559)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Patients.DETAIL_NEW_APPT_TIME_FIELD),
                     colors = biodontosTextFieldColors()
                 )
                 OutlinedTextField(
                     value = reason,
                     onValueChange = onReasonChange,
                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_36)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Patients.DETAIL_NEW_APPT_REASON_FIELD),
                     colors = biodontosTextFieldColors()
                 )
             }
@@ -1297,7 +1332,8 @@ private fun NewAppointmentDialog(
             Button(
                 onClick = onSave,
                 enabled = !isSaving,
-                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                modifier = Modifier.testTag(TestTags.Patients.DETAIL_NEW_APPT_SAVE_BUTTON)
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
@@ -1345,7 +1381,6 @@ private fun ClinicalStatusBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Consent Status Badge
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = if (isConsentSigned) Esmeralda.copy(alpha = 0.12f) else Carmesi.copy(alpha = 0.12f),
@@ -1378,7 +1413,6 @@ private fun ClinicalStatusBar(
                 }
             }
 
-            // Critical Allergy Badge
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = if (hasAllergies) Carmesi.copy(alpha = 0.12f) else BiodontosInputBg,

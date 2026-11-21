@@ -180,14 +180,12 @@ class DoctorSearchViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // 1. Con tilde
         viewModel.onEvent(DoctorSearchUiEvent.QueryChanged("María"))
         advanceTimeBy(350L)
         advanceUntilIdle()
         assertEquals(1, viewModel.uiState.value.doctors.size)
         assertEquals("María", viewModel.uiState.value.doctors[0].firstName)
 
-        // 2. Sin tilde
         viewModel.onEvent(DoctorSearchUiEvent.QueryChanged("maria"))
         advanceTimeBy(350L)
         advanceUntilIdle()

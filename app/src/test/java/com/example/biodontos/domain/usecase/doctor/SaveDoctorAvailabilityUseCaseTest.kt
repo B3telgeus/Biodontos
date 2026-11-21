@@ -86,7 +86,7 @@ class SaveDoctorAvailabilityUseCaseTest {
                 dayOfWeek = DayOfWeek.MONDAY,
                 startTime = LocalTime.of(8, 0),
                 endTime = LocalTime.of(12, 0),
-                slotMinutes = 5, // Inválido (< 10)
+                slotMinutes = 5,
                 isActive = true
             )
         }

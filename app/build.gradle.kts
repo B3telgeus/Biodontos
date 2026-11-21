@@ -83,7 +83,38 @@ android {
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.maxHeapSize = "2048m"
+            it.forkEvery = 2L
+        }
+        animationsDisabled = true
+        managedDevices {
+            localDevices {
+                create("pixel6api34") {
+                    device = "Pixel 6"
+                    apiLevel = 34
+                    systemImageSource = "google-atd"
+                }
+                create("pixel2api30") {
+                    device = "Pixel 2"
+                    apiLevel = 30
+                    systemImageSource = "aosp-atd"
+                }
+            }
+            groups {
+                create("ciMatrix") {
+                    targetDevices.add(localDevices["pixel6api34"])
+                    targetDevices.add(localDevices["pixel2api30"])
+                }
+            }
+        }
     }
+}
+
+composeCompiler {
+    reportsDestination = layout.buildDirectory.dir("compose_compiler")
+    metricsDestination = layout.buildDirectory.dir("compose_compiler")
+    stabilityConfigurationFile = rootProject.layout.projectDirectory.file("stability_config.conf")
 }
 
 ksp {
@@ -112,6 +143,7 @@ kover {
                     "com.example.biodontos.presentation.odontogram.InteractiveTooth*",
                     "com.example.biodontos.presentation.periodontogram.InteractivePeriodontogram*",
                     "com.example.biodontos.presentation.**.*Factory*",
+                    "com.example.biodontos.presentation.previews.**",
                     "com.example.biodontos.core.designsystem.**",
                     "com.example.biodontos.core.di.**",
                     "com.example.biodontos.core.network.**",
@@ -143,7 +175,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
 
-    // Architecture & Background
     implementation(libs.arrow.core)
     implementation(libs.androidx.compose.material3.window.size)
     implementation(libs.androidx.work.runtime.ktx)
@@ -153,7 +184,6 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.datastore.preferences)
 
-    // Supabase & Network
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.core.kt)
     implementation(libs.supabase.postgrest)
@@ -171,10 +201,27 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.room.testing)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.androidx.junit)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.runner)
+    testImplementation(libs.google.truth)
+
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.espresso.intents)
+    androidTestImplementation(libs.androidx.espresso.accessibility)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.test.uiautomator)
+    androidTestImplementation(libs.google.truth)
+    androidTestUtil(libs.androidx.test.orchestrator)
+
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

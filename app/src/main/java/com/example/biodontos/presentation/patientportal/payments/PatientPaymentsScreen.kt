@@ -55,6 +55,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -70,6 +71,7 @@ import com.example.biodontos.core.designsystem.BiodontosScreenGradient
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.StatusConfirmed
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.domain.model.CopAmount
@@ -116,6 +118,7 @@ fun PatientPaymentsScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     Scaffold(
+        modifier = Modifier.testTag(TestTags.PatientPortal.PAYMENTS_ROOT),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color.Transparent,
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
@@ -132,7 +135,10 @@ fun PatientPaymentsScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = BiodontosDark)
+                    CircularProgressIndicator(
+                        color = BiodontosDark,
+                        modifier = Modifier.testTag(TestTags.PatientPortal.PAYMENTS_LOADING)
+                    )
                 }
             } else {
                 BoxWithConstraints(
@@ -146,7 +152,6 @@ fun PatientPaymentsScreen(
                             .padding(horizontal = if (isExpanded) 32.dp else 20.dp, vertical = 20.dp)
                             .verticalScroll(rememberScrollState())
                     ) {
-                        // Header Bar
                         PaymentsHeader(
                             patientName = state.patientName,
                             isRefreshing = state.isRefreshing,
@@ -160,17 +165,16 @@ fun PatientPaymentsScreen(
                         if (state.errorMessage != null && state.balances.isEmpty()) {
                             ErrorCard(
                                 message = state.errorMessage,
-                                onRetry = { onEvent(PatientPaymentsUiEvent.Retry) }
+                                onRetry = { onEvent(PatientPaymentsUiEvent.Retry) },
+                                modifier = Modifier.testTag(TestTags.PatientPortal.PAYMENTS_ERROR)
                             )
                         } else {
                             if (isExpanded) {
-                                // Layout 2 Columnas para Pantalla Grande / Tablet
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                                     verticalAlignment = Alignment.Top
                                 ) {
-                                    // Columna Izquierda: Hero Card + Tratamientos
                                     Column(
                                         modifier = Modifier.weight(1.2f),
                                         verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -188,7 +192,6 @@ fun PatientPaymentsScreen(
                                         )
                                     }
 
-                                    // Columna Derecha: Abonos Recientes
                                     Column(
                                         modifier = Modifier.weight(0.9f),
                                         verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -201,7 +204,6 @@ fun PatientPaymentsScreen(
                                     }
                                 }
                             } else {
-                                // Layout Vertical para Móvil
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -258,7 +260,9 @@ private fun PaymentsHeader(
             if (canNavigateBack) {
                 IconButton(
                     onClick = onBackClick,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag(TestTags.PatientPortal.PAYMENTS_BACK_BUTTON)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -288,7 +292,9 @@ private fun PaymentsHeader(
         IconButton(
             onClick = onRefreshClick,
             enabled = !isRefreshing,
-            modifier = Modifier.size(48.dp)
+            modifier = Modifier
+                .size(48.dp)
+                .testTag(TestTags.PatientPortal.PAYMENTS_REFRESH_BUTTON)
         ) {
             if (isRefreshing) {
                 CircularProgressIndicator(
@@ -315,7 +321,9 @@ private fun HeroBalanceCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(TestTags.PatientPortal.PAYMENTS_HERO_CARD),
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -381,13 +389,13 @@ private fun TreatmentsSection(
                 color = BiodontosDark
             )
 
-            // Filtros de estado (Pills con altura mínima 48dp y háptica)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 PaymentFilter.entries.forEach { filter ->
                     val isSelected = selectedFilter == filter
                     Box(
                         modifier = Modifier
                             .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                            .testTag(TestTags.PatientPortal.paymentFilterChip(filter.name))
                             .clip(RoundedCornerShape(14.dp))
                             .background(if (isSelected) BiodontosDark else BiodontosInputBg)
                             .clickable {
@@ -412,7 +420,10 @@ private fun TreatmentsSection(
             EmptyTreatmentsCard(filter = selectedFilter)
         } else {
             balances.forEach { balance ->
-                TreatmentBalanceCard(balance = balance)
+                TreatmentBalanceCard(
+                    balance = balance,
+                    modifier = Modifier.testTag(TestTags.PatientPortal.treatmentBalanceItem(balance.treatment.id))
+                )
             }
         }
     }
@@ -452,7 +463,6 @@ private fun TreatmentBalanceCard(
                     )
                 }
 
-                // Badge de estado de pago
                 if (balance.isPaidInFull) {
                     Box(
                         modifier = Modifier
@@ -493,7 +503,6 @@ private fun TreatmentBalanceCard(
                 }
             }
 
-            // Barra de Progreso
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 LinearProgressIndicator(
                     progress = { balance.progressFraction },
@@ -581,7 +590,8 @@ private fun RecentPaymentsCard(
                 payments.forEach { payment ->
                     PaymentRow(
                         payment = payment,
-                        onClick = { onPaymentClick(payment) }
+                        onClick = { onPaymentClick(payment) },
+                        modifier = Modifier.testTag(TestTags.PatientPortal.paymentItem(payment.id))
                     )
                 }
             }
@@ -592,7 +602,8 @@ private fun RecentPaymentsCard(
 @Composable
 private fun PaymentRow(
     payment: Payment,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
     val dateStr = payment.createdAt?.let { dt ->
@@ -600,7 +611,7 @@ private fun PaymentRow(
     } ?: "Fecha reciente"
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(BiodontosCardTop)
@@ -783,7 +794,8 @@ private fun ErrorCard(
             BiodontosPillButton(
                 text = stringResource(R.string.ui_doctor_appointments_screen_175),
                 variant = PillButtonVariant.DARK,
-                onClick = onRetry
+                onClick = onRetry,
+                modifier = Modifier.testTag(TestTags.PatientPortal.PAYMENTS_RETRY_BUTTON)
             )
         }
     }
@@ -821,7 +833,8 @@ fun PaymentReceiptDialog(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
                 .clip(RoundedCornerShape(28.dp))
-                .imePadding(),
+                .imePadding()
+                .testTag(TestTags.PatientPortal.PAYMENTS_RECEIPT_DIALOG),
             colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
@@ -831,7 +844,6 @@ fun PaymentReceiptDialog(
                     .padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Encabezado y botón cerrar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -865,7 +877,6 @@ fun PaymentReceiptDialog(
                     }
                 }
 
-                // Número de comprobante y estado
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -900,7 +911,6 @@ fun PaymentReceiptDialog(
                     }
                 }
 
-                // Monto destacado
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -924,7 +934,6 @@ fun PaymentReceiptDialog(
                     )
                 }
 
-                // Desglose de información
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -934,7 +943,6 @@ fun PaymentReceiptDialog(
                     ReceiptDetailRow(label = "Fecha y Hora", value = formattedDateTime)
                 }
 
-                // Nota informativa legal / sede clínica
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -958,7 +966,6 @@ fun PaymentReceiptDialog(
                     )
                 }
 
-                // Botón Cerrar (minHeight >= 48dp)
                 BiodontosPillButton(
                     text = stringResource(R.string.ui_patient_payments_screen_427),
                     variant = PillButtonVariant.DARK,
@@ -966,6 +973,7 @@ fun PaymentReceiptDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 48.dp)
+                        .testTag(TestTags.PatientPortal.PAYMENTS_RECEIPT_CLOSE_BUTTON)
                 )
             }
         }

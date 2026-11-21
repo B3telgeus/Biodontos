@@ -13,11 +13,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.biodontos.R
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.domain.model.ToothCondition
 import com.example.biodontos.domain.model.ToothSurface
 
@@ -33,6 +35,7 @@ fun InteractiveTooth(
 
     Canvas(
         modifier = modifier
+            .testTag(TestTags.Odontogram.tooth(toothNumber))
             .semantics {
                 contentDescription = toothContentDescription
             }
@@ -50,7 +53,6 @@ fun InteractiveTooth(
         val h = size.height
         val inset = w * 0.28f
 
-        // Oclusal (Center)
         drawRect(
             color = surfaceStates[ToothSurface.OCLUSAL]?.color ?: ToothCondition.SANO.color,
             topLeft = Offset(inset, inset),
@@ -63,7 +65,6 @@ fun InteractiveTooth(
             style = Stroke(width = 1.dp.toPx())
         )
 
-        // Vestibular (Top)
         val vestibularPath = Path().apply {
             moveTo(0f, 0f)
             lineTo(w, 0f)
@@ -81,7 +82,6 @@ fun InteractiveTooth(
             style = Stroke(width = 1.dp.toPx())
         )
 
-        // Palatino/Lingual (Bottom)
         val palatinoPath = Path().apply {
             moveTo(0f, h)
             lineTo(w, h)
@@ -99,7 +99,6 @@ fun InteractiveTooth(
             style = Stroke(width = 1.dp.toPx())
         )
 
-        // Mesial (Left)
         val mesialPath = Path().apply {
             moveTo(0f, 0f)
             lineTo(inset, inset)
@@ -117,7 +116,6 @@ fun InteractiveTooth(
             style = Stroke(width = 1.dp.toPx())
         )
 
-        // Distal (Right)
         val distalPath = Path().apply {
             moveTo(w, 0f)
             lineTo(w - inset, inset)

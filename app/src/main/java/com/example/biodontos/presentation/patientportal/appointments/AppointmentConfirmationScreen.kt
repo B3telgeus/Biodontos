@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,6 +56,7 @@ import com.example.biodontos.core.designsystem.BiodontosScreenBgTop
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.StatusConfirmed
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.Zafiro
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
@@ -104,7 +106,9 @@ fun AppointmentConfirmationScreen(
     } ?: ""
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .testTag(TestTags.PatientPortal.CONFIRMATION_ROOT),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = BiodontosScreenBgTop,
         bottomBar = {
@@ -121,7 +125,9 @@ fun AppointmentConfirmationScreen(
                         text = stringResource(R.string.ui_appointment_confirmation_screen_353),
                         variant = PillButtonVariant.DARK,
                         onClick = onNavigateToMyAppointments,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.PatientPortal.CONFIRMATION_MY_APPOINTMENTS_BUTTON)
                     )
 
                     BiodontosPillButton(
@@ -144,15 +150,17 @@ fun AppointmentConfirmationScreen(
                                 }
                                 context.startActivity(intent)
                             } catch (_: Exception) {
-                                // Ignorar si el dispositivo no tiene gestor de calendario
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.PatientPortal.CONFIRMATION_ADD_CALENDAR_BUTTON)
                     )
 
                     Box(
                         modifier = Modifier
                             .defaultMinSize(minHeight = 48.dp)
+                            .testTag(TestTags.PatientPortal.CONFIRMATION_HOME_BUTTON)
                             .clickable { onNavigateToHome() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -172,12 +180,12 @@ fun AppointmentConfirmationScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 20.dp)
+                .testTag(TestTags.PatientPortal.CONFIRMATION_LIST),
             contentPadding = PaddingValues(top = 24.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Hero Icon & Confirmation Header
             item {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -217,7 +225,6 @@ fun AppointmentConfirmationScreen(
                 }
             }
 
-            // Summary Card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -229,7 +236,6 @@ fun AppointmentConfirmationScreen(
                         modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        // Doctor row
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
@@ -261,7 +267,6 @@ fun AppointmentConfirmationScreen(
 
                         HorizontalDivider(color = BiodontosInputBg)
 
-                        // Date & Time
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
@@ -292,7 +297,6 @@ fun AppointmentConfirmationScreen(
 
                         HorizontalDivider(color = BiodontosInputBg)
 
-                        // Location
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
@@ -321,7 +325,6 @@ fun AppointmentConfirmationScreen(
 
                         HorizontalDivider(color = BiodontosInputBg)
 
-                        // Reason / Procedure
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
@@ -352,7 +355,6 @@ fun AppointmentConfirmationScreen(
                 }
             }
 
-            // Clinical Instructions Card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),

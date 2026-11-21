@@ -199,7 +199,7 @@ class BookAppointmentViewModelTest {
 
         viewModel.effects.test {
             viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
-            awaitItem() // toast
+            awaitItem()
             val navigate = awaitItem()
             val confirmation = (navigate as BookAppointmentUiEffect.NavigateToConfirmation).confirmation
             assertEquals("Carrera 7 # 120-20, Consultorio 505", confirmation.roomOrLocation)
@@ -344,7 +344,7 @@ class BookAppointmentViewModelTest {
 
         viewModel.effects.test {
             viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
-            awaitItem() // toast
+            awaitItem()
             val navigate = awaitItem()
             val confirmation = (navigate as BookAppointmentUiEffect.NavigateToConfirmation).confirmation
             assertEquals("Dolor pulsátil en pieza 46", confirmation.reason)

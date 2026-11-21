@@ -104,9 +104,6 @@ class BookAppointmentAdversarialTest {
         )
     }
 
-    // =========================================================================
-    // 1. RAPID BOOKING CLICKS & RE-ENTRANCY (CONCURRENCY STRESS)
-    // =========================================================================
 
     @Test
     fun `rapid double click on ConfirmBooking should NOT invoke bookAppointmentUseCase twice`() = runTest(testDispatcher) {
@@ -122,18 +119,14 @@ class BookAppointmentAdversarialTest {
 
         viewModel.onEvent(BookAppointmentUiEvent.SelectSlot(validFutureSlot))
 
-        // First click
         viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
-        // Advance slightly so coroutine starts and sets isSubmitting
         testScheduler.advanceTimeBy(10)
 
         assertTrue(viewModel.uiState.value.isSubmitting)
 
-        // Rapid second click while first is in-flight!
         viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
         testScheduler.advanceTimeBy(10)
 
-        // Now complete the deferred
         val appt = Appointment(
             id = "appt-1",
             patientId = "patient-1",
@@ -144,7 +137,6 @@ class BookAppointmentAdversarialTest {
         bookingDeferred.complete(Result.success(appt))
         advanceUntilIdle()
 
-        // EMPIRICAL VERIFICATION: Was bookAppointmentUseCase called 1 time or 2 times?
         coVerify(exactly = 1) {
             bookAppointmentUseCase(any(), any(), any(), any(), any())
         }
@@ -166,27 +158,21 @@ class BookAppointmentAdversarialTest {
         viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
         assertTrue(viewModel.uiState.value.showRescheduleConfirmDialog)
 
-        // First confirmation
         viewModel.onEvent(BookAppointmentUiEvent.ExecuteReschedule)
         testScheduler.advanceTimeBy(10)
         assertTrue(viewModel.uiState.value.isSubmitting)
 
-        // Rapid second confirmation while in flight
         viewModel.onEvent(BookAppointmentUiEvent.ExecuteReschedule)
         testScheduler.advanceTimeBy(10)
 
         rescheduleDeferred.complete(Unit.right())
         advanceUntilIdle()
 
-        // EMPIRICAL VERIFICATION
         coVerify(exactly = 1) {
             rescheduleAppointmentUseCase(any(), any(), any())
         }
     }
 
-    // =========================================================================
-    // 2. RESCHEDULE FLOW: CONFIRMING VS DISMISSING 2-STEP DIALOG
-    // =========================================================================
 
     @Test
     fun `dismissing 2-step reschedule dialog PRESERVES old appointment and does NOT call use case`() = runTest(testDispatcher) {
@@ -197,16 +183,12 @@ class BookAppointmentAdversarialTest {
         viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
         assertTrue("Dialog should be shown", viewModel.uiState.value.showRescheduleConfirmDialog)
 
-        // Dismiss the dialog
         viewModel.onEvent(BookAppointmentUiEvent.DismissRescheduleDialog)
 
-        // Dialog should be dismissed
         assertFalse(viewModel.uiState.value.showRescheduleConfirmDialog)
         assertFalse(viewModel.uiState.value.isSubmitting)
-        // Selected slot is still in memory for patient convenience
         assertEquals(validFutureSlot, viewModel.uiState.value.selectedSlot)
 
-        // Old appointment was untouched
         coVerify(exactly = 0) {
             rescheduleAppointmentUseCase(any(), any(), any())
         }
@@ -242,9 +224,6 @@ class BookAppointmentAdversarialTest {
         }
     }
 
-    // =========================================================================
-    // 3. SLOT COLLISION ON BOOKING & RESCHEDULING
-    // =========================================================================
 
     @Test
     fun `slot collision on new booking handles error gracefully and refreshes slots`() = runTest(testDispatcher) {
@@ -266,7 +245,6 @@ class BookAppointmentAdversarialTest {
         }
 
         assertFalse("Submitting should be reset to false", viewModel.uiState.value.isSubmitting)
-        // Verify slots were reloaded for the date
         coVerify(atLeast = 2) {
             getAvailableSlotsUseCase(DoctorId("doc-1"), testToday)
         }
@@ -299,18 +277,13 @@ class BookAppointmentAdversarialTest {
         }
     }
 
-    // =========================================================================
-    // 4. PAST DATE / SLOT BOUNDARY CONDITIONS
-    // =========================================================================
 
     @Test
     fun `booking a slot exactly at 2 hours threshold vs 1 minute before threshold`() = runTest(testDispatcher) {
-        // Slot at exactly 2h: testNow is 08:00, slot starts at 10:00 (now + 2h)
         val exact2hSlot = TimeSlot(
             start = testNow.plusHours(2),
             end = testNow.plusHours(2).plusMinutes(30)
         )
-        // Slot at 1h 59m: starts at 09:59 (less than 2h)
         val justUnder2hSlot = TimeSlot(
             start = testNow.plusHours(2).minusMinutes(1),
             end = testNow.plusHours(2).plusMinutes(29)
@@ -319,7 +292,6 @@ class BookAppointmentAdversarialTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // 1) Test slot just under 2h -> Must be rejected
         viewModel.onEvent(BookAppointmentUiEvent.SelectSlot(justUnder2hSlot))
         viewModel.effects.test {
             viewModel.onEvent(BookAppointmentUiEvent.ConfirmBooking)
@@ -328,12 +300,10 @@ class BookAppointmentAdversarialTest {
             assertTrue(toast.message.contains("mínimo 2 horas de anticipación"))
         }
 
-        // Verify bookAppointmentUseCase was NOT called
         coVerify(exactly = 0) {
             bookAppointmentUseCase(any(), any(), any(), any(), any())
         }
 
-        // 2) Test slot at exactly 2 hours -> Should be accepted (not rejected by 2h check)
         coEvery {
             bookAppointmentUseCase(any(), any(), any(), any(), any())
         } returns Result.success(

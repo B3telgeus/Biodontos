@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +25,7 @@ import com.example.biodontos.R
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.TestTags
 
 @Composable
 fun OnboardingScreen(
@@ -45,6 +47,7 @@ fun OnboardingScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundBrush)
+            .testTag(TestTags.Auth.ONBOARDING_ROOT)
     ) {
 
         if (isTabletLandscape) {
@@ -55,7 +58,6 @@ fun OnboardingScreen(
                     .padding(48.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left Panel
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -63,7 +65,6 @@ fun OnboardingScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Imagen personalizada del Diente (Tablet)
                     Image(
                         painter = painterResource(id = R.drawable.diente),
                         contentDescription = stringResource(R.string.cd_biodontos_logo),
@@ -86,7 +87,6 @@ fun OnboardingScreen(
                     )
                 }
 
-                // Right Card
                 Card(
                     modifier = Modifier
                         .weight(1f)
@@ -128,6 +128,7 @@ fun OnboardingScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
+                                .testTag(TestTags.Auth.ONBOARDING_LOGIN_BUTTON)
                         ) {
                             Text(
                                 text = stringResource(R.string.onboarding_login),
@@ -154,6 +155,7 @@ fun OnboardingScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
+                                .testTag(TestTags.Auth.ONBOARDING_CREATE_ACCOUNT_BUTTON)
                         ) {
                             Text(
                                 text = stringResource(R.string.onboarding_create_account),
@@ -165,7 +167,6 @@ fun OnboardingScreen(
                 }
             }
         } else {
-            // Mobile
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -175,7 +176,6 @@ fun OnboardingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Imagen personalizada del Diente (Móvil)
                 Image(
                     painter = painterResource(id = R.drawable.diente),
                     contentDescription = stringResource(R.string.cd_biodontos_logo),
@@ -236,6 +236,7 @@ fun OnboardingScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp)
+                                .testTag(TestTags.Auth.ONBOARDING_LOGIN_BUTTON)
                         ) {
                             Text(
                                 text = stringResource(R.string.onboarding_login),
@@ -263,6 +264,7 @@ fun OnboardingScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp)
+                                .testTag(TestTags.Auth.ONBOARDING_CREATE_ACCOUNT_BUTTON)
                         ) {
                             Text(
                                 text = stringResource(R.string.onboarding_create_account),

@@ -197,7 +197,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             if (isPortalTabSwitch()) fadeThroughExitTransition else backwardExitTransition
         }
     ) {
-        // --- SPLASH SCREEN (INICIO CON AUTO-LOGIN) ---
         composable<Splash> {
             val viewModel: SplashViewModel = viewModel(factory = AuthViewModelFactory.SplashFactory)
             SplashScreen(
@@ -220,7 +219,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- GATEWAY DE SESIÓN SEGÚN ROL (COMPATIBILIDAD) ---
         composable<SessionGate> {
             val context = LocalContext.current
             val app = context.applicationContext as BiodontosApp
@@ -253,7 +251,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             }
         }
 
-        // --- ONBOARDING & SELECCIÓN ---
         composable<Onboarding> {
             OnboardingScreen(
                 onLoginClick = { navController.navigate(Login) },
@@ -269,7 +266,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- LOGIN ---
         composable<Login> {
             val viewModel: LoginViewModel = viewModel(factory = AuthViewModelFactory.LoginFactory)
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -304,7 +300,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- REGISTRO DE DOCTOR ---
         composable<DoctorRegistration> {
             val viewModel: DoctorRegistrationViewModel = viewModel(factory = AuthViewModelFactory.DoctorRegistrationFactory)
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -338,7 +333,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- REGISTRO DE PACIENTE (AUTH) ---
         composable<PatientSignUp> {
             val viewModel: PatientSignUpViewModel = viewModel(factory = AuthViewModelFactory.PatientSignUpFactory)
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -371,7 +365,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- CONFIRMACIÓN DE REGISTRO EXITOSO (FIGMA) ---
         composable<SignUpSuccess> {
             SignUpSuccessScreen(
                 onLoginClick = {
@@ -382,7 +375,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- RESETEO DE CONTRASEÑA ---
         composable<ForgotPassword> {
             val viewModel: ForgotPasswordViewModel = viewModel(factory = AuthViewModelFactory.ForgotPasswordFactory)
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -395,7 +387,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- PORTAL DE PACIENTES ---
         composable<PatientHome> {
             val viewModel: PatientHomeViewModel = viewModel(factory = PatientPortalViewModelFactory.HomeFactory)
             val isExpanded = LocalConfiguration.current.screenWidthDp >= 600
@@ -430,7 +421,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             }
         }
 
-        // --- BÚSQUEDA DE DOCTORES (PACIENTE) ---
         composable<DoctorSearch> {
             val viewModel: DoctorSearchViewModel = viewModel(factory = PatientPortalViewModelFactory.DoctorSearchFactory)
             PatientPortalShell(
@@ -458,7 +448,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             }
         }
 
-        // --- DETALLE DEL DOCTOR ---
         composable<DoctorDetail> { backStackEntry ->
             val route = backStackEntry.toRoute<DoctorDetail>()
             val viewModel: DoctorDetailViewModel = viewModel(
@@ -471,7 +460,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- MIS CITAS (PACIENTE) ---
         composable<MyAppointments> {
             val viewModel: MyAppointmentsViewModel = viewModel(factory = PatientPortalViewModelFactory.MyAppointmentsFactory)
             PatientPortalShell(
@@ -503,7 +491,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             }
         }
 
-        // --- AGENDAR / REAGENDAR CITA ---
         composable<BookAppointment> { backStackEntry ->
             val route = backStackEntry.toRoute<BookAppointment>()
             val viewModel: BookAppointmentViewModel = viewModel(
@@ -532,7 +519,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             )
         }
 
-        // --- RESUMEN Y CONFIRMACIÓN DE CITA (PACIENTE) ---
         composable<AppointmentConfirmation> { backStackEntry ->
             val route = backStackEntry.toRoute<AppointmentConfirmation>()
             AppointmentConfirmationScreen(
@@ -551,7 +537,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
         }
 
 
-        // --- PAGOS Y ABONOS (PACIENTE) ---
         composable<PatientPayments> {
             val viewModel: PatientPaymentsViewModel = viewModel(factory = PatientPortalViewModelFactory.PaymentsFactory)
             PatientPortalShell(
@@ -578,7 +563,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             }
         }
 
-        // --- PORTAL DE DOCTORES (FIGMA 08_Home_Doctor.png) ---
         composable<DoctorHome> {
             val viewModel: DoctorHomeViewModel = viewModel(factory = DoctorViewModelFactory.HomeFactory)
             DoctorPortalShell(
@@ -617,7 +601,6 @@ fun BiodontosNavGraph(navController: NavHostController) {
             }
         }
 
-        // --- LISTA DE PACIENTES (DOCTOR) ---
         composable<PatientList> {
             val viewModel: PatientListViewModel = viewModel(factory = PatientsViewModelFactory.ListFactory)
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -656,7 +639,6 @@ onFilterSelected = viewModel::onFilterSelected,
             }
         }
 
-        // --- DETALLE / HUB CLÍNICO DEL PACIENTE ---
         composable<PatientDetail> { backStackEntry ->
             val route = backStackEntry.toRoute<PatientDetail>()
             val viewModel: com.example.biodontos.presentation.patients.detail.PatientDetailViewModel = viewModel(
@@ -727,7 +709,6 @@ onFilterSelected = viewModel::onFilterSelected,
             )
         }
 
-        // --- AGENDA DE CITAS (DOCTOR) ---
         composable<DoctorAppointments> {
             val viewModel: DoctorAppointmentsViewModel = viewModel(factory = DoctorViewModelFactory.AppointmentsFactory)
             DoctorPortalShell(
@@ -758,7 +739,6 @@ onFilterSelected = viewModel::onFilterSelected,
             }
         }
 
-        // --- DOCUMENTOS E HISTORIAS CLÍNICAS (DOCTOR) ---
         composable<DoctorDocuments> {
             val viewModel: DoctorDocumentsViewModel = viewModel(factory = DoctorViewModelFactory.DocumentsFactory)
             DoctorPortalShell(
@@ -792,7 +772,6 @@ onFilterSelected = viewModel::onFilterSelected,
             }
         }
 
-        // --- GESTIÓN DE MATERIALES CLÍNICOS (PORTAL DOCTOR) ---
         composable<DoctorMaterials> {
             val viewModel: MaterialsViewModel = viewModel(factory = DoctorViewModelFactory.MaterialsFactory)
             DoctorPortalShell(
@@ -820,7 +799,6 @@ onFilterSelected = viewModel::onFilterSelected,
             }
         }
 
-        // --- REGISTRO DE PACIENTE ---
         composable<PatientRegistration> {
             val viewModel: PatientRegistrationViewModel = viewModel(factory = PatientsViewModelFactory.RegistrationFactory)
 
@@ -830,7 +808,6 @@ onFilterSelected = viewModel::onFilterSelected,
             )
         }
 
-        // --- ODONTOGRAMA ---
         composable<Odontogram> { backStackEntry ->
             val route: Odontogram = backStackEntry.toRoute()
             val viewModel: OdontogramViewModel = viewModel(
@@ -849,7 +826,6 @@ onFilterSelected = viewModel::onFilterSelected,
             )
         }
 
-        // --- INGRESO CLÍNICO ---
         composable<ClinicalAdmission> { backStackEntry ->
             val route = backStackEntry.toRoute<ClinicalAdmission>()
             val context = LocalContext.current
@@ -869,7 +845,6 @@ onFilterSelected = viewModel::onFilterSelected,
             )
         }
 
-        // --- PERFIL Y AGENDA DEL DOCTOR ---
         composable<DoctorProfile> {
             val viewModel: DoctorProfileViewModel = viewModel(factory = DoctorProfileViewModelFactory.Factory)
             DoctorProfileScreen(

@@ -137,7 +137,6 @@ class DoctorHomeViewModelTest {
         assertEquals("Dora Hernández", state.upcomingAppointments.first().patientName)
         assertFalse(state.upcomingAppointments.first().isConfirmed)
 
-        // Verificación de pagos reales cargados
         assertEquals(1, state.recentPayments.size)
         assertEquals("pat-1", state.recentPayments.first().patientId)
         assertEquals("Dora Hernández", state.recentPayments.first().patientName)
@@ -149,7 +148,6 @@ class DoctorHomeViewModelTest {
     @Test
     fun `when upcoming appointments are filtered, excludes cancelled, completed, and past appointments`() = runTest {
         val mixedAppointments = listOf(
-            // Válida: hoy en el futuro (8:00 vs reloj a las 7:00)
             Appointment(
                 id = "appt-valid-1",
                 patientId = "pat-1",
@@ -158,7 +156,6 @@ class DoctorHomeViewModelTest {
                 isConfirmed = false,
                 status = AppointmentStatus.PENDING
             ),
-            // Cancelada: debe ser excluida
             Appointment(
                 id = "appt-cancelled",
                 patientId = "pat-1",
@@ -167,7 +164,6 @@ class DoctorHomeViewModelTest {
                 isConfirmed = false,
                 status = AppointmentStatus.CANCELLED
             ),
-            // Completada: debe ser excluida
             Appointment(
                 id = "appt-completed",
                 patientId = "pat-1",
@@ -176,7 +172,6 @@ class DoctorHomeViewModelTest {
                 isConfirmed = true,
                 status = AppointmentStatus.COMPLETED
             ),
-            // Pasada (ayer 19 de Octubre): debe ser excluida
             Appointment(
                 id = "appt-past",
                 patientId = "pat-1",

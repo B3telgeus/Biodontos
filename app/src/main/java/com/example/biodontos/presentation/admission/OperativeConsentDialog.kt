@@ -22,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -67,6 +68,7 @@ fun OperativeConsentDialog(
                 .fillMaxWidth(0.95f)
                 .fillMaxHeight(0.92f)
                 .padding(8.dp)
+                .testTag(TestTags.Admission.OPERATIVE_CONSENT_DIALOG)
         ) {
             Column(
                 modifier = Modifier
@@ -75,7 +77,6 @@ fun OperativeConsentDialog(
                     .imePadding()
                     .padding(20.dp)
             ) {
-                // Cabecera Institucional
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -100,21 +101,22 @@ fun OperativeConsentDialog(
                             color = BiodontosGreyText
                         )
                     }
-                    IconButton(onClick = onDismiss) {
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.testTag(TestTags.Admission.OPERATIVE_CONSENT_CLOSE_BUTTON)
+                    ) {
                         Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.ui_operative_consent_dialog_89))
                     }
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = SlateLight)
 
-                // Cuerpo del documento con Scroll
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // 1. Selector de Declarante
                     item {
                         Card(
                             shape = RoundedCornerShape(12.dp),
@@ -137,7 +139,8 @@ fun OperativeConsentDialog(
                                     ) {
                                         RadioButton(
                                             selected = state.operativeConsentSignerType == "PATIENT",
-                                            onClick = { onUpdateSigner("PATIENT", "", "") }
+                                            onClick = { onUpdateSigner("PATIENT", "", "") },
+                                            modifier = Modifier.testTag(TestTags.Admission.OPERATIVE_CONSENT_SIGNER_PATIENT)
                                         )
                                         Text(stringResource(R.string.ui_operative_consent_dialog_91, state.firstName, state.firstLastName), fontSize = 13.sp)
                                     }
@@ -158,7 +161,8 @@ fun OperativeConsentDialog(
                                                     "${state.guardianFirstName} ${state.guardianLastName}".trim()
                                                 } else ""
                                                 onUpdateSigner("GUARDIAN", defaultRep, state.operativeConsentRepresentativeId)
-                                            }
+                                            },
+                                            modifier = Modifier.testTag(TestTags.Admission.OPERATIVE_CONSENT_SIGNER_GUARDIAN)
                                         )
                                         Text(stringResource(R.string.ui_operative_consent_dialog_92), fontSize = 13.sp)
                                     }
@@ -170,7 +174,9 @@ fun OperativeConsentDialog(
                                             value = state.operativeConsentRepresentativeName,
                                             onValueChange = { onUpdateSigner("GUARDIAN", it, state.operativeConsentRepresentativeId) },
                                             label = { Text(stringResource(R.string.ui_operative_consent_dialog_93)) },
-                                            modifier = Modifier.weight(1.3f),
+                                            modifier = Modifier
+                                                .weight(1.3f)
+                                                .testTag(TestTags.Admission.OPERATIVE_CONSENT_REP_NAME_FIELD),
                                             colors = biodontosTextFieldColors(),
                                             shape = RoundedCornerShape(10.dp)
                                         )
@@ -179,7 +185,9 @@ fun OperativeConsentDialog(
                                             onValueChange = { onUpdateSigner("GUARDIAN", state.operativeConsentRepresentativeName, it) },
                                             label = { Text(stringResource(R.string.ui_operative_consent_dialog_94)) },
                                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                            modifier = Modifier.weight(1f),
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .testTag(TestTags.Admission.OPERATIVE_CONSENT_REP_ID_FIELD),
                                             colors = biodontosTextFieldColors(),
                                             shape = RoundedCornerShape(10.dp)
                                         )
@@ -196,21 +204,21 @@ fun OperativeConsentDialog(
                         }
                     }
 
-                    // 2. Descripción del Tratamiento Propuesto
                     item {
                         OutlinedTextField(
                             value = state.operativeConsentProposedTreatment,
                             onValueChange = onUpdateTreatment,
                             label = { Text(stringResource(R.string.ui_operative_consent_dialog_96)) },
                             placeholder = { Text(stringResource(R.string.ui_operative_consent_dialog_97)) },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(TestTags.Admission.OPERATIVE_CONSENT_TREATMENT_FIELD),
                             minLines = 2,
                             colors = biodontosTextFieldColors(),
                             shape = RoundedCornerShape(12.dp)
                         )
                     }
 
-                    // 3. Resumen Normativo y Riesgos de Operatoria
                     item {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
@@ -247,7 +255,6 @@ fun OperativeConsentDialog(
                         }
                     }
 
-                    // 4. Tabla Dinámica de Dientes a Tratar
                     item {
                         Card(
                             shape = RoundedCornerShape(12.dp),
@@ -276,7 +283,9 @@ fun OperativeConsentDialog(
                                             onValueChange = { newToothInput = it },
                                             label = { Text(stringResource(R.string.ui_operative_consent_dialog_102)) },
                                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                            modifier = Modifier.width(90.dp),
+                                            modifier = Modifier
+                                                .width(90.dp)
+                                                .testTag(TestTags.Admission.OPERATIVE_CONSENT_TOOTH_INPUT),
                                             colors = biodontosTextFieldColors(),
                                             shape = RoundedCornerShape(8.dp)
                                         )
@@ -289,7 +298,8 @@ fun OperativeConsentDialog(
                                                 }
                                             },
                                             shape = RoundedCornerShape(12.dp),
-                                            colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                                            colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                                            modifier = Modifier.testTag(TestTags.Admission.OPERATIVE_CONSENT_ADD_PROCEDURE_BUTTON)
                                         ) {
                                             Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
@@ -311,7 +321,8 @@ fun OperativeConsentDialog(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .background(BiodontosInputBg, RoundedCornerShape(8.dp))
-                                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                                .testTag(TestTags.Admission.operativeProcedureItem(index)),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
@@ -339,7 +350,6 @@ fun OperativeConsentDialog(
                         }
                     }
 
-                    // 5. Exoneración y Cierre Legal
                     item {
                         Text(
                             text = stringResource(R.string.ui_operative_consent_dialog_106),
@@ -349,13 +359,11 @@ fun OperativeConsentDialog(
                         )
                     }
 
-                    // 6. Firmas Digitales
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            // Firma del Paciente o Acudiente
                             Box(modifier = Modifier.weight(1f)) {
                                 SignaturePad(
                                     title = if (state.operativeConsentSignerType == "GUARDIAN") "Firma del Acudiente / Tutor" else "Firma del Paciente",
@@ -368,7 +376,6 @@ fun OperativeConsentDialog(
                                 )
                             }
 
-                            // Firma del Profesional
                             Box(modifier = Modifier.weight(1f)) {
                                 SignaturePad(
                                     title = "Firma y Sello del Profesional",
@@ -386,7 +393,6 @@ fun OperativeConsentDialog(
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = SlateLight)
 
-                // Botones de Acción
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -396,7 +402,8 @@ fun OperativeConsentDialog(
                         onClick = onDismiss,
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
+                            .height(48.dp)
+                            .testTag(TestTags.Admission.OPERATIVE_CONSENT_DISMISS_BUTTON),
                         shape = RoundedCornerShape(24.dp)
                     ) {
                         Text(stringResource(R.string.ui_operative_consent_dialog_107), fontWeight = FontWeight.Bold)
@@ -407,7 +414,8 @@ fun OperativeConsentDialog(
                         enabled = !state.isLoading,
                         modifier = Modifier
                             .weight(1.5f)
-                            .height(48.dp),
+                            .height(48.dp)
+                            .testTag(TestTags.Admission.OPERATIVE_CONSENT_SAVE_BUTTON),
                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
                         shape = RoundedCornerShape(24.dp)
                     ) {

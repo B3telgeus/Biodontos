@@ -64,6 +64,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,6 +79,7 @@ import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.StatusCancelled
 import com.example.biodontos.core.designsystem.StatusConfirmed
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.domain.model.CopAmount
@@ -152,10 +154,13 @@ fun DoctorHomeScreen(
                 .fillMaxSize()
                 .background(BiodontosScreenGradient)
                 .padding(paddingValues)
+                .testTag(TestTags.Doctor.HOME_ROOT)
         ) {
             if (state.isLoading && !state.isRefreshing) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(TestTags.Doctor.HOME_LOADING),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(color = BiodontosDark)
@@ -171,7 +176,6 @@ fun DoctorHomeScreen(
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        // Header Principal con Avatar navegable hacia DoctorProfile
                         DoctorHomeHeader(
                             doctorName = state.doctorName,
                             doctorPhotoUrl = state.doctorPhotoUrl,
@@ -180,10 +184,11 @@ fun DoctorHomeScreen(
                             onAvatarClick = onNavigateToProfile
                         )
 
-                        // Banner de Error persistente con acción de reintento
                         if (state.errorMessage != null) {
                             Card(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.Doctor.HOME_ERROR_BANNER),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
                             ) {
@@ -211,7 +216,9 @@ fun DoctorHomeScreen(
                                     }
                                     TextButton(
                                         onClick = { onEvent(DoctorHomeUiEvent.Refresh) },
-                                        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                                        modifier = Modifier
+                                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                                            .testTag(TestTags.Doctor.HOME_RETRY_BUTTON)
                                     ) {
                                         Text(stringResource(R.string.ui_doctor_appointments_screen_175), color = Color(0xFFC62828), fontWeight = FontWeight.Bold)
                                     }
@@ -219,7 +226,6 @@ fun DoctorHomeScreen(
                             }
                         }
 
-                        // Fila Superior (3 Tarjetas): Pacientes & Evolución, Documentos, Tu agenda
                         if (isExpanded) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -265,7 +271,6 @@ fun DoctorHomeScreen(
                             }
                         }
 
-                        // Fila Inferior (2 Bloques): Próximas Citas (ancha) + Pagos y Abonos
                         if (isExpanded) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -350,6 +355,7 @@ private fun DoctorHomeHeader(
             modifier = Modifier
                 .clip(RoundedCornerShape(16.dp))
                 .clickable(onClick = onAvatarClick)
+                .testTag(TestTags.Doctor.HOME_AVATAR_BUTTON)
                 .padding(vertical = 4.dp, horizontal = 4.dp)
         ) {
             val bitmap = remember(doctorPhotoUrl) {
@@ -430,7 +436,9 @@ private fun DoctorHomeHeader(
         IconButton(
             onClick = onRefresh,
             enabled = !isRefreshing,
-            modifier = Modifier.size(48.dp)
+            modifier = Modifier
+                .size(48.dp)
+                .testTag(TestTags.Doctor.HOME_REFRESH_BUTTON)
         ) {
             if (isRefreshing) {
                 CircularProgressIndicator(
@@ -488,13 +496,17 @@ private fun PatientsEvolutionCard(
                     text = stringResource(R.string.ui_doctor_home_screen_242),
                     variant = PillButtonVariant.DARK,
                     onClick = onNavigateToClinicalAdmission,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Doctor.HOME_ADMISSION_BUTTON)
                 )
                 BiodontosPillButton(
                     text = stringResource(R.string.ui_doctor_home_screen_243),
                     variant = PillButtonVariant.LIGHT,
                     onClick = onNavigateToPatients,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Doctor.HOME_PATIENTS_BUTTON)
                 )
             }
         }
@@ -554,7 +566,8 @@ private fun DocumentsSummaryCard(
             BiodontosPillButton(
                 text = stringResource(R.string.ui_doctor_documents_screen_226),
                 variant = PillButtonVariant.DARK,
-                onClick = onViewDocumentsClick
+                onClick = onViewDocumentsClick,
+                modifier = Modifier.testTag(TestTags.Doctor.HOME_DOCUMENTS_BUTTON)
             )
         }
     }
@@ -592,7 +605,8 @@ private fun AgendaSummaryCard(
             BiodontosPillButton(
                 text = stringResource(R.string.ui_doctor_home_screen_248),
                 variant = PillButtonVariant.DARK,
-                onClick = onManageCalendarClick
+                onClick = onManageCalendarClick,
+                modifier = Modifier.testTag(TestTags.Doctor.HOME_CALENDAR_BUTTON)
             )
         }
     }
@@ -631,7 +645,8 @@ private fun UpcomingAppointmentsCard(
                 BiodontosPillButton(
                     text = stringResource(R.string.ui_doctor_home_screen_250),
                     variant = PillButtonVariant.LIGHT,
-                    onClick = onSeeAll
+                    onClick = onSeeAll,
+                    modifier = Modifier.testTag(TestTags.Doctor.HOME_SEE_ALL_APPOINTMENTS_BUTTON)
                 )
             }
 
@@ -678,6 +693,7 @@ private fun AppointmentTableRow(
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFFF7F8FA))
             .clickable(onClick = onClick)
+            .testTag(TestTags.Doctor.homeAppointmentItem(item.appointmentId))
             .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -723,7 +739,6 @@ private fun AppointmentTableRow(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Chip de confirmación interactivo >= 48.dp con feedback háptico
         Box(
             modifier = Modifier
                 .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
@@ -736,6 +751,7 @@ private fun AppointmentTableRow(
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onToggleConfirm()
                 }
+                .testTag(TestTags.Doctor.homeAppointmentConfirmChip(item.appointmentId))
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -839,6 +855,7 @@ private fun PaymentsSummaryCard(
                                     onNavigateToPatientDetail(payment.patientId)
                                 }
                             }
+                            .testTag(TestTags.Doctor.homePaymentItem(payment.id))
                             .padding(12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -903,7 +920,8 @@ private fun PaymentsSummaryCard(
             BiodontosPillButton(
                 text = stringResource(R.string.ui_doctor_home_screen_258),
                 variant = PillButtonVariant.DARK,
-                onClick = onNewPaymentClick
+                onClick = onNewPaymentClick,
+                modifier = Modifier.testTag(TestTags.Doctor.HOME_NEW_PAYMENT_BUTTON)
             )
         }
     }
@@ -942,6 +960,7 @@ private fun RecordPaymentDialog(
 
     AlertDialog(
         onDismissRequest = { if (!state.isRecordingPayment) onDismiss() },
+        modifier = Modifier.testTag(TestTags.Doctor.HOME_PAYMENT_DIALOG),
         shape = RoundedCornerShape(24.dp),
         containerColor = BiodontosWhite,
         title = {
@@ -967,7 +986,6 @@ private fun RecordPaymentDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // 1. Selección de Paciente
                 Text(
                     text = stringResource(R.string.ui_doctor_home_screen_261),
                     fontSize = 13.sp,
@@ -999,7 +1017,9 @@ private fun RecordPaymentDialog(
                             },
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(TestTags.Doctor.HOME_PAYMENT_PATIENT_SEARCH)
                         )
 
                         Column(
@@ -1089,7 +1109,6 @@ private fun RecordPaymentDialog(
                         }
                     }
 
-                    // 2. Selección de Tratamiento
                     Text(
                         text = stringResource(R.string.ui_doctor_home_screen_266),
                         fontSize = 13.sp,
@@ -1185,7 +1204,6 @@ private fun RecordPaymentDialog(
                         }
                     }
 
-                    // 3. Monto y Método
                     Text(
                         text = stringResource(R.string.ui_doctor_home_screen_273),
                         fontSize = 13.sp,
@@ -1199,7 +1217,9 @@ private fun RecordPaymentDialog(
                         label = { Text(stringResource(R.string.ui_doctor_home_screen_274)) },
                         placeholder = { Text(stringResource(R.string.ui_doctor_home_screen_275)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.Doctor.HOME_PAYMENT_AMOUNT_FIELD),
                         shape = RoundedCornerShape(12.dp)
                     )
 
@@ -1268,7 +1288,9 @@ private fun RecordPaymentDialog(
                 enabled = !state.isRecordingPayment && state.selectedPatient != null,
                 colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
                 shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                modifier = Modifier
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .testTag(TestTags.Doctor.HOME_PAYMENT_SUBMIT_BUTTON)
             ) {
                 if (state.isRecordingPayment) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BiodontosWhite, strokeWidth = 2.dp)
@@ -1281,7 +1303,9 @@ private fun RecordPaymentDialog(
             TextButton(
                 onClick = onDismiss,
                 enabled = !state.isRecordingPayment,
-                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                modifier = Modifier
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .testTag(TestTags.Doctor.HOME_PAYMENT_CANCEL_BUTTON)
             ) {
                 Text(stringResource(R.string.ui_doctor_appointments_screen_191), color = BiodontosDark)
             }

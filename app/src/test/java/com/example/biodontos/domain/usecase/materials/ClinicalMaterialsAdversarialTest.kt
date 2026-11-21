@@ -28,7 +28,7 @@ class ClinicalMaterialsAdversarialTest {
     private lateinit var saveUseCase: SaveMaterialUseCase
 
     private val fixedNow = LocalDateTime.of(2026, 10, 30, 10, 0, 0)
-    private val today = fixedNow.toLocalDate() // 2026-10-30
+    private val today = fixedNow.toLocalDate()
 
     private val baseValidMaterial = ClinicalMaterial(
         id = MaterialId("mat-test-100"),
@@ -50,14 +50,10 @@ class ClinicalMaterialsAdversarialTest {
         saveUseCase = SaveMaterialUseCase(materialRepository, clinicClock)
     }
 
-    // =========================================================================
-    // 1. STRESS-TEST: BuildEvolutionMaterialUsageUseCase Boundary Cases
-    // =========================================================================
 
     @Test
     fun `boundary expiration - material expiring on the exact same day as careDate is valid under Colombian clinical law`() = runTest {
         // Colombian clinical & pharmaceutical regulation (INVIMA / Dec. 677/1995):
-        // Expiration date indicates validity up to 23:59:59 of that date.
         val expiringToday = baseValidMaterial.copy(expirationDate = today)
 
         val result = buildUsageUseCase(expiringToday, quantityUsed = 1.0, careDate = today)
@@ -144,9 +140,6 @@ class ClinicalMaterialsAdversarialTest {
         }
     }
 
-    // =========================================================================
-    // 2. STRESS-TEST: SaveMaterialUseCase Boundary Cases
-    // =========================================================================
 
     @Test
     fun `save stress - blank or whitespace-only names are rejected with BlankName`() = runTest {
@@ -286,9 +279,6 @@ class ClinicalMaterialsAdversarialTest {
         }
     }
 
-    // =========================================================================
-    // 3. STRESS-TEST: Value Classes and Domain Invariants
-    // =========================================================================
 
     @Test(expected = IllegalArgumentException::class)
     fun `MaterialId with blank or whitespace string throws IllegalArgumentException`() {
@@ -299,20 +289,16 @@ class ClinicalMaterialsAdversarialTest {
     fun `ClinicalMaterial isNearExpiration boundary behavior`() {
         val refDate = LocalDate.of(2026, 10, 30)
 
-        // Expiring today (0 days remaining) -> should be near expiration, NOT expired
         val expiringToday = baseValidMaterial.copy(expirationDate = refDate)
         assertFalse(expiringToday.isExpired(refDate))
         assertTrue(expiringToday.isNearExpiration(refDate, thresholdDays = 30))
 
-        // Expiring in exactly 30 days -> near expiration
         val in30Days = baseValidMaterial.copy(expirationDate = refDate.plusDays(30))
         assertTrue(in30Days.isNearExpiration(refDate, thresholdDays = 30))
 
-        // Expiring in 31 days -> not near expiration
         val in31Days = baseValidMaterial.copy(expirationDate = refDate.plusDays(31))
         assertFalse(in31Days.isNearExpiration(refDate, thresholdDays = 30))
 
-        // Expired yesterday -> isNearExpiration must be false
         val expired = baseValidMaterial.copy(expirationDate = refDate.minusDays(1))
         assertTrue(expired.isExpired(refDate))
         assertFalse(expired.isNearExpiration(refDate, thresholdDays = 30))

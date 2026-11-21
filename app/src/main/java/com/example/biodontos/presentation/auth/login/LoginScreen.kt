@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +47,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.example.biodontos.core.designsystem.*
 
@@ -77,6 +79,7 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundBrush)
+            .testTag(TestTags.Auth.LOGIN_ROOT)
     ) {
 
         IconButton(
@@ -85,6 +88,8 @@ fun LoginScreen(
                 .align(Alignment.TopStart)
                 .statusBarsPadding()
                 .padding(16.dp)
+                .zIndex(1f)
+                .testTag(TestTags.Auth.LOGIN_BACK_BUTTON)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -94,7 +99,6 @@ fun LoginScreen(
         }
 
         if (isTabletLandscape) {
-            // Tablet Landscape Two-Pane Layout
             Row(
                 modifier = Modifier
                     .fillMaxSize()
@@ -103,7 +107,6 @@ fun LoginScreen(
                     .padding(32.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left Branding Panel
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -133,7 +136,6 @@ fun LoginScreen(
                     )
                 }
 
-                // Right Card Form
                 Box(
                     modifier = Modifier
                         .weight(1.2f)
@@ -156,7 +158,6 @@ fun LoginScreen(
                 }
             }
         } else {
-            // Mobile / Portrait Layout
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -261,7 +262,6 @@ private fun LoginFormCard(
 
             if (isPasswordMode) {
                 val hasEmailError = state.emailError != null
-                // Email como chip/píldora interactivo arriba para regresar con un solo toque
                 Surface(
                     onClick = {
                         hasInteracted = true
@@ -277,6 +277,7 @@ private fun LoginFormCard(
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 48.dp)
                         .padding(bottom = if (hasEmailError) 4.dp else 16.dp)
+                        .testTag(TestTags.Auth.LOGIN_EMAIL_PILL)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -334,7 +335,6 @@ private fun LoginFormCard(
                     )
                 }
 
-                // Campo Contraseña en posición principal superior
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.ui_login_screen_131),
@@ -355,7 +355,10 @@ private fun LoginFormCard(
                             )
                         },
                         trailingIcon = {
-                            TextButton(onClick = onTogglePasswordVisibility) {
+                            TextButton(
+                                onClick = onTogglePasswordVisibility,
+                                modifier = Modifier.testTag(TestTags.Auth.LOGIN_PASSWORD_VISIBILITY_BUTTON)
+                            ) {
                                 Text(
                                     text = if (state.isPasswordVisible) "Ocultar" else "Ver",
                                     color = BiodontosDark,
@@ -378,9 +381,9 @@ private fun LoginFormCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(passwordFocusRequester)
+                            .testTag(TestTags.Auth.LOGIN_PASSWORD_FIELD)
                     )
 
-                    // Feedback visual en vivo de los dígitos/caracteres ingresados
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier
@@ -434,7 +437,6 @@ private fun LoginFormCard(
                     }
                 }
             } else {
-                // Email Input en posición principal
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.ui_login_screen_128),
@@ -472,12 +474,12 @@ private fun LoginFormCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(emailFocusRequester)
+                            .testTag(TestTags.Auth.LOGIN_EMAIL_FIELD)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Password Input
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.ui_login_screen_131),
@@ -498,7 +500,10 @@ private fun LoginFormCard(
                             )
                         },
                         trailingIcon = {
-                            TextButton(onClick = onTogglePasswordVisibility) {
+                            TextButton(
+                                onClick = onTogglePasswordVisibility,
+                                modifier = Modifier.testTag(TestTags.Auth.LOGIN_PASSWORD_VISIBILITY_BUTTON)
+                            ) {
                                 Text(
                                     text = if (state.isPasswordVisible) "Ocultar" else "Ver",
                                     color = BiodontosDark,
@@ -526,6 +531,7 @@ private fun LoginFormCard(
                                     isPasswordMode = true
                                 }
                             }
+                            .testTag(TestTags.Auth.LOGIN_PASSWORD_FIELD)
                     )
                 }
             }
@@ -536,13 +542,13 @@ private fun LoginFormCard(
                     text = state.error,
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 14.sp,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.testTag(TestTags.Auth.LOGIN_ERROR_TEXT)
                 )
             }
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Iniciar Sesión Button
             Button(
                 onClick = onLoginClick,
                 enabled = !state.isLoading,
@@ -554,6 +560,7 @@ private fun LoginFormCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
+                    .testTag(TestTags.Auth.LOGIN_SUBMIT_BUTTON)
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
@@ -572,7 +579,6 @@ private fun LoginFormCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Forgot password Link
             Text(
                 text = stringResource(R.string.ui_login_screen_138),
                 fontSize = 14.sp,
@@ -581,11 +587,11 @@ private fun LoginFormCard(
                 modifier = Modifier
                     .clickable { onForgotPasswordClick() }
                     .padding(8.dp)
+                    .testTag(TestTags.Auth.LOGIN_FORGOT_PASSWORD_LINK)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Sign Up Link
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -603,6 +609,7 @@ private fun LoginFormCard(
                     modifier = Modifier
                         .clickable { onSignUpClick() }
                         .padding(4.dp)
+                        .testTag(TestTags.Auth.LOGIN_SIGN_UP_LINK)
                 )
             }
         }

@@ -71,13 +71,11 @@ class PatientHomeViewModel(
                 return@launch
             }
 
-            // Obtener el paciente asociado
             val patientResult = patientRepository.getPatientByUserId(session.id)
             val patient = patientResult.getOrNull()
             val effectivePatientId = patient?.id ?: session.id
             val patientName = patient?.firstName ?: session.displayName.ifBlank { "Usuario" }
 
-            // Cargas en paralelo con concurrencia estructurada
             val (appointmentsResult, billingResult, doctorsResult) = coroutineScope {
                 val appointmentsDeferred = async { appointmentRepository.getAppointmentsByPatientId(effectivePatientId) }
                 val billingDeferred = async { billingRepository.getPaymentSummaryByPatientId(effectivePatientId) }
@@ -113,7 +111,6 @@ class PatientHomeViewModel(
 
             val doctorsList = doctorsResult.getOrDefault(emptyList())
 
-            // Determinar el último doctor con el que el paciente agendó una cita
             val lastAppointmentWithDoctor = allAppointments
                 .filter { it.doctorId?.isNotBlank() == true }
                 .maxByOrNull { it.startTime }

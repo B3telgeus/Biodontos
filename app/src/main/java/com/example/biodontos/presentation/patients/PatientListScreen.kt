@@ -55,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -66,6 +67,7 @@ import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.StatusCancelled
 import com.example.biodontos.core.designsystem.StatusConfirmed
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.domain.model.Patient
 
@@ -83,6 +85,7 @@ fun PatientListScreen(
     onRetry: () -> Unit
 ) {
     Scaffold(
+        modifier = Modifier.testTag(TestTags.Patients.LIST_ROOT),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = Color.Transparent,
         topBar = {
@@ -101,7 +104,9 @@ fun PatientListScreen(
                     IconButton(
                         onClick = onRefresh,
                         enabled = !state.isRefreshing,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(TestTags.Patients.LIST_REFRESH_BUTTON)
                     ) {
                         if (state.isRefreshing) {
                             CircularProgressIndicator(
@@ -119,7 +124,9 @@ fun PatientListScreen(
                     }
                     IconButton(
                         onClick = onDoctorProfileClick,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(TestTags.Patients.LIST_DOCTOR_PROFILE_BUTTON)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
@@ -134,7 +141,8 @@ fun PatientListScreen(
             ExtendedFloatingActionButton(
                 onClick = onClinicalAdmissionClick,
                 containerColor = BiodontosDark,
-                contentColor = BiodontosWhite
+                contentColor = BiodontosWhite,
+                modifier = Modifier.testTag(TestTags.Patients.LIST_FAB_ADMISSION)
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_patient_list_screen_562))
                 Spacer(modifier = Modifier.width(8.dp))
@@ -154,7 +162,6 @@ fun PatientListScreen(
                     .consumeWindowInsets(padding)
                     .imePadding()
             ) {
-                // Barra de Búsqueda
                 OutlinedTextField(
                     value = state.searchQuery,
                     onValueChange = onSearchQueryChange,
@@ -168,7 +175,10 @@ fun PatientListScreen(
                     },
                     trailingIcon = {
                         if (state.searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { onSearchQueryChange("") }) {
+                            IconButton(
+                                onClick = { onSearchQueryChange("") },
+                                modifier = Modifier.testTag(TestTags.Patients.LIST_SEARCH_CLEAR_BUTTON)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = stringResource(R.string.ui_signature_pad_172),
@@ -183,9 +193,9 @@ fun PatientListScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .testTag(TestTags.Patients.LIST_SEARCH_FIELD)
                 )
 
-                // Fila de Chips de Filtrado Rápido
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -223,7 +233,9 @@ fun PatientListScreen(
                                 borderColor = if (isSelected) BiodontosDark else BiodontosDark.copy(alpha = 0.15f)
                             ),
                             shape = RoundedCornerShape(20.dp),
-                            modifier = Modifier.defaultMinSize(minHeight = 40.dp)
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 40.dp)
+                                .testTag(TestTags.Patients.filterChip(filter.name))
                         )
                     }
                 }
@@ -232,23 +244,34 @@ fun PatientListScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     if (state.isLoading && !state.isRefreshing) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = BiodontosDark)
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .testTag(TestTags.Patients.LIST_LOADING),
+                            color = BiodontosDark
+                        )
                     } else if (state.error != null) {
                         Column(
                             modifier = Modifier
                                 .align(Alignment.Center)
-                                .padding(24.dp),
+                                .padding(24.dp)
+                                .testTag(TestTags.Patients.LIST_ERROR),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(text = state.error, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Medium)
                             Spacer(modifier = Modifier.height(12.dp))
-                            Button(onClick = onRetry) {
+                            Button(
+                                onClick = onRetry,
+                                modifier = Modifier.testTag(TestTags.Patients.LIST_RETRY_BUTTON)
+                            ) {
                                 Text(stringResource(R.string.ui_doctor_appointments_screen_175))
                             }
                         }
                     } else if (state.filteredPatients.isEmpty()) {
                         Box(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .testTag(TestTags.Patients.LIST_EMPTY),
                             contentAlignment = Alignment.Center
                         ) {
                             val emptyText = if (state.searchQuery.isNotBlank()) {
@@ -266,7 +289,9 @@ fun PatientListScreen(
                         }
                     } else {
                         LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .testTag(TestTags.Patients.LIST_LAZY_COLUMN),
                             contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 88.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
@@ -291,7 +316,9 @@ fun PatientItem(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.Patients.patientItem(patient.id)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -333,12 +360,10 @@ fun PatientItem(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Fila de Badges Semánticos: Consentimiento Informado + Alergias Críticas
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Badge de Consentimiento
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = if (patient.consentSigned) StatusConfirmed.copy(alpha = 0.12f) else StatusCancelled.copy(alpha = 0.12f)
@@ -363,7 +388,6 @@ fun PatientItem(
                         }
                     }
 
-                    // Badge de Alergia Crítica (si aplica)
                     if (patient.hasCriticalAllergies) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),

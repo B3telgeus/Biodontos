@@ -54,9 +54,6 @@ class BiodontosDaoTest {
         db.close()
     }
 
-    // =========================================================================
-    // Helpers
-    // =========================================================================
 
     private fun createTestPatient(
         id: String = "pat-001",
@@ -128,9 +125,6 @@ class BiodontosDaoTest {
         )
     }
 
-    // =========================================================================
-    // Tier 1 & 2: PatientDao
-    // =========================================================================
 
     @Test
     fun testPatientDao_insertAndRetrieveById_returnsMatchingEntity() = runTest {
@@ -242,9 +236,6 @@ class BiodontosDaoTest {
         assertNull("Patient must be null after deletion", patientDao.getPatientById("pat-del-1"))
     }
 
-    // =========================================================================
-    // Tier 1 & 2: MaterialDao
-    // =========================================================================
 
     @Test
     fun testMaterialDao_insertAllAndGetActiveMaterials_filtersOutInactive() = runTest {
@@ -298,9 +289,6 @@ class BiodontosDaoTest {
         assertEquals("LOT-OCT26-B9", retrieved?.batchLotNumber)
     }
 
-    // =========================================================================
-    // Tier 1 & 2: AdmissionDraftDao
-    // =========================================================================
 
     @Test
     fun testAdmissionDraftDao_saveDraft_insertsAndRetrievesCorrectly() = runTest {
@@ -380,14 +368,11 @@ class BiodontosDaoTest {
 
         admissionDraftDao.insertDraft(draftDocA)
 
-        // Doctor B queries Patient X before saving Doctor B's own draft -> must be null
         val docBSawDocA = admissionDraftDao.getDraft("doc-B", patientId).firstOrNull()
         assertNull("Doctor B must not see Doctor A's uncommitted draft for patient X", docBSawDocA)
 
-        // Doctor B saves their own draft
         admissionDraftDao.insertDraft(draftDocB)
 
-        // Verify independent retrieval
         val retrievedA = admissionDraftDao.getDraft("doc-A", patientId).firstOrNull()
         val retrievedB = admissionDraftDao.getDraft("doc-B", patientId).firstOrNull()
 
@@ -409,13 +394,9 @@ class BiodontosDaoTest {
         assertNull("Draft for pat-2 should not be returned when only pat-1 exists", draftPat2)
     }
 
-    // =========================================================================
-    // Tier 3: SessionLocalCleaner Wipe on Logout
-    // =========================================================================
 
     @Test
     fun testSessionLocalCleaner_wipesAllRoomTables_leavingZeroRowsAcrossEntities() = runTest {
-        // 1. Populate database across all entities
         patientDao.insertAll(
             listOf(
                 createTestPatient(id = "p-wipe-1"),
@@ -431,16 +412,13 @@ class BiodontosDaoTest {
         admissionDraftDao.insertDraft(createTestDraft(doctorId = "d-wipe-1", patientId = "p-wipe-1"))
         admissionDraftDao.insertDraft(createTestDraft(doctorId = "d-wipe-2", patientId = "p-wipe-2"))
 
-        // Verify data exists
         assertNotNull(patientDao.getPatientById("p-wipe-1"))
         assertEquals(2, materialDao.getActiveMaterials().size)
         assertNotNull(admissionDraftDao.getDraft("d-wipe-1", "p-wipe-1").firstOrNull())
 
-        // 2. Perform SessionLocalCleaner purge
         val cleaner = SessionLocalCleaner(db, context)
         cleaner.clearSessionData()
 
-        // 3. Verify that 0 rows remain across all entities
         assertNull("Patient table must be wiped", patientDao.getPatientById("p-wipe-1"))
         assertNull("Patient table must be wiped", patientDao.getPatientById("p-wipe-2"))
         assertTrue("Patients search must return empty list", patientDao.searchPatients("").isEmpty())
@@ -460,7 +438,6 @@ class BiodontosDaoTest {
     @Test
     fun testSessionLocalCleaner_calledOnEmptyDatabase_completesWithoutError() = runTest {
         val cleaner = SessionLocalCleaner(db, context)
-        // Should execute cleanly without throwing
         cleaner.clearSessionData()
         assertTrue(patientDao.searchPatients("").isEmpty())
         assertTrue(materialDao.getActiveMaterials().isEmpty())
@@ -478,16 +455,12 @@ class BiodontosDaoTest {
         assertNull(patientDao.getPatientById("idempotent-pat"))
     }
 
-    // =========================================================================
-    // Tier 4: Clinical Workload Scenarios
-    // =========================================================================
 
     @Test
     fun testRealisticAdmissionDraftProgress_throughAllSixSteps() = runTest {
         val doctorId = "doctor-dr-suarez"
         val patientId = "patient-pedro-gomez"
 
-        // Step 1: Patient registration draft
         val step1 = createTestDraft(
             doctorId = doctorId,
             patientId = patientId,
@@ -497,7 +470,6 @@ class BiodontosDaoTest {
         admissionDraftDao.insertDraft(step1)
         assertEquals(1, admissionDraftDao.getDraft(doctorId, patientId).first()?.currentStep)
 
-        // Step 2: Anamnesis draft
         val step2 = createTestDraft(
             doctorId = doctorId,
             patientId = patientId,
@@ -507,7 +479,6 @@ class BiodontosDaoTest {
         admissionDraftDao.insertDraft(step2)
         assertEquals(2, admissionDraftDao.getDraft(doctorId, patientId).first()?.currentStep)
 
-        // Step 3: Odontogram FDI draft
         val step3 = createTestDraft(
             doctorId = doctorId,
             patientId = patientId,
@@ -517,7 +488,6 @@ class BiodontosDaoTest {
         admissionDraftDao.insertDraft(step3)
         assertEquals(3, admissionDraftDao.getDraft(doctorId, patientId).first()?.currentStep)
 
-        // Step 4: Periodontal exam draft
         val step4 = createTestDraft(
             doctorId = doctorId,
             patientId = patientId,
@@ -527,7 +497,6 @@ class BiodontosDaoTest {
         admissionDraftDao.insertDraft(step4)
         assertEquals(4, admissionDraftDao.getDraft(doctorId, patientId).first()?.currentStep)
 
-        // Step 5: Operative informed consent draft
         val step5 = createTestDraft(
             doctorId = doctorId,
             patientId = patientId,
@@ -537,7 +506,6 @@ class BiodontosDaoTest {
         admissionDraftDao.insertDraft(step5)
         assertEquals(5, admissionDraftDao.getDraft(doctorId, patientId).first()?.currentStep)
 
-        // Step 6: Evolution note + consumed materials draft
         val step6 = createTestDraft(
             doctorId = doctorId,
             patientId = patientId,
@@ -549,7 +517,6 @@ class BiodontosDaoTest {
         assertEquals(6, finalDraft?.currentStep)
         assertTrue(finalDraft?.draftJson?.contains("Restauracion resina") == true)
 
-        // Admission completed and committed to backend -> wipe local draft
         admissionDraftDao.deleteDraft(doctorId, patientId)
         assertNull("Draft must be deleted once admission is finalized", admissionDraftDao.getDraft(doctorId, patientId).firstOrNull())
     }
@@ -561,13 +528,10 @@ class BiodontosDaoTest {
         val patientAlpha = "pat-child-001"
         val patientBeta = "pat-adult-002"
 
-        // Doctor A works on patientAlpha
         admissionDraftDao.insertDraft(createTestDraft(doctorId = doctorA, patientId = patientAlpha, currentStep = 2))
 
-        // Doctor B works on patientBeta
         admissionDraftDao.insertDraft(createTestDraft(doctorId = doctorB, patientId = patientBeta, currentStep = 4))
 
-        // Assert cross-isolation
         assertNull(admissionDraftDao.getDraft(doctorA, patientBeta).firstOrNull())
         assertNull(admissionDraftDao.getDraft(doctorB, patientAlpha).firstOrNull())
 

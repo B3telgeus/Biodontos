@@ -54,7 +54,6 @@ class GetDoctorDetailUseCaseTest {
 
     @Test
     fun `when doctor exists and today is Monday at 9am, isAvailableToday is true`() = runTest {
-        // Monday 2026-10-19 at 09:00 AM
         val mondayMorning = LocalDateTime.of(2026, 10, 19, 9, 0)
         every { clinicClock.now() } returns mondayMorning
 
@@ -68,7 +67,6 @@ class GetDoctorDetailUseCaseTest {
 
     @Test
     fun `when doctor exists but today is Tuesday, isAvailableToday is false`() = runTest {
-        // Tuesday 2026-10-20 at 09:00 AM
         val tuesdayMorning = LocalDateTime.of(2026, 10, 20, 9, 0)
         every { clinicClock.now() } returns tuesdayMorning
 

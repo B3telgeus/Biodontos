@@ -202,7 +202,6 @@ class ClinicalAdmissionViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, patientId = pid) }
 
-            // 1. Paciente
             patientRepository.getPatientById(pid).onSuccess { patient ->
                 if (patient != null) {
                     val detectedDentition = detectDentitionFromBirthDate(patient.birthDate)
@@ -241,7 +240,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // 2. Historia Clínica
             clinicalRecordRepository.getRecordByPatientId(pid).onSuccess { record ->
                 if (record != null) {
                     _state.update {
@@ -254,7 +252,6 @@ class ClinicalAdmissionViewModel(
                         )
                     }
 
-                    // 4. Periodontograma por recordId
                     if (record.id.isNotBlank()) {
                         periodontalRepository.getExaminationByRecordId(record.id).onSuccess { exam ->
                             if (exam != null) {
@@ -271,7 +268,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // 3. Anamnesis
             anamnesisRepository.getAnamnesisByPatientId(pid).onSuccess { anamnesis ->
                 if (anamnesis != null) {
                     _state.update {
@@ -304,7 +300,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // 5. Odontograma
             odontogramRepository.getOdontogram(pid).onSuccess { teethList ->
                 val surfacesMap = teethList.associateBy({ it.number }, { it.surfaceStates })
                 if (surfacesMap.isNotEmpty()) {
@@ -312,7 +307,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // 6. Consentimiento Informado
             informedConsentRepository.getConsentByPatientId(pid).onSuccess { consent ->
                 if (consent != null) {
                     _state.update {
@@ -370,7 +364,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // Paso 1: Identificación
             is ClinicalAdmissionEvent.UpdateDni -> {
                 _state.update { it.copy(dniCedula = event.value, dniError = null, dniErrorUiText = null) }
             }
@@ -467,7 +460,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // Consentimiento de Operatoria
             is ClinicalAdmissionEvent.ToggleOperativeConsentDialog -> {
                 _state.update { it.copy(showOperativeConsentDialog = event.show) }
             }
@@ -514,7 +506,6 @@ class ClinicalAdmissionViewModel(
                 saveOperativeConsent()
             }
 
-            // Paso 2: Anamnesis
             is ClinicalAdmissionEvent.ToggleAnamnesisQuestion -> {
                 toggleAnamnesisField(event.questionKey, event.value)
             }
@@ -528,7 +519,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // Paso 3: Odontograma
             is ClinicalAdmissionEvent.ChangeDentitionType -> {
                 _state.update { it.copy(dentitionType = event.type) }
             }
@@ -542,7 +532,6 @@ class ClinicalAdmissionViewModel(
                 applySurfaceToTooth(event.toothNumber, event.surface)
             }
 
-            // Paso 4: Periodontograma
             is ClinicalAdmissionEvent.SelectPeriodontalTooth -> {
                 _state.update { it.copy(selectedPeriodontalTooth = event.toothNumber) }
             }
@@ -555,7 +544,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // Paso 5: Tratamiento & Consentimiento
             is ClinicalAdmissionEvent.UpdateDiagnoses -> {
                 _state.update {
                     it.copy(
@@ -575,7 +563,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // Paso 6: Evolución & Materiales
             is ClinicalAdmissionEvent.UpdateEvolution -> {
                 _state.update {
                     it.copy(
@@ -625,7 +612,6 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            // Paso 7: Próxima Cita & Finalizar
             is ClinicalAdmissionEvent.UpdateNextAppointment -> {
                 _state.update {
                     it.copy(
@@ -782,7 +768,6 @@ class ClinicalAdmissionViewModel(
             patientRepository.createOrUpdatePatient(patient)
                 .onSuccess { savedPatient ->
                     val pid = savedPatient.id
-                    // Crear o recuperar historia clínica
                     val clinicalRecord = ClinicalRecord(
                         id = s.clinicalRecordId,
                         patientId = pid,

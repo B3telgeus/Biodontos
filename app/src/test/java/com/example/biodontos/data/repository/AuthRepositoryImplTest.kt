@@ -60,9 +60,6 @@ class AuthRepositoryImplTest {
         unmockkAll()
     }
 
-    // =========================================================================
-    // Helpers
-    // =========================================================================
 
     private fun mockRestException(
         message: String,
@@ -94,9 +91,6 @@ class AuthRepositoryImplTest {
         return user
     }
 
-    // =========================================================================
-    // Tier 1: Core Feature Coverage — RegistrationOutcome & Identity (R1)
-    // =========================================================================
 
     @Test
     fun `registerPatient returns Authenticated outcome when Supabase returns authenticated user with valid UUID`() = runTest(testDispatcher) {
@@ -218,7 +212,6 @@ class AuthRepositoryImplTest {
 
         assertTrue(result.isSuccess)
         val outcome = result.getOrNull()
-        // If id is empty string, it MUST NOT emit Authenticated(session with empty id)
         assertFalse("Must never emit Authenticated session with empty string id", outcome is RegistrationOutcome.Authenticated && (outcome as RegistrationOutcome.Authenticated).session.id.isEmpty())
         assertTrue("Empty user ID must be treated as PendingEmailVerification", outcome is RegistrationOutcome.PendingEmailVerification)
     }
@@ -244,9 +237,6 @@ class AuthRepositoryImplTest {
         assertTrue("Blank user ID must be treated as PendingEmailVerification", outcome is RegistrationOutcome.PendingEmailVerification)
     }
 
-    // =========================================================================
-    // Tier 1 & 2: Logout and Local Storage Purge (R5)
-    // =========================================================================
 
     @Test
     fun `logout invokes Supabase signOut and sessionLocalCleaner clearSessionData`() = runTest(testDispatcher) {
@@ -267,9 +257,7 @@ class AuthRepositoryImplTest {
 
         val result = authRepository.logout()
 
-        // Even though remote failed, local cleaner MUST execute to protect user data
         coVerify(exactly = 1) { sessionLocalCleaner.clearSessionData() }
-        // The overall operation must report the failure or complete safely without silencing critical local cleanup
         assertTrue("Local cleanup must have been called", true)
     }
 
@@ -288,9 +276,6 @@ class AuthRepositoryImplTest {
         coVerify(exactly = 1) { auth.signOut(any()) }
     }
 
-    // =========================================================================
-    // Tier 2: Error Propagation & No Silent Swallowing (R1)
-    // =========================================================================
 
     @Test
     fun `registerPatient propagates Result failure when Supabase auth throws exception`() = runTest(testDispatcher) {
@@ -327,9 +312,6 @@ class AuthRepositoryImplTest {
         assertEquals(networkError.message, result.exceptionOrNull()?.message)
     }
 
-    // =========================================================================
-    // Tier 2: Coroutine Cancellation Safety (R1, Architecture #3)
-    // =========================================================================
 
     @Test(expected = CancellationException::class)
     fun `registerPatient rethrows CancellationException directly`() = runTest(testDispatcher) {
@@ -386,9 +368,6 @@ class AuthRepositoryImplTest {
         authRepository.updatePassword("NewPassword123!")
     }
 
-    // =========================================================================
-    // Tier 3: Session Role Mapping & Authentication Flow
-    // =========================================================================
 
     @Test
     fun `login returns UserSession with DOCTOR role when metadata role is DOCTOR`() = runTest(testDispatcher) {
@@ -471,9 +450,6 @@ class AuthRepositoryImplTest {
         assertEquals("Invalid login credentials", result.exceptionOrNull()?.message)
     }
 
-    // =========================================================================
-    // Tier 3: Session State Retrieval & Password Management
-    // =========================================================================
 
     @Test
     fun `getCurrentSession returns mapped UserSession when user is logged in`() = runTest(testDispatcher) {
@@ -543,9 +519,6 @@ class AuthRepositoryImplTest {
         assertEquals("Password must be at least 6 characters", result.exceptionOrNull()?.message)
     }
 
-    // =========================================================================
-    // Tier 4: Trimming and Sanitization Integrity
-    // =========================================================================
 
     @Test
     fun `registerPatient trims whitespace from email, names and DNI before registration`() = runTest(testDispatcher) {

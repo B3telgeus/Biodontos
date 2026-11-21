@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,6 +57,7 @@ import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.components.AppointmentStatusChip
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.DateBadge
@@ -112,10 +114,10 @@ fun MyAppointmentsScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .testTag(TestTags.PatientPortal.MY_APPT_ROOT)
             .padding(16.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -143,7 +145,9 @@ fun MyAppointmentsScreen(
                 ) {
                     IconButton(
                         onClick = { onEvent(MyAppointmentsUiEvent.Refresh) },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(TestTags.PatientPortal.MY_APPT_REFRESH_BUTTON)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -155,14 +159,14 @@ fun MyAppointmentsScreen(
                     BiodontosPillButton(
                         text = stringResource(R.string.ui_my_appointments_screen_370),
                         variant = PillButtonVariant.DARK,
-                        onClick = { onEvent(MyAppointmentsUiEvent.BookNewAppointment) }
+                        onClick = { onEvent(MyAppointmentsUiEvent.BookNewAppointment) },
+                        modifier = Modifier.testTag(TestTags.PatientPortal.MY_APPT_NEW_BUTTON)
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Selector de Pestañas (Segmented Pills)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -173,25 +177,30 @@ fun MyAppointmentsScreen(
                     text = stringResource(R.string.ui_my_appointments_screen_371, state.upcomingAppointments.size),
                     isSelected = state.selectedTab == AppointmentTab.UPCOMING,
                     onClick = { onEvent(MyAppointmentsUiEvent.SelectTab(AppointmentTab.UPCOMING)) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.PatientPortal.MY_APPT_TAB_UPCOMING)
                 )
                 TabItem(
                     text = stringResource(R.string.ui_my_appointments_screen_372, state.completedAppointments.size),
                     isSelected = state.selectedTab == AppointmentTab.COMPLETED,
                     onClick = { onEvent(MyAppointmentsUiEvent.SelectTab(AppointmentTab.COMPLETED)) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.PatientPortal.MY_APPT_TAB_COMPLETED)
                 )
                 TabItem(
                     text = stringResource(R.string.ui_my_appointments_screen_373, state.cancelledAppointments.size),
                     isSelected = state.selectedTab == AppointmentTab.CANCELLED,
                     onClick = { onEvent(MyAppointmentsUiEvent.SelectTab(AppointmentTab.CANCELLED)) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.PatientPortal.MY_APPT_TAB_CANCELLED)
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Lista de Citas
             val activeList = when (state.selectedTab) {
                 AppointmentTab.UPCOMING -> state.upcomingAppointments
                 AppointmentTab.COMPLETED -> state.completedAppointments
@@ -206,7 +215,10 @@ fun MyAppointmentsScreen(
                             .weight(1f),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = BiodontosDark)
+                        CircularProgressIndicator(
+                            color = BiodontosDark,
+                            modifier = Modifier.testTag(TestTags.PatientPortal.MY_APPT_LOADING)
+                        )
                     }
                 }
                 state.errorMessage != null && activeList.isEmpty() -> {
@@ -218,7 +230,8 @@ fun MyAppointmentsScreen(
                     ) {
                         AppointmentsErrorCard(
                             message = state.errorMessage,
-                            onRetry = { onEvent(MyAppointmentsUiEvent.Refresh) }
+                            onRetry = { onEvent(MyAppointmentsUiEvent.Refresh) },
+                            modifier = Modifier.testTag(TestTags.PatientPortal.MY_APPT_ERROR)
                         )
                     }
                 }
@@ -230,6 +243,7 @@ fun MyAppointmentsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
+                            modifier = Modifier.testTag(TestTags.PatientPortal.MY_APPT_EMPTY),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
@@ -257,7 +271,8 @@ fun MyAppointmentsScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .weight(1f)
+                            .testTag(TestTags.PatientPortal.MY_APPT_LIST),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                         contentPadding = PaddingValues(bottom = 24.dp)
                     ) {
@@ -268,7 +283,8 @@ fun MyAppointmentsScreen(
                                 doctor = doctor,
                                 isUpcoming = state.selectedTab == AppointmentTab.UPCOMING,
                                 onRescheduleClick = { onEvent(MyAppointmentsUiEvent.RescheduleAppointment(appointment)) },
-                                onCancelClick = { onEvent(MyAppointmentsUiEvent.RequestCancelAppointment(appointment)) }
+                                onCancelClick = { onEvent(MyAppointmentsUiEvent.RequestCancelAppointment(appointment)) },
+                                modifier = Modifier.testTag(TestTags.PatientPortal.appointmentItem(appointment.id))
                             )
                         }
                     }
@@ -285,7 +301,6 @@ fun MyAppointmentsScreen(
         )
     }
 
-    // Diálogo de confirmación de 2 pasos para cancelar cita (Regla GEMINI §4)
     state.appointmentToCancel?.let { appt ->
         val doctorName = appt.doctorId?.let { state.doctorsMap[it]?.displayName } ?: "el especialista"
         val timeFmt = appt.startTime.format(DateTimeFormatter.ofPattern("dd 'de' MMMM, hh:mm a", Locale.forLanguageTag("es-CO")))
@@ -329,7 +344,8 @@ private fun AppointmentsErrorCard(
             BiodontosPillButton(
                 text = stringResource(R.string.ui_doctor_appointments_screen_175),
                 variant = PillButtonVariant.DARK,
-                onClick = onRetry
+                onClick = onRetry,
+                modifier = Modifier.testTag(TestTags.PatientPortal.MY_APPT_RETRY_BUTTON)
             )
         }
     }
@@ -445,13 +461,17 @@ private fun AppointmentItemCard(
                         text = stringResource(R.string.ui_doctor_appointments_screen_190),
                         variant = PillButtonVariant.OUTLINED,
                         onClick = onRescheduleClick,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag(TestTags.PatientPortal.appointmentRescheduleButton(appointment.id))
                     )
                     BiodontosPillButton(
                         text = stringResource(R.string.ui_doctor_appointments_screen_191),
                         variant = PillButtonVariant.LIGHT,
                         onClick = onCancelClick,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag(TestTags.PatientPortal.appointmentCancelButton(appointment.id))
                     )
                 }
             }

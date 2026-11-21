@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -66,6 +67,7 @@ import com.example.biodontos.core.designsystem.BiodontosRowHighlight
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.Esmeralda
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.components.AppointmentStatusChip
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.DateBadge
@@ -123,10 +125,15 @@ fun PatientHomeScreen(
 ) {
     if (state.isLoading) {
         Box(
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier
+                .fillMaxSize()
+                .testTag(TestTags.PatientPortal.HOME_ROOT),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = BiodontosDark)
+            CircularProgressIndicator(
+                color = BiodontosDark,
+                modifier = Modifier.testTag(TestTags.PatientPortal.HOME_LOADING)
+            )
         }
         return
     }
@@ -134,10 +141,10 @@ fun PatientHomeScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .testTag(TestTags.PatientPortal.HOME_ROOT)
             .padding(24.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // --- HEADER ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -154,7 +161,9 @@ fun PatientHomeScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = { onEvent(PatientHomeUiEvent.Refresh) },
-                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                        .testTag(TestTags.PatientPortal.HOME_REFRESH_BUTTON)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
@@ -171,11 +180,12 @@ fun PatientHomeScreen(
             }
         }
 
-        // --- BANNER DE ERROR REACTIVO ---
         state.errorMessage?.let { errorMsg ->
             Spacer(modifier = Modifier.height(16.dp))
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.PatientPortal.HOME_ERROR_BANNER),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = BiodontosErrorBg),
                 border = BorderStroke(1.dp, BiodontosErrorRed)
@@ -209,7 +219,9 @@ fun PatientHomeScreen(
                     BiodontosPillButton(
                         text = stringResource(R.string.ui_doctor_appointments_screen_175),
                         onClick = { onEvent(PatientHomeUiEvent.Refresh) },
-                        modifier = Modifier.height(36.dp)
+                        modifier = Modifier
+                            .height(36.dp)
+                            .testTag(TestTags.PatientPortal.HOME_RETRY_BUTTON)
                     )
                 }
             }
@@ -218,12 +230,10 @@ fun PatientHomeScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         if (isExpanded) {
-            // Layout Tablet Horizontal (Figma 07_Home_Paciente)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Columna Izquierda (Agenda + Pagos & Documentos)
                 Column(
                     modifier = Modifier.weight(1.8f),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -251,7 +261,6 @@ fun PatientHomeScreen(
                     }
                 }
 
-                // Columna Derecha (Tus Doctores)
                 Box(modifier = Modifier.weight(1f)) {
                     DoctorsCard(
                         doctors = state.doctors,
@@ -261,7 +270,6 @@ fun PatientHomeScreen(
                 }
             }
         } else {
-            // Layout Móvil Vertical
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -297,13 +305,14 @@ private fun AgendaCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(TestTags.PatientPortal.HOME_AGENDA_CARD),
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            // Header de la tarjeta
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -327,6 +336,7 @@ private fun AgendaCard(
                 BiodontosPillButton(
                     text = stringResource(R.string.ui_patient_home_screen_395),
                     onClick = onGoToAppointments,
+                    modifier = Modifier.testTag(TestTags.PatientPortal.HOME_GO_TO_APPOINTMENTS_BUTTON),
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -357,7 +367,6 @@ private fun AgendaCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Panel de Próxima Cita (Estilo Figma con fondo degradado suave)
                     nextAppointment?.let { next ->
                         val day = next.startTime.dayOfMonth.toString()
                         val month = next.startTime.month.getDisplayName(TextStyle.FULL, Locale("es", "CO"))
@@ -422,7 +431,6 @@ private fun AgendaCard(
                         }
                     }
 
-                    // Lista de siguientes citas
                     Column(
                         modifier = Modifier.weight(1.3f),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -478,7 +486,9 @@ private fun PaymentsSummaryCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(TestTags.PatientPortal.HOME_PAYMENTS_CARD),
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -518,6 +528,7 @@ private fun PaymentsSummaryCard(
                     text = stringResource(R.string.ui_patient_home_screen_401),
                     variant = PillButtonVariant.LIGHT,
                     onClick = onGoToPayments,
+                    modifier = Modifier.testTag(TestTags.PatientPortal.HOME_GO_TO_PAYMENTS_BUTTON),
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -538,7 +549,9 @@ private fun ClinicalRecordsSummaryCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(TestTags.PatientPortal.HOME_RECORDS_CARD),
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -570,7 +583,8 @@ private fun ClinicalRecordsSummaryCard(
             Spacer(modifier = Modifier.height(16.dp))
             BiodontosPillButton(
                 text = stringResource(R.string.ui_patient_home_screen_404),
-                onClick = onGoToRecords
+                onClick = onGoToRecords,
+                modifier = Modifier.testTag(TestTags.PatientPortal.HOME_GO_TO_RECORDS_BUTTON)
             )
         }
     }
@@ -586,7 +600,9 @@ private fun DoctorsCard(
     val doctor = doctors.firstOrNull()
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(TestTags.PatientPortal.HOME_DOCTORS_CARD),
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -610,7 +626,8 @@ private fun DoctorsCard(
                 BiodontosPillButton(
                     text = stringResource(R.string.ui_patient_home_screen_406),
                     variant = PillButtonVariant.LIGHT,
-                    onClick = onSeeAllDoctors
+                    onClick = onSeeAllDoctors,
+                    modifier = Modifier.testTag(TestTags.PatientPortal.HOME_SEE_ALL_DOCTORS_BUTTON)
                 )
             }
 
@@ -685,7 +702,6 @@ private fun DoctorsCard(
                     }
                 }
 
-                // Placeholder / avatar de doctor con estilo circular o redondeado
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -718,7 +734,9 @@ private fun DoctorsCard(
                     BiodontosPillButton(
                         text = stringResource(R.string.ui_doctor_search_screen_392),
                         onClick = { onBookDoctor(doctor.id.value) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag(TestTags.PatientPortal.HOME_BOOK_FEATURED_DOCTOR_BUTTON)
                     )
                 }
             }

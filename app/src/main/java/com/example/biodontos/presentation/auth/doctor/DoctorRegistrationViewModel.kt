@@ -95,7 +95,6 @@ class DoctorRegistrationViewModel(
         val s = _state.value
         when (s.currentStep) {
             1 -> {
-                // Validar Identidad y Acceso (Paso 1)
                 var hasError = false
                 var firstNameErr = s.firstNameError
                 var lastNameErr = s.lastNameError
@@ -156,7 +155,6 @@ class DoctorRegistrationViewModel(
                 }
             }
             2 -> {
-                // Validar Perfil Profesional (Paso 2)
                 var hasError = false
                 var licenseErr = s.licenseError
 

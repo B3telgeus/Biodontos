@@ -32,6 +32,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -112,7 +114,9 @@ fun DoctorProfileContent(
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onNavigateBack()
                         },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(TestTags.Doctor.PROFILE_BACK_BUTTON)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -127,7 +131,9 @@ fun DoctorProfileContent(
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onEvent(DoctorProfileEvent.LoadProfile)
                         },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(TestTags.Doctor.PROFILE_REFRESH_BUTTON)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -140,7 +146,9 @@ fun DoctorProfileContent(
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onEvent(DoctorProfileEvent.RequestLogout)
                         },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(TestTags.Doctor.PROFILE_TOP_LOGOUT_BUTTON)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
@@ -161,21 +169,24 @@ fun DoctorProfileContent(
                 .padding(padding)
                 .consumeWindowInsets(padding)
                 .imePadding()
+                .testTag(TestTags.Doctor.PROFILE_ROOT)
         ) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .testTag(TestTags.Doctor.PROFILE_LIST),
                 contentPadding = PaddingValues(vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Banner de error si existe
                 state.errorMessage?.let { errorMsg ->
-                    item {
+                    item(key = "error_banner") {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = BiodontosErrorBg,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(TestTags.Doctor.PROFILE_ERROR_BANNER)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -206,13 +217,14 @@ fun DoctorProfileContent(
                     }
                 }
 
-                // Banner de éxito si existe
                 state.successMessage?.let { successMsg ->
-                    item {
+                    item(key = "success_banner") {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = Color(0xFFE8F5E9),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(TestTags.Doctor.PROFILE_SUCCESS_BANNER)
                         ) {
                             Text(
                                 text = successMsg,
@@ -226,19 +238,19 @@ fun DoctorProfileContent(
                 }
 
                 if (state.isLoading && state.doctor == null) {
-                    item {
+                    item(key = "loading") {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp),
+                                .height(200.dp)
+                                .testTag(TestTags.Doctor.PROFILE_LOADING),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(color = Zafiro)
                         }
                     }
                 } else {
-                    // Sección 1: Cabecera con Avatar interactivo
-                    item {
+                    item(key = "avatar_header") {
                         DoctorAvatarHeaderSection(
                             photoUrl = state.photoUrl,
                             firstName = state.firstName,
@@ -257,16 +269,14 @@ fun DoctorProfileContent(
                         )
                     }
 
-                    // Sección 2: Información Profesional (CRUD)
-                    item {
+                    item(key = "professional_info") {
                         DoctorProfessionalInfoCard(
                             state = state,
                             onEvent = onEvent
                         )
                     }
 
-                    // Sección 3: Seguridad y Cuenta
-                    item {
+                    item(key = "security_card") {
                         DoctorSecurityCard(
                             state = state,
                             onEvent = onEvent
@@ -275,10 +285,10 @@ fun DoctorProfileContent(
                 }
             }
 
-            // Diálogo de confirmación para cerrar sesión
             if (state.showLogoutConfirmation) {
                 AlertDialog(
                     onDismissRequest = { onEvent(DoctorProfileEvent.DismissLogoutDialog) },
+                    modifier = Modifier.testTag(TestTags.Doctor.PROFILE_LOGOUT_DIALOG),
                     shape = RoundedCornerShape(20.dp),
                     containerColor = BiodontosWhite,
                     title = {
@@ -302,7 +312,9 @@ fun DoctorProfileContent(
                                 onEvent(DoctorProfileEvent.ConfirmLogout)
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Carmesi),
-                            modifier = Modifier.heightIn(min = 48.dp)
+                            modifier = Modifier
+                                .heightIn(min = 48.dp)
+                                .testTag(TestTags.Doctor.PROFILE_LOGOUT_CONFIRM_BUTTON)
                         ) {
                             Text(stringResource(R.string.ui_doctor_profile_screen_309), color = BiodontosWhite, fontWeight = FontWeight.Bold)
                         }
@@ -377,7 +389,6 @@ fun DoctorAvatarHeaderSection(
                     }
                 }
 
-                // Botón / Badge de selección de foto (Touch target garantizado >= 48.dp)
                 Surface(
                     shape = CircleShape,
                     color = Zafiro,
@@ -389,7 +400,9 @@ fun DoctorAvatarHeaderSection(
                 ) {
                     IconButton(
                         onClick = onPickPhotoClick,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag(TestTags.Doctor.PROFILE_PICK_PHOTO_BUTTON)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
@@ -574,7 +587,9 @@ fun DoctorProfessionalInfoCard(
                 label = { Text(stringResource(R.string.ui_doctor_profile_screen_316)) },
                 placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_317)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_FIRST_NAME_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -584,7 +599,9 @@ fun DoctorProfessionalInfoCard(
                 label = { Text(stringResource(R.string.ui_doctor_profile_screen_318)) },
                 placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_319)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_LAST_NAME_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -594,7 +611,9 @@ fun DoctorProfessionalInfoCard(
                 label = { Text(stringResource(R.string.ui_doctor_profile_screen_320)) },
                 placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_321)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_SPECIALTY_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -604,7 +623,9 @@ fun DoctorProfessionalInfoCard(
                 label = { Text(stringResource(R.string.ui_doctor_profile_screen_322)) },
                 placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_323)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_LICENSE_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -615,7 +636,9 @@ fun DoctorProfessionalInfoCard(
                 placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_325)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_PHONE_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -626,7 +649,9 @@ fun DoctorProfessionalInfoCard(
                 placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_327)) },
                 minLines = 3,
                 maxLines = 5,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_BIO_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -636,7 +661,9 @@ fun DoctorProfessionalInfoCard(
                 label = { Text(stringResource(R.string.ui_doctor_profile_screen_314)) },
                 placeholder = { Text(stringResource(R.string.ui_doctor_profile_screen_328)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_CLINIC_ADDRESS_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -650,7 +677,9 @@ fun DoctorProfessionalInfoCard(
                 supportingText = {
                     Text(stringResource(R.string.ui_doctor_profile_screen_331), fontSize = 11.sp, color = BiodontosGreyText)
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_SERVICES_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -677,6 +706,7 @@ fun DoctorProfessionalInfoCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp)
+                    .testTag(TestTags.Doctor.PROFILE_SAVE_BUTTON)
             ) {
                 if (state.isSavingProfile) {
                     CircularProgressIndicator(
@@ -770,7 +800,9 @@ fun DoctorSecurityCard(
                         )
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_NEW_PASSWORD_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -795,7 +827,9 @@ fun DoctorSecurityCard(
                         )
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Doctor.PROFILE_CONFIRM_PASSWORD_FIELD),
                 colors = biodontosTextFieldColors()
             )
 
@@ -810,6 +844,7 @@ fun DoctorSecurityCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp)
+                    .testTag(TestTags.Doctor.PROFILE_UPDATE_PASSWORD_BUTTON)
             ) {
                 if (state.isUpdatingPassword) {
                     CircularProgressIndicator(
@@ -856,6 +891,7 @@ fun DoctorSecurityCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp)
+                    .testTag(TestTags.Doctor.PROFILE_RESET_EMAIL_BUTTON)
             ) {
                 if (state.isSendingResetEmail) {
                     CircularProgressIndicator(
@@ -894,6 +930,7 @@ fun DoctorSecurityCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp)
+                    .testTag(TestTags.Doctor.PROFILE_LOGOUT_BUTTON)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
@@ -923,9 +960,10 @@ fun DoctorAsyncAvatar(
 ) {
     val cleanUrl = photoUrl?.trim().orEmpty()
     val isLegacyDataUri = cleanUrl.startsWith("data:image", ignoreCase = true)
+    val isInspection = LocalInspectionMode.current
 
-    val decodedBytes by produceState<ByteArray?>(initialValue = null, key1 = cleanUrl) {
-        value = if (isLegacyDataUri) {
+    val decodedBytes by produceState<ByteArray?>(initialValue = null, key1 = cleanUrl, key2 = isInspection) {
+        value = if (!isInspection && isLegacyDataUri) {
             withContext(Dispatchers.Default) {
                 ImageCompressor.decodeBase64ToBytes(cleanUrl)
             }
@@ -935,12 +973,13 @@ fun DoctorAsyncAvatar(
     }
 
     val model: Any? = when {
+        isInspection -> null
         cleanUrl.isEmpty() -> null
         isLegacyDataUri -> decodedBytes
         else -> cleanUrl
     }
 
-    if (model != null) {
+    if (model != null && !isInspection) {
         SubcomposeAsyncImage(
             model = model,
             contentDescription = stringResource(R.string.cd_doctor_profile_photo),

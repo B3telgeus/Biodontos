@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,7 @@ import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.domain.model.DentitionType
 import com.example.biodontos.domain.model.Tooth
 import com.example.biodontos.domain.model.ToothCondition
@@ -47,11 +49,15 @@ fun OdontogramScreen(
     onBackClick: () -> Unit
 ) {
     Scaffold(
+        modifier = Modifier.testTag(TestTags.Odontogram.ROOT),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.ui_odontogram_screen_347), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.testTag(TestTags.Odontogram.BACK_BUTTON)
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ui_doctor_registration_screen_110))
                     }
                 }
@@ -65,7 +71,11 @@ fun OdontogramScreen(
                 .fillMaxSize()
         ) {
             if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .testTag(TestTags.Odontogram.LOADING)
+                )
             } else {
                 Column(
                     modifier = Modifier
@@ -74,7 +84,6 @@ fun OdontogramScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Selector de tipo de dentición
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -93,6 +102,7 @@ fun OdontogramScreen(
                                 modifier = Modifier
                                     .padding(horizontal = 4.dp)
                                     .clickable { onDentitionTypeChange(type) }
+                                    .testTag(TestTags.Odontogram.dentitionOption(type.name))
                             ) {
                                 Text(
                                     text = label,
@@ -105,7 +115,6 @@ fun OdontogramScreen(
                         }
                     }
 
-                    // Leyenda clínica
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -128,7 +137,6 @@ fun OdontogramScreen(
                         }
                     }
 
-                    // Maxilar Superior
                     Text(
                         stringResource(R.string.ui_odontogram_screen_348),
                         fontWeight = FontWeight.Bold,
@@ -153,7 +161,6 @@ fun OdontogramScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Mandíbula Inferior
                     Text(
                         stringResource(R.string.ui_odontogram_screen_349),
                         fontWeight = FontWeight.Bold,
@@ -198,6 +205,7 @@ fun OdontogramScreen(
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding()
                         .padding(16.dp)
+                        .testTag(TestTags.Odontogram.ERROR_SNACKBAR)
                 ) {
                     Text(it)
                 }
@@ -247,7 +255,10 @@ fun ToothSelectionDialog(
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .testTag(TestTags.Odontogram.SELECTION_DIALOG),
             shape = MaterialTheme.shapes.large
         ) {
             Column(
@@ -270,7 +281,9 @@ fun ToothSelectionDialog(
                     ToothCondition.entries.forEach { condition ->
                         Button(
                             onClick = { onConditionSelected(condition) },
-                            modifier = Modifier.padding(4.dp),
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .testTag(TestTags.Odontogram.conditionOption(condition.name)),
                             colors = ButtonDefaults.buttonColors(containerColor = condition.color),
                             enabled = !isSaving
                         ) {
@@ -283,15 +296,25 @@ fun ToothSelectionDialog(
                     value = comment,
                     onValueChange = onCommentChange,
                     label = { Text(stringResource(R.string.ui_odontogram_screen_352)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Odontogram.DIALOG_COMMENT_FIELD),
                     enabled = !isSaving
                 )
 
                 if (isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .testTag(TestTags.Odontogram.DIALOG_LOADING)
+                    )
                 }
 
-                TextButton(onClick = onDismiss, enabled = !isSaving) {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isSaving,
+                    modifier = Modifier.testTag(TestTags.Odontogram.DIALOG_DISMISS_BUTTON)
+                ) {
                     Text(stringResource(R.string.ui_doctor_appointments_screen_191))
                 }
             }

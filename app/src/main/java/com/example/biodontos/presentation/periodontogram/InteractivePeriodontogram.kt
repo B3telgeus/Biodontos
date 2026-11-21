@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -60,19 +61,18 @@ fun InteractivePeriodontogram(
         PeriodontalSiteLocation.DISTO_LINGUAL
     )
 
-    // Compute tooth summary
     val deepPocketsCount = currentToothSites.values.count { it.isDeepPocket }
     val bopCount = currentToothSites.values.count { it.bleedingOnProbing }
 
     Column(
         modifier = modifier
+            .testTag(TestTags.Periodontogram.ROOT)
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(BiodontosWhite)
             .border(1.dp, BiodontosBorder.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        // --- Header: Selector de Dientes FDI ---
         Text(
             text = stringResource(R.string.ui_interactive_periodontogram_571),
             style = MaterialTheme.typography.titleMedium.copy(
@@ -89,9 +89,11 @@ fun InteractivePeriodontogram(
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(TestTags.Periodontogram.TEETH_ROW)
         ) {
-            items(availableTeeth) { tooth ->
+            items(availableTeeth, key = { it }) { tooth ->
                 val isSelected = tooth == selectedToothNumber
                 val hasDeepPocketInTooth = PeriodontalSiteLocation.entries.any { loc ->
                     siteMeasurements[tooth to loc]?.isDeepPocket == true
@@ -104,7 +106,9 @@ fun InteractivePeriodontogram(
                         hasDeepPocketInTooth -> BiodontosErrorBg
                         else -> BiodontosInputBg
                     },
-                    modifier = Modifier.clickable { onToothSelected(tooth) }
+                    modifier = Modifier
+                        .clickable { onToothSelected(tooth) }
+                        .testTag(TestTags.Periodontogram.toothChip(tooth))
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -138,13 +142,13 @@ fun InteractivePeriodontogram(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- Resumen Clínico del Diente Seleccionado ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
                 .background(if (deepPocketsCount > 0) BiodontosErrorBg else SlateLight)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .testTag(TestTags.Periodontogram.SUMMARY_BANNER),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -186,7 +190,6 @@ fun InteractivePeriodontogram(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- SECCIÓN 1: VESTIBULAR (MV, V, DV) ---
         Text(
             text = stringResource(R.string.ui_interactive_periodontogram_576),
             style = MaterialTheme.typography.labelSmall.copy(
@@ -222,7 +225,6 @@ fun InteractivePeriodontogram(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- SECCIÓN 2: LINGUAL / PALATINO (ML, L, DL) ---
         Text(
             text = stringResource(R.string.ui_interactive_periodontogram_577),
             style = MaterialTheme.typography.labelSmall.copy(
@@ -258,7 +260,6 @@ fun InteractivePeriodontogram(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- Movilidad y Furca del Diente ---
         val sampleMeasurement = currentToothSites.values.firstOrNull() ?: PeriodontalSiteMeasurement(
             toothNumber = selectedToothNumber,
             siteLocation = PeriodontalSiteLocation.MID_VESTIBULAR
@@ -269,7 +270,6 @@ fun InteractivePeriodontogram(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Movilidad (0..3)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.ui_interactive_periodontogram_578),
@@ -285,11 +285,11 @@ fun InteractivePeriodontogram(
                             modifier = Modifier
                                 .weight(1f)
                                 .clickable {
-                                    // Update mobility on all sites of current tooth
                                     currentToothSites.values.forEach { site ->
                                         onMeasurementChanged(site.copy(mobilityGrade = grade))
                                     }
                                 }
+                                .testTag(TestTags.Periodontogram.mobilityGrade(grade))
                         ) {
                             Text(
                                 text = grade.toString(),
@@ -303,7 +303,6 @@ fun InteractivePeriodontogram(
                 }
             }
 
-            // Furca (0..4)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.ui_interactive_periodontogram_579),
@@ -323,6 +322,7 @@ fun InteractivePeriodontogram(
                                         onMeasurementChanged(site.copy(furcationGrade = grade))
                                     }
                                 }
+                                .testTag(TestTags.Periodontogram.furcationGrade(grade))
                         ) {
                             Text(
                                 text = grade.toString(),
@@ -355,6 +355,7 @@ private fun SiteMeasurementCard(
 
     Column(
         modifier = modifier
+            .testTag(TestTags.Periodontogram.siteCard(measurement.siteLocation.name))
             .clip(RoundedCornerShape(12.dp))
             .background(containerBg)
             .border(
@@ -365,7 +366,6 @@ private fun SiteMeasurementCard(
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Sitio
         Text(
             text = title,
             fontWeight = FontWeight.Bold,
@@ -375,7 +375,6 @@ private fun SiteMeasurementCard(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // Profundidad de Bolsa (PD)
         Text(
             text = stringResource(R.string.ui_interactive_periodontogram_580, measurement.pocketDepthMm.toInt()),
             fontWeight = FontWeight.ExtraBold,
@@ -406,7 +405,6 @@ private fun SiteMeasurementCard(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // Recesión Gingival (GR)
         Text(
             text = stringResource(R.string.ui_interactive_periodontogram_583, measurement.gingivalRecessionMm.toInt()),
             color = BiodontosGreyText,
@@ -437,7 +435,6 @@ private fun SiteMeasurementCard(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // CAL Calculado
         Text(
             text = stringResource(R.string.ui_interactive_periodontogram_584, measurement.clinicalAttachmentLossMm.toInt()),
             fontSize = 12.sp,
@@ -447,7 +444,6 @@ private fun SiteMeasurementCard(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // Botón BOP (Sangrado)
         Surface(
             shape = RoundedCornerShape(6.dp),
             color = if (measurement.bleedingOnProbing) Carmesi else BiodontosWhite,
@@ -456,6 +452,7 @@ private fun SiteMeasurementCard(
                 .clickable {
                     onChanged(measurement.copy(bleedingOnProbing = !measurement.bleedingOnProbing))
                 }
+                .testTag(TestTags.Periodontogram.bopToggle(measurement.siteLocation.name))
         ) {
             Text(
                 text = if (measurement.bleedingOnProbing) "🩸 BOP" else "Sin Sangrado",

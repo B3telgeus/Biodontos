@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,6 +79,7 @@ import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.Carmesi
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.Esmeralda
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.domain.model.Patient
 
@@ -149,6 +151,7 @@ fun DoctorDocumentsContent(
                 .background(BiodontosScreenGradient)
                 .padding(padding)
                 .consumeWindowInsets(padding)
+                .testTag(TestTags.Doctor.DOCS_ROOT)
         ) {
             Column(
                 modifier = Modifier
@@ -156,14 +159,16 @@ fun DoctorDocumentsContent(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Header Clínico
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(
+                            onClick = onNavigateBack,
+                            modifier = Modifier.testTag(TestTags.Doctor.DOCS_BACK_BUTTON)
+                        ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.ui_doctor_appointments_screen_182),
@@ -192,7 +197,8 @@ fun DoctorDocumentsContent(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onRefresh()
-                        }
+                        },
+                        modifier = Modifier.testTag(TestTags.Doctor.DOCS_REFRESH_BUTTON)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -202,19 +208,20 @@ fun DoctorDocumentsContent(
                     }
                 }
 
-                // KPI Summary Card con métricas reales
                 DocumentsKpiSummaryCard(
                     totalRecords = state.totalRecords,
                     consentedCount = state.consentedCount,
                     pendingConsentCount = state.pendingConsentCount,
-                    criticalAllergiesCount = state.criticalAllergiesCount
+                    criticalAllergiesCount = state.criticalAllergiesCount,
+                    modifier = Modifier.testTag(TestTags.Doctor.DOCS_KPI_CARD)
                 )
 
-                // Search Bar
                 OutlinedTextField(
                     value = state.searchQuery,
                     onValueChange = onSearchQueryChange,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Doctor.DOCS_SEARCH_FIELD),
                     placeholder = {
                         Text(
                             text = stringResource(R.string.ui_doctor_documents_screen_227),
@@ -231,7 +238,10 @@ fun DoctorDocumentsContent(
                     },
                     trailingIcon = {
                         if (state.searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { onSearchQueryChange("") }) {
+                            IconButton(
+                                onClick = { onSearchQueryChange("") },
+                                modifier = Modifier.testTag(TestTags.Doctor.DOCS_SEARCH_CLEAR_BUTTON)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = stringResource(R.string.ui_doctor_appointments_screen_213),
@@ -245,7 +255,6 @@ fun DoctorDocumentsContent(
                     singleLine = true
                 )
 
-                // Quick Filter Chips
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -266,6 +275,7 @@ fun DoctorDocumentsContent(
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onFilterSelect(filter)
                             },
+                            modifier = Modifier.testTag(TestTags.Doctor.documentFilterChip(filter.name)),
                             label = {
                                 Text(
                                     text = stringResource(R.string.ui_doctor_documents_screen_229, filter.label, count),
@@ -284,13 +294,13 @@ fun DoctorDocumentsContent(
                     }
                 }
 
-                // Contenido reactivo: Loading, Error o Lista
                 when {
                     state.isLoading -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.DOCS_LOADING),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(color = BiodontosDark)
@@ -300,7 +310,8 @@ fun DoctorDocumentsContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.DOCS_ERROR),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
@@ -315,7 +326,8 @@ fun DoctorDocumentsContent(
                                 )
                                 Button(
                                     onClick = onRefresh,
-                                    colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                                    colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                                    modifier = Modifier.testTag(TestTags.Doctor.DOCS_RETRY_BUTTON)
                                 ) {
                                     Text(stringResource(R.string.ui_doctor_appointments_screen_175))
                                 }
@@ -326,7 +338,8 @@ fun DoctorDocumentsContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.DOCS_EMPTY),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -344,7 +357,8 @@ fun DoctorDocumentsContent(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.DOCS_LIST),
                             contentPadding = PaddingValues(bottom = 88.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
@@ -352,7 +366,8 @@ fun DoctorDocumentsContent(
                                 DocumentItemCard(
                                     patient = patient,
                                     onNavigateToPatientDetail = onNavigateToPatientDetail,
-                                    onNavigateToAdmission = onNavigateToAdmission
+                                    onNavigateToAdmission = onNavigateToAdmission,
+                                    modifier = Modifier.testTag(TestTags.Doctor.documentItem(patient.id))
                                 )
                             }
                         }
@@ -438,7 +453,6 @@ private fun DocumentItemCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Header: Avatar e Información del Paciente
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -481,7 +495,6 @@ private fun DocumentItemCard(
                 }
             }
 
-            // Badges Semánticos de Consentimiento y Alergias
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -520,12 +533,10 @@ private fun DocumentItemCard(
 
             HorizontalDivider(color = BiodontosLightGrey, thickness = 1.dp)
 
-            // 3 Botones de Acción Rápida con Touch Targets >= 48.dp accesibles
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Botón 1: Trazabilidad -> PatientDetail(patientId, initialTab = "HISTORY")
                 OutlinedButton(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -533,7 +544,8 @@ private fun DocumentItemCard(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .heightIn(min = 40.dp),
+                        .heightIn(min = 40.dp)
+                        .testTag(TestTags.Doctor.documentHistoryButton(patient.id)),
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark),
@@ -554,7 +566,6 @@ private fun DocumentItemCard(
                     )
                 }
 
-                // Botón 2: Odontograma -> PatientDetail(patientId, initialTab = "ODONTOGRAM")
                 OutlinedButton(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -562,7 +573,8 @@ private fun DocumentItemCard(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .heightIn(min = 40.dp),
+                        .heightIn(min = 40.dp)
+                        .testTag(TestTags.Doctor.documentOdontogramButton(patient.id)),
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = BiodontosDark),
@@ -583,7 +595,6 @@ private fun DocumentItemCard(
                     )
                 }
 
-                // Botón 3: Admisión -> ClinicalAdmission(patientId)
                 Button(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -591,7 +602,8 @@ private fun DocumentItemCard(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .heightIn(min = 40.dp),
+                        .heightIn(min = 40.dp)
+                        .testTag(TestTags.Doctor.documentAdmissionButton(patient.id)),
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
                     colors = ButtonDefaults.buttonColors(

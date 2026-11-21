@@ -24,7 +24,6 @@ import com.example.biodontos.domain.model.PeriodontalSiteMeasurement
 import com.example.biodontos.domain.model.history.ClinicalDateParser
 import com.example.biodontos.domain.model.history.VoidInfo
 
-// --- Anamnesis ---
 fun AnamnesisDto.toDomain(): Anamnesis = Anamnesis(
     id = id ?: "",
     patientId = patientId,
@@ -94,7 +93,6 @@ fun Anamnesis.toDto(): AnamnesisDto {
     )
 }
 
-// --- Clinical Record ---
 fun ClinicalRecordDto.toDomain(): ClinicalRecord = ClinicalRecord(
     id = id ?: "",
     patientId = patientId,
@@ -125,7 +123,6 @@ fun ClinicalRecord.toDto(): ClinicalRecordDto = ClinicalRecordDto(
     createdAt = openedAt
 )
 
-// --- Periodontograma ---
 fun PeriodontalExaminationDto.toDomain(sites: List<PeriodontalSiteMeasurement> = emptyList()): PeriodontalExamination =
     PeriodontalExamination(
         id = id ?: "",
@@ -170,7 +167,6 @@ fun PeriodontalSiteMeasurement.toDto(examinationId: String): PeriodontalSiteDto 
     furcationGrade = furcationGrade
 )
 
-// --- Evolution & Materials ---
 fun EvolutionDto.toDomain(materials: List<EvolutionMaterialUsed> = emptyList()): Evolution {
     val resolvedVoidInfo = if (!voidedAt.isNullOrBlank()) {
         VoidInfo(
@@ -248,7 +244,6 @@ fun EvolutionMaterialUsed.toDto(evolutionId: String): EvolutionMaterialUsedDto =
     manufacturingDateSnapshot = manufacturingDateSnapshot.ifBlank { null }
 )
 
-// --- Informed Consent ---
 fun InformedConsentDto.toDomain(procedures: List<InformedConsentProcedure> = emptyList()): InformedConsent =
     InformedConsent(
         id = id ?: "",

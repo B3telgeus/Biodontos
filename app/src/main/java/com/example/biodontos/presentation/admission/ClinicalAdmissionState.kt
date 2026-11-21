@@ -20,14 +20,12 @@ data class ClinicalAdmissionState(
     val successUiText: UiText? = null,
     val isFinished: Boolean = false,
 
-    // Identificadores de sesión clínica
     val patientId: String = "",
     val clinicalRecordId: String = "",
     val doctorId: String = "",
     val doctorName: String = "Dr. Odontólogo",
     val doctorLicense: String = "OD-98234-COL",
 
-    // --- PASO 1: Identificación del Paciente ---
     val dniCedula: String = "",
     val dniError: String? = null,
     val dniErrorUiText: UiText? = null,
@@ -47,7 +45,6 @@ data class ClinicalAdmissionState(
     val locality: String = "",
     val occupation: String = "",
     val maritalStatus: String = "Soltero(a)",
-    // Acudiente (guardians)
     val hasGuardian: Boolean = false,
     val guardianId: String? = null,
     val guardianRelationship: String = "",
@@ -63,10 +60,9 @@ data class ClinicalAdmissionState(
     val hasCriticalAllergies: Boolean = false,
     val allergiesDescription: String = "",
 
-    // --- CONSENTIMIENTO INFORMADO DE OPERATORIA (Modal Especializado) ---
     val showOperativeConsentDialog: Boolean = false,
     val operativeConsentProposedTreatment: String = "",
-    val operativeConsentSignerType: String = "PATIENT", // "PATIENT" o "GUARDIAN"
+    val operativeConsentSignerType: String = "PATIENT",
     val operativeConsentRepresentativeName: String = "",
     val operativeConsentRepresentativeId: String = "",
     val operativeConsentPatientSignature: String = "",
@@ -74,7 +70,6 @@ data class ClinicalAdmissionState(
     val operativeConsentProcedures: List<com.example.biodontos.domain.model.InformedConsentProcedure> = emptyList(),
     val operativeConsentSaved: Boolean = false,
 
-    // --- PASO 2: Anamnesis (20 Preguntas) ---
     val tratamientoMedicoActual: Boolean = false,
     val tomaMedicamentos: Boolean = false,
     val alergias: Boolean = false,
@@ -99,18 +94,15 @@ data class ClinicalAdmissionState(
     val antecedentesFamiliares: String = "",
     val medicamentosActuales: String = "",
 
-    // --- PASO 3: Odontograma ---
     val dentitionType: DentitionType = DentitionType.ADULT,
     val teethSurfaces: Map<Int, Map<ToothSurface, ToothCondition>> = emptyMap(),
     val selectedOdontogramTooth: Int = 11,
     val selectedConditionToApply: ToothCondition = ToothCondition.CARIES,
 
-    // --- PASO 4: Periodontograma ---
     val selectedPeriodontalTooth: Int = 11,
     val siteMeasurements: Map<Pair<Int, PeriodontalSiteLocation>, PeriodontalSiteMeasurement> = emptyMap(),
     val periodontalObservations: String = "",
 
-    // --- PASO 5: Plan de Tratamiento & Consentimiento ---
     val mainDiagnosis: String = "",
     val relatedDiagnoses: String = "",
     val complementaryExams: String = "",
@@ -118,7 +110,6 @@ data class ClinicalAdmissionState(
     val consentSigned: Boolean = false,
     val consentPatientSignature: String = "",
 
-    // --- PASO 6: Evolución, Pagos & Materiales INVIMA ---
     val evolutionDescription: String = "",
     val evolutionCost: String = "0",
     val evolutionPayment: String = "0",
@@ -129,7 +120,6 @@ data class ClinicalAdmissionState(
     val closeRecordOnFinish: Boolean = false,
     val closureSummary: String = "",
 
-    // --- PASO 7: Agendamiento Próxima Cita ---
     val nextAppointmentDate: String = "",
     val nextAppointmentTime: String = "10:00",
     val nextAppointmentReason: String = "Control y seguimiento post-tratamiento",

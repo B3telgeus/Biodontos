@@ -70,7 +70,6 @@ class GetPatientActivityTimelineUseCase(
             }
         }
 
-        // If every single primary clinical source failed, propagate failure
         val allPrimaryFailed = appointmentsRes.isFailure &&
             treatmentsRes.isFailure &&
             paymentsRes.isFailure &&
@@ -92,7 +91,6 @@ class GetPatientActivityTimelineUseCase(
 
         val activities = mutableListOf<PatientActivity>()
 
-        // 1. Appointments
         for (appt in appointmentsRes.getOrDefault(emptyList())) {
             val stamps = stampsFor(auditByEntity, "appointments", appt.id)
             val createdStamp = stamps.firstOrNull { it.action == AuditAction.CREATE } ?: stamps.lastOrNull()
@@ -108,7 +106,6 @@ class GetPatientActivityTimelineUseCase(
             )
         }
 
-        // 2. Treatments / Budgets
         for (treat in treatments) {
             val stamps = stampsFor(auditByEntity, "treatments", treat.id)
             val createdStamp = stamps.firstOrNull { it.action == AuditAction.CREATE } ?: stamps.lastOrNull()
@@ -127,7 +124,6 @@ class GetPatientActivityTimelineUseCase(
             )
         }
 
-        // 3. Payments
         for (pay in paymentsRes.getOrDefault(emptyList())) {
             val stamps = stampsFor(auditByEntity, "payments", pay.id)
             val createdStamp = stamps.firstOrNull { it.action == AuditAction.CREATE } ?: stamps.lastOrNull()
@@ -147,7 +143,6 @@ class GetPatientActivityTimelineUseCase(
             )
         }
 
-        // 4. Evolutions
         for (evo in evolutionsList) {
             val stamps = stampsFor(auditByEntity, "evolutions", evo.id)
             val parsedDate = ClinicalDateParser.parseDateAndTime(evo.date, evo.procedureTime)
@@ -173,7 +168,6 @@ class GetPatientActivityTimelineUseCase(
             )
         }
 
-        // 5. Informed Consents
         for (consent in consentsRes.getOrDefault(emptyList())) {
             val stamps = stampsFor(auditByEntity, "informed_consents", consent.id)
             val createdStamp = stamps.firstOrNull { it.action == AuditAction.CREATE } ?: stamps.lastOrNull()
@@ -193,7 +187,6 @@ class GetPatientActivityTimelineUseCase(
             )
         }
 
-        // 6. Clinical Record Lifecycle (Open & Close)
         for (rec in records) {
             val stamps = stampsFor(auditByEntity, "clinical_records", rec.id)
             val openStamp = stamps.firstOrNull { it.action == AuditAction.CREATE }

@@ -27,7 +27,6 @@ class SplashViewModel(
 
     private fun checkSession() {
         viewModelScope.launch {
-            // Breve espera estética (1200ms) para mostrar la animación del logo y el branding institucional
             val startTime = System.currentTimeMillis()
             val session = try {
                 getCurrentSessionUseCase()

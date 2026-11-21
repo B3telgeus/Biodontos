@@ -148,7 +148,6 @@ class BookAppointmentViewModel(
         if (state.isSubmitting) return
         val slot = state.selectedSlot ?: return
 
-        // Defensive past slot check
         val now = clinicClock.now()
         if (slot.start.isBefore(now.plusHours(2))) {
             viewModelScope.launch {
@@ -159,7 +158,6 @@ class BookAppointmentViewModel(
         }
 
         if (state.rescheduleAppointmentId != null) {
-            // Critical PP-02: Show 2-step confirmation dialog before mutating reschedule
             _uiState.update { it.copy(showRescheduleConfirmDialog = true) }
         } else {
             proceedWithNewBooking()

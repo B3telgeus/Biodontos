@@ -54,7 +54,6 @@ class SaveAdmissionEvolutionAndCloseUseCase(
 
         // The 4-argument saveEvolution RPC (save_evolution_with_materials) already closes the clinical
         // record atomically inside PostgreSQL. Only invoke clinicalRecordRepository.closeRecord when
-        // falling back to the legacy 1-argument saveEvolution stub.
         saveResult.onSuccess {
             if (usedLegacySingleArgFallback && closeRecord && clinicalRecordRepository != null && evolution.recordId.isNotBlank()) {
                 clinicalRecordRepository.closeRecord(

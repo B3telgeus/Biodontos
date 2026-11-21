@@ -62,12 +62,10 @@ class DoctorSearchAdversarialTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Clear mock invocations from init
         io.mockk.clearMocks(searchDoctorsUseCase, answers = false, recordedCalls = true)
 
         coEvery { searchDoctorsUseCase("Carlos", any(), any(), any()) } returns Result.success(listOf(testDoctor1))
 
-        // Simulate rapid typing: C -> Ca -> Car -> Carl -> Carlo -> Carlos within 50ms intervals
         viewModel.onEvent(DoctorSearchUiEvent.QueryChanged("C"))
         testScheduler.advanceTimeBy(50)
 
@@ -85,16 +83,13 @@ class DoctorSearchAdversarialTest {
 
         viewModel.onEvent(DoctorSearchUiEvent.QueryChanged("Carlos"))
 
-        // Up to here, 250ms elapsed, less than 300ms debounce. No search should have been executed yet!
         coVerify(exactly = 0) {
             searchDoctorsUseCase(any(), any(), any(), any())
         }
 
-        // Now advance past 300ms debounce window
         testScheduler.advanceTimeBy(350)
         advanceUntilIdle()
 
-        // EMPIRICAL VERIFICATION: Exactly 1 search was fired, with "Carlos"
         coVerify(exactly = 1) {
             searchDoctorsUseCase("Carlos", any(), any(), any())
         }

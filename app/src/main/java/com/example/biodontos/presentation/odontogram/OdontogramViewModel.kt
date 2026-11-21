@@ -73,7 +73,7 @@ class OdontogramViewModel(
             updateToothUseCase(patientId, toothNumber, surface, condition, comment)
                 .onSuccess {
                     _state.update { it.copy(isSaving = false, showSelectionDialog = false) }
-                    loadOdontogram() // Refresh
+                    loadOdontogram()
                 }
                 .onFailure { error ->
                     _state.update { it.copy(isSaving = false, error = "Error al guardar: ${error.message}") }

@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -111,6 +112,7 @@ fun ClinicalAdmissionContent(
     }
 
     Scaffold(
+        modifier = Modifier.testTag(TestTags.Admission.ROOT),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -131,7 +133,10 @@ fun ClinicalAdmissionContent(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.testTag(TestTags.Admission.BACK_BUTTON)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.ui_clinical_admission_screen_3),
@@ -147,7 +152,9 @@ fun ClinicalAdmissionContent(
                             contentColor = Zafiro
                         ),
                         shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.padding(end = 8.dp)
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .testTag(TestTags.Admission.CONSENT_ACTION_BUTTON)
                     ) {
                         Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
@@ -158,7 +165,6 @@ fun ClinicalAdmissionContent(
             )
         },
         bottomBar = {
-            // Barra inferior de navegación de pasos consciente de insets
             com.example.biodontos.core.designsystem.insets.BiodontosBottomActionBar(
                 containerColor = BiodontosWhite,
                 shadowElevation = 8.dp,
@@ -172,7 +178,8 @@ fun ClinicalAdmissionContent(
                     if (state.currentStep > 1) {
                         OutlinedButton(
                             onClick = { onEvent(ClinicalAdmissionEvent.PreviousStep) },
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.testTag(TestTags.Admission.PREV_BUTTON)
                         ) {
                             Text(stringResource(R.string.ui_clinical_admission_screen_5), color = BiodontosDark)
                         }
@@ -186,7 +193,8 @@ fun ClinicalAdmissionContent(
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (state.currentStep == 7) Esmeralda else BiodontosDark
-                        )
+                        ),
+                        modifier = Modifier.testTag(TestTags.Admission.NEXT_BUTTON)
                     ) {
                         if (state.isLoading) {
                             CircularProgressIndicator(
@@ -214,13 +222,11 @@ fun ClinicalAdmissionContent(
                 .imePadding()
                 .background(BiodontosLightGrey)
         ) {
-            // Indicador Horizontal de Pasos
             StepProgressHeader(
                 currentStep = state.currentStep,
                 onStepClicked = { step -> onEvent(ClinicalAdmissionEvent.JumpToStep(step)) }
             )
 
-            // Mensaje de Error
             state.errorMessage?.let { errorMsg ->
                 Surface(
                     color = BiodontosErrorBg,
@@ -228,6 +234,7 @@ fun ClinicalAdmissionContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .testTag(TestTags.Admission.ERROR_BANNER)
                 ) {
                     Text(
                         text = stringResource(R.string.ui_clinical_admission_screen_6, errorMsg),
@@ -239,22 +246,22 @@ fun ClinicalAdmissionContent(
                 }
             }
 
-            // Contenido Dinámico por Paso
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .testTag(TestTags.Admission.STEP_LIST),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
                 when (state.currentStep) {
-                    1 -> item { Step1IdentificationContent(state, onEvent) }
-                    2 -> item { Step2AnamnesisContent(state, onEvent) }
-                    3 -> item { Step3OdontogramContent(state, onEvent) }
-                    4 -> item { Step4PeriodontogramContent(state, onEvent) }
-                    5 -> item { Step5TreatmentConsentContent(state, onEvent) }
-                    6 -> item { Step6EvolutionMaterialsContent(state, onEvent) }
-                    7 -> item { Step7NextAppointmentContent(state, onEvent) }
+                    1 -> item(key = "step_1") { Step1IdentificationContent(state, onEvent) }
+                    2 -> item(key = "step_2") { Step2AnamnesisContent(state, onEvent) }
+                    3 -> item(key = "step_3") { Step3OdontogramContent(state, onEvent) }
+                    4 -> item(key = "step_4") { Step4PeriodontogramContent(state, onEvent) }
+                    5 -> item(key = "step_5") { Step5TreatmentConsentContent(state, onEvent) }
+                    6 -> item(key = "step_6") { Step6EvolutionMaterialsContent(state, onEvent) }
+                    7 -> item(key = "step_7") { Step7NextAppointmentContent(state, onEvent) }
                 }
             }
         }
@@ -281,11 +288,12 @@ private fun StepProgressHeader(
         modifier = Modifier
             .fillMaxWidth()
             .background(BiodontosWhite)
-            .padding(vertical = 12.dp, horizontal = 16.dp),
+            .padding(vertical = 12.dp, horizontal = 16.dp)
+            .testTag(TestTags.Admission.STEP_HEADER_ROW),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        items((1..7).toList()) { step ->
+        items((1..7).toList(), key = { it }) { step ->
             val isActive = step == currentStep
             val isCompleted = step < currentStep
 
@@ -296,7 +304,9 @@ private fun StepProgressHeader(
                     isCompleted -> Esmeralda.copy(alpha = 0.15f)
                     else -> BiodontosInputBg
                 },
-                modifier = Modifier.clickable { onStepClicked(step) }
+                modifier = Modifier
+                    .clickable { onStepClicked(step) }
+                    .testTag(TestTags.Admission.stepChip(step))
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -359,9 +369,6 @@ private fun StepProgressHeader(
     }
 }
 
-// ============================================================================
-// PASO 1: IDENTIFICACIÓN DEL PACIENTE
-// ============================================================================
 @Composable
 private fun Step1IdentificationContent(
     state: ClinicalAdmissionState,
@@ -383,7 +390,6 @@ private fun Step1IdentificationContent(
                 color = BiodontosDark
             )
 
-            // DNI
             OutlinedTextField(
                 value = state.dniCedula,
                 onValueChange = { input ->
@@ -395,19 +401,22 @@ private fun Step1IdentificationContent(
                 isError = state.dniError != null,
                 supportingText = state.dniError?.let { { Text(it, color = BiodontosErrorRed) } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.DNI_FIELD),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Nombres y Apellidos
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.firstName,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateFirstName(it)) },
                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_9)) },
                     isError = state.nameError != null,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Admission.FIRST_NAME_FIELD),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -416,7 +425,9 @@ private fun Step1IdentificationContent(
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateFirstLastName(it)) },
                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_10)) },
                     isError = state.nameError != null,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Admission.FIRST_LAST_NAME_FIELD),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -427,7 +438,9 @@ private fun Step1IdentificationContent(
                     value = state.secondLastName,
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateSecondLastName(it)) },
                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_11)) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Admission.SECOND_LAST_NAME_FIELD),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -436,13 +449,14 @@ private fun Step1IdentificationContent(
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateBirthDate(it)) },
                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_12)) },
                     placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_13)) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Admission.BIRTH_DATE_FIELD),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
                 )
             }
 
-            // Indicador de Dentición calculada
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = SlateLight,
@@ -476,7 +490,6 @@ private fun Step1IdentificationContent(
                 )
             }
 
-            // Grupo Sanguíneo y RH
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.bloodGroup,
@@ -499,7 +512,9 @@ private fun Step1IdentificationContent(
                     onValueChange = { onEvent(ClinicalAdmissionEvent.UpdatePhone(it)) },
                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_19)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    modifier = Modifier.weight(2f),
+                    modifier = Modifier
+                        .weight(2f)
+                        .testTag(TestTags.Admission.PHONE_FIELD),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -510,7 +525,9 @@ private fun Step1IdentificationContent(
                 onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateEmail(it)) },
                 label = { Text(stringResource(R.string.ui_clinical_admission_screen_20)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.EMAIL_FIELD),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -535,7 +552,6 @@ private fun Step1IdentificationContent(
                 )
             }
 
-            // Alerta visual médica si el paciente es menor de 18 años
             if (state.isMinor) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -563,7 +579,6 @@ private fun Step1IdentificationContent(
                 }
             }
 
-            // Tarjeta de Acudiente / Acompañante
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = SlateLight.copy(alpha = 0.45f)),
@@ -596,7 +611,8 @@ private fun Step1IdentificationContent(
                         }
                         Switch(
                             checked = state.hasGuardian,
-                            onCheckedChange = { onEvent(ClinicalAdmissionEvent.ToggleHasGuardian(it)) }
+                            onCheckedChange = { onEvent(ClinicalAdmissionEvent.ToggleHasGuardian(it)) },
+                            modifier = Modifier.testTag(TestTags.Admission.GUARDIAN_SWITCH)
                         )
                     }
 
@@ -726,7 +742,6 @@ private fun Step1IdentificationContent(
                 }
             }
 
-            // Motivo de Consulta
             Text(
                 text = stringResource(R.string.ui_clinical_admission_screen_35),
                 fontWeight = FontWeight.Bold,
@@ -748,7 +763,9 @@ private fun Step1IdentificationContent(
                 },
                 label = { Text(stringResource(R.string.ui_clinical_admission_screen_36)) },
                 placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_37)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.CONSULTATION_REASON_FIELD),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -772,7 +789,6 @@ private fun Step1IdentificationContent(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Alergias Críticas
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -789,7 +805,8 @@ private fun Step1IdentificationContent(
                         onEvent(
                             ClinicalAdmissionEvent.UpdateAllergies(it, state.allergiesDescription)
                         )
-                    }
+                    },
+                    modifier = Modifier.testTag(TestTags.Admission.ALLERGIES_SWITCH)
                 )
             }
 
@@ -801,7 +818,9 @@ private fun Step1IdentificationContent(
                     },
                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_40)) },
                     isError = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Admission.ALLERGIES_DESC_FIELD),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -810,9 +829,6 @@ private fun Step1IdentificationContent(
     }
 }
 
-// ============================================================================
-// PASO 2: ANAMNESIS (20 PREGUNTAS)
-// ============================================================================
 @Composable
 private fun Step2AnamnesisContent(
     state: ClinicalAdmissionState,
@@ -886,7 +902,8 @@ private fun Step2AnamnesisContent(
                         checked = isChecked,
                         onCheckedChange = {
                             onEvent(ClinicalAdmissionEvent.ToggleAnamnesisQuestion(key, it))
-                        }
+                        },
+                        modifier = Modifier.testTag(TestTags.Admission.anamnesisSwitch(key))
                     )
                 }
             }
@@ -947,9 +964,6 @@ private fun Step2AnamnesisContent(
     }
 }
 
-// ============================================================================
-// PASO 3: ODONTOGRAMA
-// ============================================================================
 @Composable
 private fun Step3OdontogramContent(
     state: ClinicalAdmissionState,
@@ -976,16 +990,17 @@ private fun Step3OdontogramContent(
                     color = BiodontosDark
                 )
 
-                // Selector de Dentición
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     DentitionType.entries.forEach { type ->
                         val selected = state.dentitionType == type
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = if (selected) BiodontosDark else BiodontosInputBg,
-                            modifier = Modifier.clickable {
-                                onEvent(ClinicalAdmissionEvent.ChangeDentitionType(type))
-                            }
+                            modifier = Modifier
+                                .clickable {
+                                    onEvent(ClinicalAdmissionEvent.ChangeDentitionType(type))
+                                }
+                                .testTag(TestTags.Odontogram.dentitionOption(type.name))
                         ) {
                             Text(
                                 text = when (type) {
@@ -1009,17 +1024,18 @@ private fun Step3OdontogramContent(
                 color = BiodontosGreyText
             )
 
-            // Selector de Condición a Aplicar
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(ToothCondition.entries) { condition ->
+                items(ToothCondition.entries, key = { it.name }) { condition ->
                     val isSelected = state.selectedConditionToApply == condition
                     Surface(
                         shape = RoundedCornerShape(10.dp),
                         color = if (isSelected) condition.color.copy(alpha = 0.2f) else BiodontosInputBg,
                         border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, condition.color) else null,
-                        modifier = Modifier.clickable {
-                            onEvent(ClinicalAdmissionEvent.SelectConditionToApply(condition))
-                        }
+                        modifier = Modifier
+                            .clickable {
+                                onEvent(ClinicalAdmissionEvent.SelectConditionToApply(condition))
+                            }
+                            .testTag(TestTags.Odontogram.conditionOption(condition.name))
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -1045,7 +1061,6 @@ private fun Step3OdontogramContent(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Rejilla de Dientes
             Text(
                 text = stringResource(R.string.ui_clinical_admission_screen_48, state.selectedOdontogramTooth),
                 fontWeight = FontWeight.Bold,
@@ -1057,7 +1072,7 @@ private fun Step3OdontogramContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(state.availableFdiTeeth) { toothNum ->
+                items(state.availableFdiTeeth, key = { it }) { toothNum ->
                     val surfaces = state.teethSurfaces[toothNum] ?: emptyMap()
                     val isSelected = state.selectedOdontogramTooth == toothNum
 
@@ -1092,9 +1107,6 @@ private fun Step3OdontogramContent(
     }
 }
 
-// ============================================================================
-// PASO 4: PERIODONTOGRAMA
-// ============================================================================
 @Composable
 private fun Step4PeriodontogramContent(
     state: ClinicalAdmissionState,
@@ -1113,9 +1125,6 @@ private fun Step4PeriodontogramContent(
     )
 }
 
-// ============================================================================
-// PASO 5: PLAN DE TRATAMIENTO & CONSENTIMIENTO INFORMADO
-// ============================================================================
 @Composable
 private fun Step5TreatmentConsentContent(
     state: ClinicalAdmissionState,
@@ -1151,7 +1160,9 @@ private fun Step5TreatmentConsentContent(
                 },
                 label = { Text(stringResource(R.string.ui_clinical_admission_screen_50)) },
                 placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_51)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.MAIN_DIAGNOSIS_FIELD),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -1188,7 +1199,9 @@ private fun Step5TreatmentConsentContent(
                 },
                 label = { Text(stringResource(R.string.ui_clinical_admission_screen_53)) },
                 placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_54)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.TREATMENT_PLAN_FIELD),
                 minLines = 3,
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -1196,7 +1209,6 @@ private fun Step5TreatmentConsentContent(
 
             HorizontalDivider(color = SlateLight)
 
-            // Texto de Consentimiento Legal
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = SlateLight,
@@ -1223,14 +1235,15 @@ private fun Step5TreatmentConsentContent(
                 onClick = { onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true)) },
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Zafiro),
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.OPEN_OPERATIVE_CONSENT_BUTTON)
             ) {
                 Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.ui_clinical_admission_screen_57), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
 
-            // Pad de Firma
             SignaturePad(
                 title = "Firma del Paciente / Acudiente",
                 subtitle = "Firme en el recuadro para validar el consentimiento legal.",
@@ -1243,9 +1256,6 @@ private fun Step5TreatmentConsentContent(
     }
 }
 
-// ============================================================================
-// PASO 6: EVOLUCIÓN, COSTOS & INVIMA
-// ============================================================================
 @Composable
 private fun Step6EvolutionMaterialsContent(
     state: ClinicalAdmissionState,
@@ -1280,13 +1290,14 @@ private fun Step6EvolutionMaterialsContent(
                 },
                 label = { Text(stringResource(R.string.ui_clinical_admission_screen_59)) },
                 placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_60)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.EVOLUTION_DESC_FIELD),
                 minLines = 3,
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Costos y Pagos
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.evolutionCost,
@@ -1301,7 +1312,9 @@ private fun Step6EvolutionMaterialsContent(
                     },
                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_61)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Admission.EVOLUTION_COST_FIELD),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -1319,13 +1332,14 @@ private fun Step6EvolutionMaterialsContent(
                     },
                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_62)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.Admission.EVOLUTION_PAYMENT_FIELD),
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp)
                 )
             }
 
-            // Cálculo Automático de Saldo
             Surface(
                 shape = RoundedCornerShape(10.dp),
                 color = if (state.evolutionBalance > 0.0) BiodontosErrorBg else Esmeralda.copy(alpha = 0.15f),
@@ -1352,7 +1366,6 @@ private fun Step6EvolutionMaterialsContent(
 
             HorizontalDivider(color = SlateLight)
 
-            // Trazabilidad de Materiales INVIMA
             Text(
                 text = stringResource(R.string.ui_clinical_admission_screen_65),
                 fontWeight = FontWeight.Bold,
@@ -1368,15 +1381,17 @@ private fun Step6EvolutionMaterialsContent(
                 )
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(state.materialsCatalog) { mat ->
+                    items(state.materialsCatalog, key = { it.id.value }) { mat ->
                         val isSelected = state.selectedCatalogMaterial?.id == mat.id
                         val isExpiredMat = mat.isExpired(java.time.LocalDate.now())
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = if (isSelected) BiodontosDark else BiodontosInputBg,
-                            modifier = Modifier.clickable(enabled = !isExpiredMat) {
-                                onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(mat))
-                            }
+                            modifier = Modifier
+                                .clickable(enabled = !isExpiredMat) {
+                                    onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(mat))
+                                }
+                                .testTag(TestTags.Admission.catalogMaterialItem(mat.id.value))
                         ) {
                             Text(
                                 text = if (isExpiredMat) "${mat.name} · Vencido" else mat.name,
@@ -1433,7 +1448,6 @@ private fun Step6EvolutionMaterialsContent(
                 }
             }
 
-            // Lista de Materiales Anexados a la Evolución
             if (state.usedMaterials.isNotEmpty()) {
                 Text(
                     text = stringResource(R.string.ui_clinical_admission_screen_74),
@@ -1447,7 +1461,8 @@ private fun Step6EvolutionMaterialsContent(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
                             .background(BiodontosInputBg)
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                            .testTag(TestTags.Admission.usedMaterialItem(used.materialId)),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1462,7 +1477,6 @@ private fun Step6EvolutionMaterialsContent(
                 }
             }
 
-            // Firma de Evolución
             SignaturePad(
                 title = "Firma del Paciente en Evolución",
                 subtitle = "Conformidad con el procedimiento realizado.",
@@ -1472,7 +1486,6 @@ private fun Step6EvolutionMaterialsContent(
                 }
             )
 
-            // Cierre Médico-Legal
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1487,16 +1500,14 @@ private fun Step6EvolutionMaterialsContent(
                     checked = state.closeRecordOnFinish,
                     onCheckedChange = {
                         onEvent(ClinicalAdmissionEvent.ToggleCloseRecord(it, state.closureSummary))
-                    }
+                    },
+                    modifier = Modifier.testTag(TestTags.Admission.CLOSE_RECORD_SWITCH)
                 )
             }
         }
     }
 }
 
-// ============================================================================
-// PASO 7: AGENDAR PRÓXIMA CITA
-// ============================================================================
 @Composable
 private fun Step7NextAppointmentContent(
     state: ClinicalAdmissionState,
@@ -1536,7 +1547,9 @@ private fun Step7NextAppointmentContent(
                 },
                 label = { Text(stringResource(R.string.ui_clinical_admission_screen_80)) },
                 placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_81)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.NEXT_APPT_DATE_FIELD),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -1553,7 +1566,9 @@ private fun Step7NextAppointmentContent(
                     )
                 },
                 label = { Text(stringResource(R.string.ui_clinical_admission_screen_82)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.NEXT_APPT_TIME_FIELD),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -1570,7 +1585,9 @@ private fun Step7NextAppointmentContent(
                     )
                 },
                 label = { Text(stringResource(R.string.ui_clinical_admission_screen_83)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.NEXT_APPT_REASON_FIELD),
                 colors = biodontosTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
             )

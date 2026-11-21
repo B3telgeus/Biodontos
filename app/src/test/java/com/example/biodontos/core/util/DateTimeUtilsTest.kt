@@ -13,7 +13,6 @@ class DateTimeUtilsTest {
 
     @Test
     fun `parseToClinicalZonedDateTime correctly converts UTC ISO string to America Bogota`() {
-        // 13:00 UTC corresponds to 08:00 AM in America/Bogota (UTC-5)
         val utcIso = "2026-10-25T13:00:00Z"
         val zdt = DateTimeUtils.parseToClinicalZonedDateTime(utcIso)
 
@@ -36,11 +35,11 @@ class DateTimeUtilsTest {
 
     @Test
     fun `extractTime formats Bogota time accurately`() {
-        val utcIso = "2026-10-25T14:00:00Z" // 14:00 UTC = 09:00 AM in Bogota
+        val utcIso = "2026-10-25T14:00:00Z"
         val timeStr = DateTimeUtils.extractTime(utcIso)
         assertEquals("09:00 AM", timeStr)
 
-        val afternoonUtc = "2026-10-25T19:00:00Z" // 19:00 UTC = 02:00 PM in Bogota
+        val afternoonUtc = "2026-10-25T19:00:00Z"
         val afternoonStr = DateTimeUtils.extractTime(afternoonUtc)
         assertEquals("02:00 PM", afternoonStr)
     }
@@ -64,11 +63,9 @@ class DateTimeUtilsTest {
             "02:00 PM",
             "03:00 PM"
         )
-        // Cita tomada a las 11:00 AM (16:00 UTC)
         val taken = listOf("2026-10-25T16:00:00Z")
         val todayStr = DateTimeUtils.getTodayDate()
 
-        // Simular que la hora actual es 09:30 AM
         val simulatedNow = LocalTime.of(9, 30)
 
         val available = DateTimeUtils.computeAvailableSlots(
@@ -78,17 +75,13 @@ class DateTimeUtilsTest {
             referenceTime = simulatedNow
         )
 
-        // 08:00 AM y 09:00 AM deben quedar fuera por haber pasado ya
         assertFalse(available.contains("08:00 AM"))
         assertFalse(available.contains("09:00 AM"))
 
-        // 10:00 AM debe estar disponible
         assertTrue(available.contains("10:00 AM"))
 
-        // 11:00 AM está ocupado por otra cita, debe quedar fuera
         assertFalse(available.contains("11:00 AM"))
 
-        // 02:00 PM y 03:00 PM deben estar disponibles
         assertTrue(available.contains("02:00 PM"))
         assertTrue(available.contains("03:00 PM"))
     }
@@ -97,7 +90,7 @@ class DateTimeUtilsTest {
     fun `computeAvailableSlots preserves future date slots even if earlier than current time`() {
         val allSlots = listOf("08:00 AM", "09:00 AM", "10:00 AM")
         val futureDate = LocalDate.now(DateTimeUtils.CLINICAL_ZONE).plusDays(2).toString()
-        val simulatedNow = LocalTime.of(15, 0) // 3 PM
+        val simulatedNow = LocalTime.of(15, 0)
 
         val available = DateTimeUtils.computeAvailableSlots(
             allSlots = allSlots,
@@ -106,7 +99,6 @@ class DateTimeUtilsTest {
             referenceTime = simulatedNow
         )
 
-        // En una fecha futura, las horas matutinas deben estar disponibles
         assertEquals(3, available.size)
         assertTrue(available.contains("08:00 AM"))
     }

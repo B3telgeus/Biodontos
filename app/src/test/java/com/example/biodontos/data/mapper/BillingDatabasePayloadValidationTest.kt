@@ -64,18 +64,15 @@ class BillingDatabasePayloadValidationTest {
         val jsonObject = strictNullsJson.parseToJsonElement(jsonString).jsonObject
         val headers = jsonObject.keys
 
-        // 1. Columnas obligatorias de la tabla treatments en Postgres
         val expectedHeaders = listOf("id", "patient_id", "description", "total_cost", "status", "created_at")
         for (header in expectedHeaders) {
             assertTrue("El payload debe incluir el header '$header'", headers.contains(header))
         }
 
-        // 2. Ausencia de fugas camelCase
         assertFalse("NO debe incluir camelCase patientId", headers.contains("patientId"))
         assertFalse("NO debe incluir camelCase totalCost", headers.contains("totalCost"))
         assertFalse("NO debe incluir camelCase createdAt", headers.contains("createdAt"))
 
-        // 3. Verificación de valores y tipos
         assertEquals(patientUuid, jsonObject["patient_id"]?.jsonPrimitive?.content)
         assertEquals("Ortodoncia con Brackets Autoligados", jsonObject["description"]?.jsonPrimitive?.content)
         assertEquals(2800000.0, jsonObject["total_cost"]?.jsonPrimitive?.doubleOrNull ?: 0.0, 0.001)
@@ -85,19 +82,16 @@ class BillingDatabasePayloadValidationTest {
     @Test
     fun treatmentStatusConformsToPostgresTreatmentStatusEnum() {
         // En PostgreSQL el tipo ENUM treatment_status solo admite:
-        // 'PENDIENTE', 'EN_PROGRESO', 'COMPLETADO', 'CANCELADO'
-        // Si se enviara 'ACTIVE' fallaría en base de datos.
         val validPostgresStatuses = listOf("PENDIENTE", "EN_PROGRESO", "COMPLETADO", "CANCELADO")
 
         val treatmentWithActive = Treatment(
             patientId = PatientId("7c9e6679-7425-40de-944b-e07fc1f90ae7"),
             description = "Blanqueamiento dental",
             totalCost = CopAmount(500_000L),
-            status = "ACTIVE" // Valor antiguo no compatible con enum
+            status = "ACTIVE"
         )
 
         val dto = treatmentWithActive.toDto()
-        // El mapper debe normalizarlo al enum de Postgres
         assertTrue(
             "El estado '${dto.status}' debe ser uno de los válidos en PostgreSQL: $validPostgresStatuses",
             validPostgresStatuses.contains(dto.status)
@@ -123,18 +117,15 @@ class BillingDatabasePayloadValidationTest {
         val jsonObject = strictNullsJson.parseToJsonElement(jsonString).jsonObject
         val headers = jsonObject.keys
 
-        // 1. Columnas obligatorias de la tabla payments en Postgres
         val expectedHeaders = listOf("id", "treatment_id", "amount", "payment_method", "created_at")
         for (header in expectedHeaders) {
             assertTrue("El payload debe incluir el header '$header'", headers.contains(header))
         }
 
-        // 2. Ausencia de fugas camelCase
         assertFalse("NO debe incluir camelCase treatmentId", headers.contains("treatmentId"))
         assertFalse("NO debe incluir camelCase paymentMethod", headers.contains("paymentMethod"))
         assertFalse("NO debe incluir camelCase createdAt", headers.contains("createdAt"))
 
-        // 3. Verificación de valores
         assertEquals(treatmentUuid, jsonObject["treatment_id"]?.jsonPrimitive?.content)
         assertEquals(350000.0, jsonObject["amount"]?.jsonPrimitive?.doubleOrNull ?: 0.0, 0.001)
         assertEquals("EFECTIVO", jsonObject["payment_method"]?.jsonPrimitive?.content)

@@ -97,7 +97,6 @@ class PatientSignUpViewModel(
         val s = _state.value
         when (s.currentStep) {
             1 -> {
-                // Validar datos personales del Paso 1
                 var hasError = false
                 var firstNameErr = s.firstNameError
                 var lastNameErr = s.lastNameError
@@ -147,7 +146,6 @@ class PatientSignUpViewModel(
                 }
             }
             2 -> {
-                // Validar credenciales de acceso del Paso 2
                 var hasError = false
                 var emailErr = s.emailError
                 var passErr = s.passwordError
@@ -181,7 +179,6 @@ class PatientSignUpViewModel(
                 }
             }
             3 -> {
-                // Paso 3: Términos y confirmación -> Ejecutar registro
                 if (!s.termsAccepted) {
                     _state.update { it.copy(error = "Debes aceptar la política de tratamiento de datos para continuar") }
                     return

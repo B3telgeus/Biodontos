@@ -62,7 +62,6 @@ class RoomRepositoryCacheTest {
         assertTrue(onlineResult.isSuccess)
         assertEquals(1, onlineResult.getOrNull()?.size)
 
-        // Simulate offline failure
         repo.remotePatientsFetcher = { throw IOException("Offline") }
         val offlineResult = repo.getPatients()
         assertTrue(offlineResult.isSuccess)
@@ -93,7 +92,6 @@ class RoomRepositoryCacheTest {
         assertTrue(onlineResult.isSuccess)
         assertEquals(1, onlineResult.getOrNull()?.size)
 
-        // Simulate offline failure
         repo.remoteMaterialsFetcher = { _, _ -> throw IOException("Offline") }
         val offlineResult = repo.getMaterials(includeInactive = false, doctorId = DoctorId("doc-1"))
         assertTrue(offlineResult.isSuccess)

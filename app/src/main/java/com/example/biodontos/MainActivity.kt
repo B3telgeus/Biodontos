@@ -14,9 +14,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DentalTheme {
-                // Creamos el controlador de rutas
                 val navController = rememberNavController()
-                // Iniciamos la navegación de tu app
                 BiodontosNavGraph(navController = navController)
             }
         }

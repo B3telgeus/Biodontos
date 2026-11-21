@@ -141,7 +141,6 @@ class GetPatientActivityTimelineUseCaseTest {
         assertTrue(result.isSuccess)
         val timeline = result.getOrThrow()
 
-        // 1 appointment + 1 treatment + 1 payment + 1 evolution + 1 consent + 2 record events (open & close) = 7
         assertEquals(7, timeline.activities.size)
         assertTrue(timeline.failedSources.isEmpty())
         assertEquals("rec-close-rec-1", timeline.activities.first().id)

@@ -65,21 +65,17 @@ class PatientListViewModelTest {
         val viewModel = PatientListViewModel(getPatientsUseCase)
         advanceUntilIdle()
 
-        // Búsqueda por nombre
         viewModel.onSearchQueryChange("carlos")
         assertEquals(1, viewModel.state.value.filteredPatients.size)
         assertEquals("Carlos", viewModel.state.value.filteredPatients.first().firstName)
 
-        // Búsqueda por DNI
         viewModel.onSearchQueryChange("9876")
         assertEquals(1, viewModel.state.value.filteredPatients.size)
         assertEquals("Maria", viewModel.state.value.filteredPatients.first().firstName)
 
-        // Búsqueda sin coincidencias
         viewModel.onSearchQueryChange("99999999")
         assertTrue(viewModel.state.value.filteredPatients.isEmpty())
 
-        // Limpiar búsqueda
         viewModel.onSearchQueryChange("")
         assertEquals(2, viewModel.state.value.filteredPatients.size)
     }
@@ -99,21 +95,17 @@ class PatientListViewModelTest {
         assertEquals(1, state.criticalAllergiesCount)
         assertEquals(1, state.pendingConsentCount)
 
-        // Filtro por defecto ALL
         assertEquals(PatientQuickFilter.ALL, state.selectedFilter)
         assertEquals(3, state.filteredPatients.size)
 
-        // Filtro CRITICAL_ALLERGIES
         viewModel.onFilterSelected(PatientQuickFilter.CRITICAL_ALLERGIES)
         assertEquals(1, viewModel.state.value.filteredPatients.size)
         assertEquals("Ana", viewModel.state.value.filteredPatients.first().firstName)
 
-        // Filtro PENDING_CONSENT
         viewModel.onFilterSelected(PatientQuickFilter.PENDING_CONSENT)
         assertEquals(1, viewModel.state.value.filteredPatients.size)
         assertEquals("Bernardo", viewModel.state.value.filteredPatients.first().firstName)
 
-        // Volver a ALL
         viewModel.onFilterSelected(PatientQuickFilter.ALL)
         assertEquals(3, viewModel.state.value.filteredPatients.size)
     }
@@ -128,18 +120,14 @@ class PatientListViewModelTest {
         val viewModel = PatientListViewModel(getPatientsUseCase)
         advanceUntilIdle()
 
-        // Filtrar por apellido "Ruiz"
         viewModel.onSearchQueryChange("ruiz")
         assertEquals(2, viewModel.state.value.filteredPatients.size)
 
-        // Activar filtro PENDING_CONSENT: solo Ana Ruiz cumple ambas condiciones
         viewModel.onFilterSelected(PatientQuickFilter.PENDING_CONSENT)
         assertEquals(1, viewModel.state.value.filteredPatients.size)
         assertEquals("Ana", viewModel.state.value.filteredPatients.first().firstName)
 
-        // Buscar texto que no coincide con Ana
         viewModel.onSearchQueryChange("carlos")
-        // Carlos tiene consentimiento pendiente, coincide
         assertEquals(1, viewModel.state.value.filteredPatients.size)
         assertEquals("Carlos", viewModel.state.value.filteredPatients.first().firstName)
     }

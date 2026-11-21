@@ -43,7 +43,6 @@ data class DoctorHomeUiState(
     val recentPayments: List<DoctorPaymentItem> = emptyList(),
     val recentTotalCollectedCop: CopAmount = CopAmount.ZERO,
     val errorMessage: String? = null,
-    // Estado del diálogo de registro de abono/pago
     val isRecordPaymentDialogOpen: Boolean = false,
     val isRecordingPayment: Boolean = false,
     val availablePatients: List<Patient> = emptyList(),
@@ -58,7 +57,6 @@ sealed interface DoctorHomeUiEvent {
     data class ToggleConfirmAppointment(val appointmentId: String, val currentConfirmed: Boolean) : DoctorHomeUiEvent
     data object Logout : DoctorHomeUiEvent
 
-    // Eventos para gestión de abonos y pagos
     data object OpenRecordPaymentDialog : DoctorHomeUiEvent
     data object DismissRecordPaymentDialog : DoctorHomeUiEvent
     data object ClearSelectedPatient : DoctorHomeUiEvent

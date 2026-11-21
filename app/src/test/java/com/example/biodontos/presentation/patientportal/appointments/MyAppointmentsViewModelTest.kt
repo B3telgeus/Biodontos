@@ -200,7 +200,6 @@ class MyAppointmentsViewModelTest {
 
         assertEquals("Error de red temporal", viewModel.uiState.value.errorMessage)
 
-        // Ahora simulamos recuperación exitosa del servicio
         coEvery { appointmentRepository.getAppointmentsByPatientId("patient-1") } returns Result.success(
             listOf(upcomingAppt, completedAppt, cancelledAppt)
         )

@@ -19,7 +19,7 @@ class AppointmentModificationPolicyTest {
         val appointment = Appointment(
             id = "app-1",
             patientId = "pat-1",
-            startTime = LocalDateTime.of(2026, 10, 19, 12, 0), // 4 horas después
+            startTime = LocalDateTime.of(2026, 10, 19, 12, 0),
             status = AppointmentStatus.CONFIRMED
         )
 
@@ -33,7 +33,7 @@ class AppointmentModificationPolicyTest {
         val appointment = Appointment(
             id = "app-1",
             patientId = "pat-1",
-            startTime = LocalDateTime.of(2026, 10, 19, 9, 30), // 1.5 horas después
+            startTime = LocalDateTime.of(2026, 10, 19, 9, 30),
             status = AppointmentStatus.CONFIRMED
         )
 

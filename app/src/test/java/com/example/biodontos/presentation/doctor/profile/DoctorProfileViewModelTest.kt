@@ -247,7 +247,6 @@ class DoctorProfileViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // In fallback mode, the repository saves basic info and returns a doctor with null bio, photo, address, services
         val fallbackDoctor = dummyDoctor.copy(
             clinicAddress = null,
             services = null

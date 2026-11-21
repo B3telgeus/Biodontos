@@ -1,0 +1,1112 @@
+# Biodontos Compose Stability Baseline
+# Source: app/build/compose_compiler/app_debug-composables.txt
+#
+# Module Summary:
+#   totalComposables: 1757
+#   restartableComposables: 1755
+#   skippableComposables: 1090
+#   knownStableArguments: 30208
+#   knownUnstableArguments: 229
+#   effectivelyStableClasses: 367 / 499
+#   strongSkipping: true
+#   trackedComposables: 168 (excluded Previews: 78)
+
+@composable com.example.biodontos.core.designsystem.DentalTheme [restartable=true, skippable=true]
+  - stable darkTheme: Boolean
+  - stable content: Function2<Composer, Int, Unit>
+
+@composable com.example.biodontos.core.designsystem.biodontosTextFieldColors [restartable=false, skippable=false]
+
+@composable com.example.biodontos.core.designsystem.components.AppointmentStatusChip [restartable=true, skippable=true]
+  - stable status: AppointmentStatus
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.core.designsystem.components.BiodontosPillButton [restartable=true, skippable=true]
+  - stable text: String
+  - stable onClick: Function0<Unit>
+  - stable modifier: Modifier?
+  - stable variant: PillButtonVariant?
+  - stable enabled: Boolean
+  - stable isLoading: Boolean
+  - stable leadingIcon: Function2<Composer, Int, Unit>?
+  - stable trailingIcon: Function2<Composer, Int, Unit>?
+
+@composable com.example.biodontos.core.designsystem.components.ButtonContent [restartable=true, skippable=true]
+  - stable text: String
+  - stable isLoading: Boolean
+  - stable leadingIcon: Function2<Composer, Int, Unit>?
+  - stable trailingIcon: Function2<Composer, Int, Unit>?
+  - stable contentColor: Color
+
+@composable com.example.biodontos.core.designsystem.components.DateBadge [restartable=true, skippable=true]
+  - stable dateTime: LocalDateTime
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.core.designsystem.components.TwoStepConfirmationDialog [restartable=true, skippable=true]
+  - stable title: String
+  - stable impactSummary: String
+  - stable confirmActionLabel: String
+  - stable onConfirm: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.core.designsystem.insets.BiodontosBottomActionBar [restartable=true, skippable=true]
+  - stable modifier: Modifier?
+  - stable containerColor: Color
+  - stable contentColor: Color
+  - stable shadowElevation: Dp
+  - stable tonalElevation: Dp
+  - stable contentPadding: PaddingValues?
+  - stable content: @[ExtensionFunctionType] Function3<BoxScope, Composer, Int, Unit>
+
+@composable com.example.biodontos.core.designsystem.insets.BiodontosFormColumn [restartable=true, skippable=true]
+  - stable modifier: Modifier?
+  - stable scrollState: ScrollState?
+  - stable horizontalAlignment: Horizontal?
+  - stable verticalArrangement: Vertical?
+  - stable contentPadding: PaddingValues?
+  - stable content: @[ExtensionFunctionType] Function3<ColumnScope, Composer, Int, Unit>
+
+@composable com.example.biodontos.core.designsystem.insets.BiodontosScreen [restartable=true, skippable=true]
+  - stable modifier: Modifier?
+  - stable topBar: Function2<Composer, Int, Unit>?
+  - stable bottomBar: Function2<Composer, Int, Unit>?
+  - stable snackbarHost: Function2<Composer, Int, Unit>?
+  - stable floatingActionButton: Function2<Composer, Int, Unit>?
+  - stable floatingActionButtonPosition: FabPosition
+  - stable containerColor: Color
+  - stable contentColor: Color
+  - stable contentWindowInsets: WindowInsets?
+  - stable content: Function3<PaddingValues, Composer, Int, Unit>
+
+@composable com.example.biodontos.core.ui.UiText.asString [restartable=false, skippable=false]
+  - uncertain <this>: UiText
+
+@composable com.example.biodontos.presentation.admission.ClinicalAdmissionContent [restartable=true, skippable=true]
+  - stable state: ClinicalAdmissionState
+  - stable onEvent: Function1<ClinicalAdmissionEvent, Unit>
+  - stable onNavigateBack: Function0<Unit>
+  - stable snackbarHostState: SnackbarHostState?
+
+@composable com.example.biodontos.presentation.admission.ClinicalAdmissionScreen [restartable=true, skippable=true]
+  - unstable viewModel: ClinicalAdmissionViewModel
+  - stable onNavigateBack: Function0<Unit>
+  - stable onAdmissionFinished: Function0<Unit>
+
+@composable com.example.biodontos.presentation.admission.OperativeConsentDialog [restartable=true, skippable=true]
+  - stable state: ClinicalAdmissionState
+  - stable onDismiss: Function0<Unit>
+  - stable onUpdateTreatment: Function1<String, Unit>
+  - stable onUpdateSigner: Function3<@[ParameterName(name = 'signerType')] String, @[ParameterName(name = 'repName')] String, @[ParameterName(name = 'repId')] String, Unit>
+  - stable onAddProcedure: Function2<@[ParameterName(name = 'toothNumber')] Int, @[ParameterName(name = 'date')] String, Unit>
+  - stable onRemoveProcedure: Function1<Int, Unit>
+  - stable onConfirmSignatures: Function2<@[ParameterName(name = 'patientSig')] String, @[ParameterName(name = 'doctorSig')] String, Unit>
+  - stable onSaveConsent: Function0<Unit>
+
+@composable com.example.biodontos.presentation.admission.Step1IdentificationContent [restartable=true, skippable=true]
+  - stable state: ClinicalAdmissionState
+  - stable onEvent: Function1<ClinicalAdmissionEvent, Unit>
+
+@composable com.example.biodontos.presentation.admission.Step2AnamnesisContent [restartable=true, skippable=true]
+  - stable state: ClinicalAdmissionState
+  - stable onEvent: Function1<ClinicalAdmissionEvent, Unit>
+
+@composable com.example.biodontos.presentation.admission.Step3OdontogramContent [restartable=true, skippable=true]
+  - stable state: ClinicalAdmissionState
+  - stable onEvent: Function1<ClinicalAdmissionEvent, Unit>
+
+@composable com.example.biodontos.presentation.admission.Step4PeriodontogramContent [restartable=true, skippable=true]
+  - stable state: ClinicalAdmissionState
+  - stable onEvent: Function1<ClinicalAdmissionEvent, Unit>
+
+@composable com.example.biodontos.presentation.admission.Step5TreatmentConsentContent [restartable=true, skippable=true]
+  - stable state: ClinicalAdmissionState
+  - stable onEvent: Function1<ClinicalAdmissionEvent, Unit>
+
+@composable com.example.biodontos.presentation.admission.Step6EvolutionMaterialsContent [restartable=true, skippable=true]
+  - stable state: ClinicalAdmissionState
+  - stable onEvent: Function1<ClinicalAdmissionEvent, Unit>
+
+@composable com.example.biodontos.presentation.admission.Step7NextAppointmentContent [restartable=true, skippable=true]
+  - stable state: ClinicalAdmissionState
+  - stable onEvent: Function1<ClinicalAdmissionEvent, Unit>
+
+@composable com.example.biodontos.presentation.admission.StepProgressHeader [restartable=true, skippable=true]
+  - stable currentStep: Int
+  - stable onStepClicked: Function1<Int, Unit>
+
+@composable com.example.biodontos.presentation.auth.doctor.DoctorRegistrationScreen [restartable=true, skippable=true]
+  - stable state: DoctorRegistrationState
+  - stable onFirstNameChange: Function1<String, Unit>
+  - stable onLastNameChange: Function1<String, Unit>
+  - stable onLicenseNumberChange: Function1<String, Unit>
+  - stable onSpecialtyChange: Function1<String, Unit>
+  - stable onEmailChange: Function1<String, Unit>
+  - stable onPhoneChange: Function1<String, Unit>
+  - stable onPasswordChange: Function1<String, Unit>
+  - stable onConfirmPasswordChange: Function1<String, Unit>
+  - stable onTogglePasswordVisibility: Function0<Unit>
+  - stable onNextClick: Function0<Unit>
+  - stable onBackClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.auth.login.LoginFormCard [restartable=true, skippable=true]
+  - stable state: LoginState
+  - stable onEmailChange: Function1<String, Unit>
+  - stable onPasswordChange: Function1<String, Unit>
+  - stable onTogglePasswordVisibility: Function0<Unit>
+  - stable onLoginClick: Function0<Unit>
+  - stable onForgotPasswordClick: Function0<Unit>
+  - stable onSignUpClick: Function0<Unit>
+  - stable onDone: Function0<Unit>
+
+@composable com.example.biodontos.presentation.auth.login.LoginScreen [restartable=true, skippable=true]
+  - stable state: LoginState
+  - stable onEmailChange: Function1<String, Unit>
+  - stable onPasswordChange: Function1<String, Unit>
+  - stable onTogglePasswordVisibility: Function0<Unit>
+  - stable onLoginClick: Function0<Unit>
+  - stable onForgotPasswordClick: Function0<Unit>
+  - stable onSignUpClick: Function0<Unit>
+  - stable onBackClick: Function0<Unit>?
+
+@composable com.example.biodontos.presentation.auth.onboarding.OnboardingScreen [restartable=true, skippable=true]
+  - stable onLoginClick: Function0<Unit>
+  - stable onCreateAccountClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.auth.onboarding.UserTypeSelectionScreen [restartable=true, skippable=true]
+  - stable onDoctorClick: Function0<Unit>
+  - stable onPatientClick: Function0<Unit>
+  - stable onBackClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.auth.patient.PatientSignUpScreen [restartable=true, skippable=true]
+  - stable state: PatientSignUpState
+  - stable onFirstNameChange: Function1<String, Unit>
+  - stable onLastNameChange: Function1<String, Unit>
+  - stable onDniChange: Function1<String, Unit>
+  - stable onEmailChange: Function1<String, Unit>
+  - stable onPhoneChange: Function1<String, Unit>
+  - stable onPasswordChange: Function1<String, Unit>
+  - stable onConfirmPasswordChange: Function1<String, Unit>
+  - stable onTermsAcceptedChange: Function1<Boolean, Unit>
+  - stable onTogglePasswordVisibility: Function0<Unit>
+  - stable onNextClick: Function0<Unit>
+  - stable onBackClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.auth.patient.SignUpSuccessScreen [restartable=true, skippable=true]
+  - stable onLoginClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.auth.reset.ForgotPasswordScreen [restartable=true, skippable=true]
+  - stable state: ForgotPasswordState
+  - stable onEmailChange: Function1<String, Unit>
+  - stable onSubmitClick: Function0<Unit>
+  - stable onBackClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.auth.splash.SplashContent [restartable=true, skippable=true]
+  - stable startAnimation: Boolean
+  - stable isLoading: Boolean
+  - stable statusMessage: String?
+  - stable errorMessage: String?
+
+@composable com.example.biodontos.presentation.auth.splash.SplashScreen [restartable=true, skippable=true]
+  - unstable viewModel: SplashViewModel
+  - stable onNavigateToDoctor: Function0<Unit>
+  - stable onNavigateToPatient: Function0<Unit>
+  - stable onNavigateToOnboarding: Function0<Unit>
+
+@composable com.example.biodontos.presentation.components.SignaturePad [restartable=true, skippable=true]
+  - stable title: String?
+  - stable subtitle: String?
+  - stable currentSignature: String?
+  - stable onSignatureConfirmed: Function1<String, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.appointments.DayAvailabilityItemRow [restartable=true, skippable=true]
+  - stable config: DayAvailabilityConfig
+  - stable onConfigChanged: Function4<Boolean, LocalTime, LocalTime, Int, Unit>
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentCard [restartable=true, skippable=true]
+  - stable item: DoctorAppointmentItem
+  - stable onToggleConfirm: Function0<Unit>
+  - stable onReschedule: Function0<Unit>
+  - stable onCancel: Function0<Unit>
+  - stable onPatientClick: Function1<String, Unit>?
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsHeader [restartable=true, skippable=true]
+  - stable doctorName: String
+  - stable isRefreshing: Boolean
+  - stable onNavigateBack: Function0<Unit>
+  - stable onOpenAvailability: Function0<Unit>
+  - stable onRefresh: Function0<Unit>
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsRoute [restartable=true, skippable=true]
+  - unstable viewModel: DoctorAppointmentsViewModel
+  - stable onNavigateBack: Function0<Unit>?
+  - stable onPatientClick: Function1<String, Unit>?
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorAppointmentsScreen [restartable=true, skippable=true]
+  - stable state: DoctorAppointmentsUiState
+  - stable today: LocalDate
+  - stable onEvent: Function1<DoctorAppointmentsUiEvent, Unit>
+  - stable onNavigateBack: Function0<Unit>
+  - stable onPatientClick: Function1<String, Unit>?
+  - stable snackbarHostState: SnackbarHostState?
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorAvailabilityDialog [restartable=true, skippable=true]
+  - unstable weeklyConfig: List<DayAvailabilityConfig>
+  - stable isSaving: Boolean
+  - stable onDismiss: Function0<Unit>
+  - stable onUpdateDay: Function5<DayOfWeek, Boolean, LocalTime, LocalTime, Int, Unit>
+  - stable onCopyWeekdays: Function0<Unit>
+  - stable onSave: Function0<Unit>
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorDayOffView [restartable=true, skippable=true]
+  - stable date: LocalDate
+  - stable onOpenAvailability: Function0<Unit>
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorDayStrip [restartable=true, skippable=true]
+  - stable selectedDate: LocalDate
+  - stable today: LocalDate
+  - unstable appointments: List<DoctorAppointmentItem>
+  - stable onDateSelected: Function1<LocalDate, Unit>
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorScheduleModeSelector [restartable=true, skippable=true]
+  - stable currentMode: DoctorScheduleMode
+  - stable onModeSelected: Function1<DoctorScheduleMode, Unit>
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorSlotAvailableCard [restartable=true, skippable=true]
+  - stable slot: DoctorTimelineSlot
+  - stable onClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorSlotOccupiedCard [restartable=true, skippable=true]
+  - stable appointment: DoctorAppointmentItem
+  - stable onToggleConfirm: Function0<Unit>
+  - stable onReschedule: Function0<Unit>
+  - stable onCancel: Function0<Unit>
+  - stable onPatientClick: Function1<String, Unit>?
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorSlotPastCard [restartable=true, skippable=true]
+  - stable slot: DoctorTimelineSlot
+
+@composable com.example.biodontos.presentation.doctor.appointments.DoctorTimelineSlotRow [restartable=true, skippable=true]
+  - stable slot: DoctorTimelineSlot
+  - stable onBookSlot: Function0<Unit>
+  - stable onToggleConfirm: Function1<DoctorAppointmentItem, Unit>
+  - stable onReschedule: Function1<DoctorAppointmentItem, Unit>
+  - stable onCancel: Function1<DoctorAppointmentItem, Unit>
+  - stable onPatientClick: Function1<String, Unit>?
+
+@composable com.example.biodontos.presentation.doctor.appointments.QuickBookingDialog [restartable=true, skippable=true]
+  - stable slot: DoctorTimelineSlot
+  - unstable patients: List<Patient>
+  - stable isBooking: Boolean
+  - stable onDismiss: Function0<Unit>
+  - stable onConfirm: Function2<@[ParameterName(name = 'patientId')] String, @[ParameterName(name = 'reason')] String, Unit>
+
+@composable com.example.biodontos.presentation.doctor.appointments.RescheduleAppointmentDialog [restartable=true, skippable=true]
+  - stable appointment: DoctorAppointmentItem
+  - stable today: LocalDate
+  - stable targetDate: LocalDate
+  - unstable availableSlots: List<LocalDateTime>
+  - stable isRescheduling: Boolean
+  - stable onTargetDateChanged: Function1<LocalDate, Unit>
+  - stable onDismiss: Function0<Unit>
+  - stable onConfirm: Function1<@[ParameterName(name = 'newStartTime')] LocalDateTime, Unit>
+
+@composable com.example.biodontos.presentation.doctor.appointments.TimeSelectorButton [restartable=true, skippable=true]
+  - stable currentTime: LocalTime
+  - stable isError: Boolean
+  - stable onTimeSelected: Function1<LocalTime, Unit>
+
+@composable com.example.biodontos.presentation.doctor.documents.DoctorDocumentsContent [restartable=true, skippable=true]
+  - stable state: DoctorDocumentsState
+  - stable onSearchQueryChange: Function1<String, Unit>
+  - stable onFilterSelect: Function1<DocumentFilter, Unit>
+  - stable onRefresh: Function0<Unit>
+  - stable onNavigateBack: Function0<Unit>
+  - stable onNavigateToPatientDetail: Function2<@[ParameterName(name = 'patientId')] String, @[ParameterName(name = 'initialTab')] String, Unit>
+  - stable onNavigateToAdmission: Function1<@[ParameterName(name = 'patientId')] String, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.documents.DoctorDocumentsRoute [restartable=true, skippable=true]
+  - unstable viewModel: DoctorDocumentsViewModel
+  - stable onNavigateBack: Function0<Unit>
+  - stable onNavigateToPatientDetail: Function2<@[ParameterName(name = 'patientId')] String, @[ParameterName(name = 'initialTab')] String, Unit>
+  - stable onNavigateToAdmission: Function1<@[ParameterName(name = 'patientId')] String, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.documents.DoctorDocumentsScreen [restartable=true, skippable=true]
+  - stable state: DoctorDocumentsState
+  - stable onSearchQueryChange: Function1<String, Unit>
+  - stable onFilterSelect: Function1<DocumentFilter, Unit>
+  - stable onRefresh: Function0<Unit>
+  - stable onNavigateBack: Function0<Unit>
+  - stable onNavigateToPatientDetail: Function2<@[ParameterName(name = 'patientId')] String, @[ParameterName(name = 'initialTab')] String, Unit>
+  - stable onNavigateToAdmission: Function1<@[ParameterName(name = 'patientId')] String, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.documents.DocumentItemCard [restartable=true, skippable=true]
+  - stable patient: Patient
+  - stable onNavigateToPatientDetail: Function2<@[ParameterName(name = 'patientId')] String, @[ParameterName(name = 'initialTab')] String, Unit>
+  - stable onNavigateToAdmission: Function1<@[ParameterName(name = 'patientId')] String, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.documents.DocumentStatusBadge [restartable=true, skippable=true]
+  - stable text: String
+  - stable containerColor: Color
+  - stable textColor: Color
+  - stable icon: ImageVector
+
+@composable com.example.biodontos.presentation.doctor.documents.DocumentsKpiSummaryCard [restartable=true, skippable=true]
+  - stable totalRecords: Int
+  - stable consentedCount: Int
+  - stable pendingConsentCount: Int
+  - stable criticalAllergiesCount: Int
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.documents.KpiMetricItem [restartable=true, skippable=true]
+  - stable label: String
+  - stable value: String
+  - stable accentColor: Color
+
+@composable com.example.biodontos.presentation.doctor.home.AgendaSummaryCard [restartable=true, skippable=true]
+  - stable todayCount: Int
+  - stable onManageCalendarClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.home.AppointmentTableRow [restartable=true, skippable=true]
+  - stable item: DoctorAppointmentItem
+  - stable onToggleConfirm: Function0<Unit>
+  - stable onClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.doctor.home.DoctorHomeHeader [restartable=true, skippable=true]
+  - stable doctorName: String
+  - stable doctorPhotoUrl: String?
+  - stable isRefreshing: Boolean
+  - stable onRefresh: Function0<Unit>
+  - stable onAvatarClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.doctor.home.DoctorHomeRoute [restartable=true, skippable=true]
+  - unstable viewModel: DoctorHomeViewModel
+  - stable onNavigateToPatients: Function0<Unit>
+  - stable onNavigateToNewPatient: Function0<Unit>
+  - stable onNavigateToAppointments: Function0<Unit>
+  - stable onNavigateToDocuments: Function0<Unit>
+  - stable onNavigateToClinicalAdmission: Function0<Unit>?
+  - stable onNavigateToProfile: Function0<Unit>?
+  - stable onNavigateToPatientDetail: Function1<@[ParameterName(name = 'patientId')] String, Unit>?
+  - stable onNavigateToLogin: Function0<Unit>
+
+@composable com.example.biodontos.presentation.doctor.home.DoctorHomeScreen [restartable=true, skippable=true]
+  - stable state: DoctorHomeUiState
+  - stable onEvent: Function1<DoctorHomeUiEvent, Unit>
+  - stable onNavigateToPatients: Function0<Unit>
+  - stable onNavigateToNewPatient: Function0<Unit>
+  - stable onNavigateToAppointments: Function0<Unit>
+  - stable onNavigateToDocuments: Function0<Unit>
+  - stable onNavigateToClinicalAdmission: Function0<Unit>?
+  - stable onNavigateToProfile: Function0<Unit>?
+  - stable onNavigateToPatientDetail: Function1<@[ParameterName(name = 'patientId')] String, Unit>?
+  - stable snackbarHostState: SnackbarHostState?
+
+@composable com.example.biodontos.presentation.doctor.home.DocumentsSummaryCard [restartable=true, skippable=true]
+  - stable consentedPatientsCount: Int
+  - stable pendingConsentCount: Int
+  - stable onViewDocumentsClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.home.PatientsEvolutionCard [restartable=true, skippable=true]
+  - stable patientsCount: Int
+  - stable onNavigateToClinicalAdmission: Function0<Unit>
+  - stable onNavigateToPatients: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.home.PaymentsSummaryCard [restartable=true, skippable=true]
+  - unstable payments: List<DoctorPaymentItem>
+  - stable totalCollectedCop: CopAmount
+  - stable onNewPaymentClick: Function0<Unit>
+  - stable onNavigateToPatientDetail: Function1<@[ParameterName(name = 'patientId')] String, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.home.RecordPaymentDialog [restartable=true, skippable=true]
+  - stable state: DoctorHomeUiState
+  - stable onDismiss: Function0<Unit>
+  - stable onClearSelectedPatient: Function0<Unit>
+  - stable onSelectPatient: Function1<Patient, Unit>
+  - stable onSelectTreatment: Function1<Treatment?, Unit>
+  - stable onSubmit: Function6<@[ParameterName(name = 'patientId')] String, @[ParameterName(name = 'treatmentId')] String?, @[ParameterName(name = 'newDesc')] String?, @[ParameterName(name = 'newCost')] Long?, @[ParameterName(name = 'amount')] Long, @[ParameterName(name = 'method')] String, Unit>
+
+@composable com.example.biodontos.presentation.doctor.home.UpcomingAppointmentsCard [restartable=true, skippable=true]
+  - unstable appointments: List<DoctorAppointmentItem>
+  - stable onToggleConfirm: Function2<String, Boolean, Unit>
+  - stable onSeeAll: Function0<Unit>
+  - stable onNavigateToPatientDetail: Function1<String, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.materials.MaterialCard [restartable=true, skippable=true]
+  - stable material: ClinicalMaterial
+  - stable onEdit: Function0<Unit>
+  - stable onDeactivate: Function0<Unit>
+  - stable onReactivate: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.materials.MaterialFormBottomSheet [restartable=true, skippable=true]
+  - stable formState: MaterialFormState
+  - stable onNameChange: Function1<String, Unit>
+  - stable onInvimaChange: Function1<String, Unit>
+  - stable onLotChange: Function1<String, Unit>
+  - stable onManufacturingDateChange: Function1<LocalDate, Unit>
+  - stable onExpirationDateChange: Function1<LocalDate, Unit>
+  - stable onSave: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.materials.MaterialMetricPill [restartable=true, skippable=true]
+  - stable label: String
+  - stable count: Int
+  - stable indicatorColor: Color
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.materials.MaterialStatusBadge [restartable=true, skippable=true]
+  - stable text: String
+  - stable bgColor: Color
+  - stable textColor: Color
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.materials.MaterialsContent [restartable=true, skippable=true]
+  - stable state: MaterialsUiState
+  - stable onEvent: Function1<MaterialsUiEvent, Unit>
+  - stable onNavigateBack: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.materials.MaterialsRoute [restartable=true, skippable=true]
+  - unstable viewModel: MaterialsViewModel
+  - stable onNavigateBack: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.materials.MaterialsScreen [restartable=true, skippable=true]
+  - stable state: MaterialsUiState
+  - stable onEvent: Function1<MaterialsUiEvent, Unit>
+  - stable onNavigateBack: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.materials.RegulatoryTag [restartable=true, skippable=true]
+  - stable label: String
+  - stable value: String
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.profile.DoctorAsyncAvatar [restartable=true, skippable=true]
+  - stable photoUrl: String?
+  - stable firstName: String
+  - stable lastName: String
+  - stable size: Dp
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.profile.DoctorAvatarHeaderSection [restartable=true, skippable=true]
+  - stable photoUrl: String?
+  - stable firstName: String
+  - stable lastName: String
+  - stable specialty: String
+  - stable licenseNumber: String
+  - stable clinicAddress: String?
+  - stable services: String?
+  - stable isSavingPhoto: Boolean
+  - stable onPickPhotoClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.profile.DoctorInitialsAvatar [restartable=true, skippable=true]
+  - stable firstName: String
+  - stable lastName: String
+  - stable size: Dp
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.profile.DoctorProfessionalInfoCard [restartable=true, skippable=true]
+  - stable state: DoctorProfileState
+  - stable onEvent: Function1<DoctorProfileEvent, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.profile.DoctorProfileContent [restartable=true, skippable=true]
+  - stable state: DoctorProfileState
+  - stable onEvent: Function1<DoctorProfileEvent, Unit>
+  - stable onNavigateBack: Function0<Unit>
+
+@composable com.example.biodontos.presentation.doctor.profile.DoctorProfileScreen [restartable=true, skippable=true]
+  - unstable viewModel: DoctorProfileViewModel
+  - stable onNavigateBack: Function0<Unit>
+  - stable onNavigateToLogin: Function0<Unit>
+
+@composable com.example.biodontos.presentation.doctor.profile.DoctorSecurityCard [restartable=true, skippable=true]
+  - stable state: DoctorProfileState
+  - stable onEvent: Function1<DoctorProfileEvent, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.doctor.shell.DoctorPortalShell [restartable=true, skippable=true]
+  - stable selectedItem: DoctorNavItem
+  - stable onItemSelected: Function1<DoctorNavItem, Unit>
+  - stable onLogoutClick: Function0<Unit>
+  - stable isExpandedScreen: Boolean
+  - stable content: Function2<Composer, Int, Unit>
+
+@composable com.example.biodontos.presentation.navigation.BiodontosNavGraph [restartable=true, skippable=true]
+  - unstable navController: NavHostController
+
+@composable com.example.biodontos.presentation.odontogram.InteractiveTooth [restartable=true, skippable=true]
+  - stable toothNumber: Int
+  - unstable surfaceStates: Map<ToothSurface, ToothCondition>
+  - stable onSurfaceClicked: Function1<ToothSurface, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.odontogram.OdontogramScreen [restartable=true, skippable=true]
+  - stable state: OdontogramState
+  - stable onDentitionTypeChange: Function1<DentitionType, Unit>?
+  - stable onSurfaceClick: Function2<Int, ToothSurface, Unit>
+  - stable onCommentChange: Function1<String, Unit>
+  - stable onUpdateCondition: Function1<ToothCondition, Unit>
+  - stable onDismissDialog: Function0<Unit>
+  - stable onBackClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.odontogram.QuadrantView [restartable=true, skippable=true]
+  - unstable toothNumbers: List<Int>
+  - stable state: OdontogramState
+  - stable onSurfaceClick: Function2<Int, ToothSurface, Unit>
+
+@composable com.example.biodontos.presentation.odontogram.ToothSelectionDialog [restartable=true, skippable=true]
+  - stable toothNumber: Int
+  - stable surface: ToothSurface
+  - stable comment: String
+  - stable isSaving: Boolean
+  - stable onCommentChange: Function1<String, Unit>
+  - stable onConditionSelected: Function1<ToothCondition, Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patientportal.appointments.AppointmentConfirmationScreen [restartable=true, skippable=true]
+  - stable confirmation: AppointmentConfirmation
+  - stable onNavigateToMyAppointments: Function0<Unit>
+  - stable onNavigateToHome: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.appointments.AppointmentItemCard [restartable=true, skippable=true]
+  - stable appointment: Appointment
+  - stable doctor: Doctor?
+  - stable isUpcoming: Boolean
+  - stable onRescheduleClick: Function0<Unit>
+  - stable onCancelClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.appointments.AppointmentsErrorCard [restartable=true, skippable=true]
+  - stable message: String
+  - stable onRetry: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.appointments.BookAppointmentRoute [restartable=true, skippable=true]
+  - unstable viewModel: BookAppointmentViewModel
+  - stable onNavigateBack: Function0<Unit>
+  - stable onNavigateToConfirmation: Function1<AppointmentConfirmation, Unit>
+  - stable onNavigateToMyAppointments: Function0<Unit>?
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.appointments.BookAppointmentScreen [restartable=true, skippable=true]
+  - stable state: BookAppointmentUiState
+  - stable onEvent: Function1<BookAppointmentUiEvent, Unit>
+  - stable onBackClick: Function0<Unit>
+  - stable snackbarHostState: SnackbarHostState?
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.appointments.DateStripItem [restartable=true, skippable=true]
+  - stable date: LocalDate
+  - stable isSelected: Boolean
+  - stable onClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.appointments.MyAppointmentsRoute [restartable=true, skippable=true]
+  - unstable viewModel: MyAppointmentsViewModel
+  - stable onNavigateToReschedule: Function2<String, String, Unit>
+  - stable onNavigateToBookNew: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.appointments.MyAppointmentsScreen [restartable=true, skippable=true]
+  - stable state: MyAppointmentsUiState
+  - stable onEvent: Function1<MyAppointmentsUiEvent, Unit>
+  - stable snackbarHostState: SnackbarHostState?
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.appointments.SlotChip [restartable=true, skippable=true]
+  - stable slot: TimeSlot
+  - stable isSelected: Boolean
+  - stable onClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.appointments.TabItem [restartable=true, skippable=true]
+  - stable text: String
+  - stable isSelected: Boolean
+  - stable onClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.doctors.DoctorAvatar [restartable=true, skippable=true]
+  - stable photoUrl: String?
+  - stable firstName: String
+  - stable lastName: String
+  - stable size: Dp
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.doctors.DoctorDetailRoute [restartable=true, skippable=true]
+  - unstable viewModel: DoctorDetailViewModel
+  - stable onNavigateBack: Function0<Unit>
+  - stable onNavigateToBooking: Function1<String, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.doctors.DoctorDetailScreen [restartable=true, skippable=true]
+  - stable state: DoctorDetailUiState
+  - stable onEvent: Function1<DoctorDetailUiEvent, Unit>
+  - stable onBackClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.doctors.DoctorItemCard [restartable=true, skippable=true]
+  - stable doctor: Doctor
+  - stable onDoctorClick: Function0<Unit>
+  - stable onBookClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.doctors.DoctorSearchRoute [restartable=true, skippable=true]
+  - unstable viewModel: DoctorSearchViewModel
+  - stable onNavigateToDetail: Function1<String, Unit>
+  - stable onNavigateToBooking: Function1<String, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.doctors.DoctorSearchScreen [restartable=true, skippable=true]
+  - stable state: DoctorSearchUiState
+  - stable onEvent: Function1<DoctorSearchUiEvent, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.doctors.ScheduleRow [restartable=true, skippable=true]
+  - stable slot: WeeklyAvailability
+
+@composable com.example.biodontos.presentation.patientportal.home.AgendaCard [restartable=true, skippable=true]
+  - stable nextAppointment: Appointment?
+  - unstable upcomingAppointments: List<Appointment>
+  - stable onGoToAppointments: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.home.ClinicalRecordsSummaryCard [restartable=true, skippable=true]
+  - stable completedCount: Int
+  - stable onGoToRecords: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.home.DoctorsCard [restartable=true, skippable=true]
+  - unstable doctors: List<Doctor>
+  - stable onBookDoctor: Function1<String, Unit>
+  - stable onSeeAllDoctors: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.home.PatientHomeRoute [restartable=true, skippable=true]
+  - unstable viewModel: PatientHomeViewModel
+  - stable onNavigateToAppointments: Function0<Unit>
+  - stable onNavigateToPayments: Function0<Unit>
+  - stable onNavigateToDoctors: Function0<Unit>
+  - stable onNavigateToBooking: Function1<String, Unit>
+  - stable onNavigateToLogin: Function0<Unit>
+  - stable modifier: Modifier?
+  - stable isExpanded: Boolean
+
+@composable com.example.biodontos.presentation.patientportal.home.PatientHomeScreen [restartable=true, skippable=true]
+  - stable state: PatientHomeUiState
+  - stable onEvent: Function1<PatientHomeUiEvent, Unit>
+  - stable modifier: Modifier?
+  - stable isExpanded: Boolean
+
+@composable com.example.biodontos.presentation.patientportal.home.PaymentsSummaryCard [restartable=true, skippable=true]
+  - stable amountCop: String
+  - stable onGoToPayments: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.payments.EmptyTreatmentsCard [restartable=true, skippable=true]
+  - stable filter: PaymentFilter
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.payments.ErrorCard [restartable=true, skippable=true]
+  - stable message: String
+  - stable onRetry: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.payments.FinancialInfoCard [restartable=true, skippable=true]
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.payments.HeroBalanceCard [restartable=true, skippable=true]
+  - stable totalPendingFormatted: String
+  - stable totalPaidFormatted: String
+  - stable hasPending: Boolean
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.payments.PatientPaymentsRoute [restartable=true, skippable=true]
+  - unstable viewModel: PatientPaymentsViewModel
+  - stable onNavigateBack: Function0<Unit>?
+  - stable canNavigateBack: Boolean
+
+@composable com.example.biodontos.presentation.patientportal.payments.PatientPaymentsScreen [restartable=true, skippable=true]
+  - stable state: PatientPaymentsUiState
+  - stable onEvent: Function1<PatientPaymentsUiEvent, Unit>
+  - stable onNavigateBack: Function0<Unit>?
+  - stable canNavigateBack: Boolean
+  - stable snackbarHostState: SnackbarHostState?
+
+@composable com.example.biodontos.presentation.patientportal.payments.PaymentReceiptDialog [restartable=true, skippable=true]
+  - stable payment: Payment
+  - unstable balances: List<TreatmentBalance>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patientportal.payments.PaymentRow [restartable=true, skippable=true]
+  - stable payment: Payment
+  - stable onClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.payments.PaymentsHeader [restartable=true, skippable=true]
+  - stable patientName: String
+  - stable isRefreshing: Boolean
+  - stable onRefreshClick: Function0<Unit>
+  - stable onBackClick: Function0<Unit>
+  - stable canNavigateBack: Boolean
+
+@composable com.example.biodontos.presentation.patientportal.payments.ReceiptDetailRow [restartable=true, skippable=true]
+  - stable label: String
+  - stable value: String
+
+@composable com.example.biodontos.presentation.patientportal.payments.RecentPaymentsCard [restartable=true, skippable=true]
+  - unstable payments: List<Payment>
+  - stable onPaymentClick: Function1<Payment, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.payments.TreatmentBalanceCard [restartable=true, skippable=true]
+  - unstable balance: TreatmentBalance
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.payments.TreatmentsSection [restartable=true, skippable=true]
+  - unstable balances: List<TreatmentBalance>
+  - stable selectedFilter: PaymentFilter
+  - stable onFilterSelected: Function1<PaymentFilter, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patientportal.shell.PatientPortalShell [restartable=true, skippable=true]
+  - stable selectedItem: PatientNavItem
+  - stable onItemSelected: Function1<PatientNavItem, Unit>
+  - stable onLogoutClick: Function0<Unit>
+  - stable isExpandedScreen: Boolean
+  - stable content: Function2<Composer, Int, Unit>
+
+@composable com.example.biodontos.presentation.patients.PatientItem [restartable=true, skippable=true]
+  - stable patient: Patient
+  - stable onClick: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.PatientListScreen [restartable=true, skippable=true]
+  - stable state: PatientListState
+  - stable onSearchQueryChange: Function1<String, Unit>?
+  - stable onFilterSelected: Function1<PatientQuickFilter, Unit>?
+  - stable onRefresh: Function0<Unit>?
+  - stable onAddPatientClick: Function0<Unit>?
+  - stable onClinicalAdmissionClick: Function0<Unit>?
+  - stable onPatientClick: Function1<Patient, Unit>
+  - stable onDoctorProfileClick: Function0<Unit>?
+  - stable onRetry: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.PatientRegistrationRoute [restartable=true, skippable=true]
+  - unstable viewModel: PatientRegistrationViewModel
+  - stable onNavigateBack: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.PatientRegistrationScreen [restartable=true, skippable=true]
+  - stable state: PatientRegistrationState
+  - stable onDniChange: Function1<String, Unit>
+  - stable onFirstNameChange: Function1<String, Unit>
+  - stable onLastNameChange: Function1<String, Unit>
+  - stable onPhoneChange: Function1<String, Unit>
+  - stable onConsentChange: Function1<Boolean, Unit>
+  - stable onAllergiesChange: Function1<Boolean, Unit>
+  - stable onAllergiesDescriptionChange: Function1<String, Unit>
+  - stable onSaveClick: Function0<Unit>
+  - stable onBackClick: Function0<Unit>
+  - stable snackbarHostState: SnackbarHostState?
+
+@composable com.example.biodontos.presentation.patients.detail.AnamnesisSummaryCard [restartable=true, skippable=true]
+  - stable anamnesis: Anamnesis?
+
+@composable com.example.biodontos.presentation.patients.detail.ClinicalStatusBar [restartable=true, skippable=true]
+  - stable patient: Patient?
+  - stable anamnesis: Anamnesis?
+  - unstable consent: InformedConsent?
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patients.detail.ConsentSummaryCard [restartable=true, skippable=true]
+  - unstable consent: InformedConsent?
+
+@composable com.example.biodontos.presentation.patients.detail.EvolutionItemCard [restartable=true, skippable=true]
+  - unstable evolution: Evolution
+
+@composable com.example.biodontos.presentation.patients.detail.NewAppointmentDialog [restartable=true, skippable=true]
+  - stable date: String
+  - stable time: String
+  - stable reason: String
+  - stable isSaving: Boolean
+  - stable onDateChange: Function1<String, Unit>
+  - stable onTimeChange: Function1<String, Unit>
+  - stable onReasonChange: Function1<String, Unit>
+  - stable onSave: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.NewEvolutionDialog [restartable=true, skippable=true]
+  - stable description: String
+  - stable tooth: Int?
+  - stable cost: String
+  - stable payment: String
+  - unstable materials: List<EvolutionMaterialUsed>
+  - unstable catalog: List<ClinicalMaterial>
+  - stable selectedMaterial: ClinicalMaterial?
+  - stable isSaving: Boolean
+  - stable onDescriptionChange: Function1<String, Unit>
+  - stable onToothChange: Function1<Int?, Unit>
+  - stable onCostChange: Function1<String, Unit>
+  - stable onPaymentChange: Function1<String, Unit>
+  - stable onSelectCatalogMaterial: Function1<ClinicalMaterial, Unit>
+  - stable onAddMaterial: Function1<Double, Unit>
+  - stable onRemoveMaterial: Function1<String, Unit>
+  - stable onSave: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.OdontogramHubCard [restartable=true, skippable=true]
+  - stable dentitionType: String
+  - stable mainDiagnosis: String
+  - stable onOpenOdontogram: Function0<Unit>
+  - stable onOpenAdmission: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.PatientAppointmentItemCard [restartable=true, skippable=true]
+  - stable appointment: Appointment
+
+@composable com.example.biodontos.presentation.patients.detail.PatientDemographicsCard [restartable=true, skippable=true]
+  - stable patient: Patient?
+
+@composable com.example.biodontos.presentation.patients.detail.PatientDetailScreen [restartable=true, skippable=true]
+  - stable state: PatientDetailState
+  - stable onTabSelected: Function1<PatientDetailTab, Unit>
+  - stable onNavigateBack: Function0<Unit>
+  - stable onNavigateToOdontogram: Function0<Unit>
+  - stable onNavigateToAdmission: Function0<Unit>
+  - stable onOpenNewEvolutionDialog: Function0<Unit>
+  - stable onDismissNewEvolutionDialog: Function0<Unit>
+  - stable onEvolutionDescriptionChange: Function1<String, Unit>
+  - stable onEvolutionToothChange: Function1<Int?, Unit>
+  - stable onEvolutionCostChange: Function1<String, Unit>
+  - stable onEvolutionPaymentChange: Function1<String, Unit>
+  - stable onSelectCatalogMaterial: Function1<ClinicalMaterial, Unit>
+  - stable onAddMaterial: Function1<Double, Unit>
+  - stable onRemoveMaterial: Function1<String, Unit>
+  - stable onSaveEvolution: Function0<Unit>
+  - stable onOpenNewAppointmentDialog: Function0<Unit>
+  - stable onDismissNewAppointmentDialog: Function0<Unit>
+  - stable onAppointmentDateChange: Function1<String, Unit>
+  - stable onAppointmentTimeChange: Function1<String, Unit>
+  - stable onAppointmentReasonChange: Function1<String, Unit>
+  - stable onSaveAppointment: Function0<Unit>
+  - stable onClearMessages: Function0<Unit>
+  - stable onSelectMonthFilter: Function1<YearMonth?, Unit>?
+  - stable onToggleActivityTypeFilter: Function1<ActivityType, Unit>?
+  - stable onClearHistoryFilters: Function0<Unit>?
+  - stable onToggleExpandActivity: Function1<String, Unit>?
+  - stable onOpenQuickActionSheet: Function0<Unit>?
+  - stable onDismissQuickActionSheet: Function0<Unit>?
+  - stable onRequestVoidActivity: Function1<PatientActivity, Unit>?
+  - stable onVoidReasonChange: Function1<String, Unit>?
+  - stable onAdvanceVoidStep: Function0<Unit>?
+  - stable onConfirmVoidActivity: Function0<Unit>?
+  - stable onDismissVoidDialog: Function0<Unit>?
+  - stable onOpenClarificationDialog: Function1<Evolution, Unit>?
+  - stable onClarificationTextChange: Function1<String, Unit>?
+  - stable onSaveClarification: Function0<Unit>?
+  - stable onDismissClarificationDialog: Function0<Unit>?
+  - stable onOpenTreatmentStatusDialog: Function1<Treatment, Unit>?
+  - stable onSelectTargetTreatmentStatus: Function1<TreatmentStatus, Unit>?
+  - stable onTreatmentStatusReasonChange: Function1<String, Unit>?
+  - stable onConfirmTreatmentStatusUpdate: Function0<Unit>?
+  - stable onDismissTreatmentStatusDialog: Function0<Unit>?
+  - stable onOpenNewTreatmentDialog: Function0<Unit>?
+  - stable onDismissNewTreatmentDialog: Function0<Unit>?
+  - stable onNewTreatmentDescriptionChange: Function1<String, Unit>?
+  - stable onNewTreatmentTotalCostChange: Function1<String, Unit>?
+  - stable onSaveTreatment: Function0<Unit>?
+  - stable onOpenNewPaymentDialog: Function1<String?, Unit>?
+  - stable onDismissNewPaymentDialog: Function0<Unit>?
+  - stable onSelectPaymentTreatment: Function1<String, Unit>?
+  - stable onNewPaymentAmountChange: Function1<String, Unit>?
+  - stable onNewPaymentMethodChange: Function1<String, Unit>?
+  - stable onSavePayment: Function0<Unit>?
+  - stable onRefreshTimeline: Function0<Unit>?
+
+@composable com.example.biodontos.presentation.patients.detail.TreatmentItemCard [restartable=true, skippable=true]
+  - stable treatment: Treatment
+
+@composable com.example.biodontos.presentation.patients.detail.TreatmentsBalanceHeaderCard [restartable=true, skippable=true]
+  - stable totalBilled: Double
+  - stable totalPaid: Double
+  - stable balance: Double
+
+@composable com.example.biodontos.presentation.patients.detail.history.ActivityFilterBar [restartable=true, skippable=true]
+  - unstable availableMonths: List<YearMonth>
+  - stable selectedMonth: YearMonth?
+  - unstable selectedTypes: Set<ActivityType>
+  - stable onSelectMonth: Function1<YearMonth?, Unit>
+  - stable onToggleType: Function1<ActivityType, Unit>
+  - stable onClearFilters: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.history.AppointmentActivityContent [restartable=true, skippable=true]
+  - unstable activity: AppointmentActivity
+
+@composable com.example.biodontos.presentation.patients.detail.history.AuditFooterRow [restartable=true, skippable=true]
+  - stable stamp: AuditStamp?
+
+@composable com.example.biodontos.presentation.patients.detail.history.ClarificationNoteDialog [restartable=true, skippable=true]
+  - unstable originalEvolution: Evolution
+  - stable clarificationText: String
+  - stable isSaving: Boolean
+  - stable onTextChange: Function1<String, Unit>
+  - stable onSave: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.history.ConsentActivityContent [restartable=true, skippable=true]
+  - unstable activity: ConsentActivity
+
+@composable com.example.biodontos.presentation.patients.detail.history.EmptyHistoryStateCard [restartable=true, skippable=true]
+  - stable hasAnyActivities: Boolean
+  - stable onClearFilters: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.history.EvolutionActivityContent [restartable=true, skippable=true]
+  - unstable activity: EvolutionActivity
+
+@composable com.example.biodontos.presentation.patients.detail.history.EvolutionMaterialsSnapshotCard [restartable=true, skippable=true]
+  - unstable materials: List<EvolutionMaterialUsed>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patients.detail.history.KpiMetricItem [restartable=true, skippable=true]
+  - stable label: String
+  - stable value: String
+  - stable valueColor: Color
+
+@composable com.example.biodontos.presentation.patients.detail.history.MonthStickyHeader [restartable=true, skippable=true]
+  - stable yearMonth: YearMonth?
+  - stable count: Int
+
+@composable com.example.biodontos.presentation.patients.detail.history.NewPaymentDialog [restartable=true, skippable=true]
+  - unstable treatments: List<Treatment>
+  - stable selectedTreatmentId: String
+  - stable amount: String
+  - stable method: String
+  - stable isSaving: Boolean
+  - stable onSelectTreatment: Function1<String, Unit>
+  - stable onAmountChange: Function1<String, Unit>
+  - stable onMethodChange: Function1<String, Unit>
+  - stable onSave: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.history.NewTreatmentBudgetDialog [restartable=true, skippable=true]
+  - stable description: String
+  - stable totalCost: String
+  - stable isSaving: Boolean
+  - stable onDescriptionChange: Function1<String, Unit>
+  - stable onTotalCostChange: Function1<String, Unit>
+  - stable onSave: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.history.PartialSyncWarningBanner [restartable=true, skippable=true]
+  - unstable failedSources: Set<ActivityType>
+  - stable onRetry: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.history.PatientActivityTimelineCard [restartable=true, skippable=true]
+  - uncertain activity: PatientActivity
+  - stable isExpanded: Boolean
+  - stable onToggleExpand: Function0<Unit>
+  - stable onRequestVoid: Function0<Unit>
+  - stable onOpenClarification: Function1<Evolution, Unit>
+  - stable onOpenTreatmentStatus: Function1<Treatment, Unit>
+  - stable onOpenNewPaymentForTreatment: Function1<String, Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.history.PatientHistoryKpiHeader [restartable=true, skippable=true]
+  - stable summary: PatientHistorySummary
+
+@composable com.example.biodontos.presentation.patients.detail.history.PatientHistoryTab [restartable=true, skippable=true]
+  - stable historyState: PatientHistoryUiState
+  - stable onSelectMonth: Function1<YearMonth?, Unit>
+  - stable onToggleType: Function1<ActivityType, Unit>
+  - stable onClearFilters: Function0<Unit>
+  - stable onToggleExpandActivity: Function1<String, Unit>
+  - stable onRequestVoidActivity: Function1<PatientActivity, Unit>
+  - stable onOpenClarificationDialog: Function1<Evolution, Unit>
+  - stable onOpenTreatmentStatusDialog: Function1<Treatment, Unit>
+  - stable onOpenNewPaymentForTreatment: Function1<String, Unit>
+  - stable onRetry: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patients.detail.history.PaymentActivityContent [restartable=true, skippable=true]
+  - unstable activity: PaymentActivity
+
+@composable com.example.biodontos.presentation.patients.detail.history.QuickActionOptionRow [restartable=true, skippable=true]
+  - stable title: String
+  - stable subtitle: String
+  - stable icon: ImageVector
+  - stable onClick: Function0<Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.patients.detail.history.QuickCreateActivityBottomSheet [restartable=true, skippable=true]
+  - stable onCreateEvolution: Function0<Unit>
+  - stable onCreateAppointment: Function0<Unit>
+  - stable onCreateTreatmentBudget: Function0<Unit>
+  - stable onCreatePayment: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.history.RecordLifecycleActivityContent [restartable=true, skippable=true]
+  - unstable activity: RecordLifecycleActivity
+
+@composable com.example.biodontos.presentation.patients.detail.history.StatusPill [restartable=true, skippable=true]
+  - stable text: String
+  - stable color: Color
+
+@composable com.example.biodontos.presentation.patients.detail.history.TreatmentBudgetActivityContent [restartable=true, skippable=true]
+  - unstable activity: TreatmentBudgetActivity
+
+@composable com.example.biodontos.presentation.patients.detail.history.TreatmentStatusUpdateDialog [restartable=true, skippable=true]
+  - stable treatment: Treatment
+  - stable selectedTargetStatus: TreatmentStatus?
+  - stable reason: String
+  - stable isUpdating: Boolean
+  - stable onSelectStatus: Function1<TreatmentStatus, Unit>
+  - stable onReasonChange: Function1<String, Unit>
+  - stable onConfirm: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.patients.detail.history.VoidActivityDialog [restartable=true, skippable=true]
+  - uncertain target: PatientActivity
+  - stable reason: String
+  - stable step: Int
+  - stable isProcessing: Boolean
+  - stable onReasonChange: Function1<String, Unit>
+  - stable onAdvanceStep: Function0<Unit>
+  - stable onConfirmVoid: Function0<Unit>
+  - stable onDismiss: Function0<Unit>
+
+@composable com.example.biodontos.presentation.periodontogram.InteractivePeriodontogram [restartable=true, skippable=true]
+  - stable selectedToothNumber: Int
+  - unstable availableTeeth: List<Int>
+  - unstable siteMeasurements: Map<Pair<Int, PeriodontalSiteLocation>, PeriodontalSiteMeasurement>
+  - stable onToothSelected: Function1<Int, Unit>
+  - stable onMeasurementChanged: Function1<PeriodontalSiteMeasurement, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.periodontogram.SiteMeasurementCard [restartable=true, skippable=true]
+  - stable title: String
+  - stable measurement: PeriodontalSiteMeasurement
+  - stable onChanged: Function1<PeriodontalSiteMeasurement, Unit>
+  - stable modifier: Modifier?
+
+@composable com.example.biodontos.presentation.periodontogram.SmallStepperButton [restartable=true, skippable=true]
+  - stable text: String
+  - stable enabled: Boolean
+  - stable onClick: Function0<Unit>
+
+@composable com.example.biodontos.ui.theme.BiodontosTheme [restartable=true, skippable=true]
+  - stable darkTheme: Boolean
+  - stable dynamicColor: Boolean
+  - stable content: Function2<Composer, Int, Unit>
+

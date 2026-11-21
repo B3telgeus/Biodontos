@@ -30,7 +30,7 @@ class RemainingAppointmentsUseCasesTest {
     private val clinicClock: ClinicClock = mockk()
     private val modificationPolicy = AppointmentModificationPolicy(minHoursBefore = 2)
 
-    private val testNow = LocalDateTime.of(2026, 10, 20, 8, 0) // Tuesday
+    private val testNow = LocalDateTime.of(2026, 10, 20, 8, 0)
 
     @Before
     fun setUp() {

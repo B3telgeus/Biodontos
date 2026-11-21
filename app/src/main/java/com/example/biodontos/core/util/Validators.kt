@@ -33,7 +33,7 @@ object Validators {
 
     fun validatePhone(value: String): String? {
         val trimmed = value.trim()
-        if (trimmed.isEmpty()) return null // Opcional
+        if (trimmed.isEmpty()) return null
         if (!DIGITS_ONLY_REGEX.matches(trimmed)) return "Error en el teléfono"
         if (trimmed.length < 7 || trimmed.length > 15) return "Error en el teléfono"
         return null

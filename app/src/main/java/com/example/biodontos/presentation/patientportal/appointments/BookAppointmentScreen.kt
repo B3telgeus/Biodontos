@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -62,6 +63,7 @@ import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosScreenBgTop
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.core.designsystem.components.TwoStepConfirmationDialog
@@ -119,7 +121,6 @@ fun BookAppointmentScreen(
     val isRescheduling = state.rescheduleAppointmentId != null
     val titleText = if (isRescheduling) "Reagendar Cita" else "Agendar Cita"
 
-    // Critical PP-02: TwoStepConfirmationDialog on reschedule
     if (state.showRescheduleConfirmDialog) {
         val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.forLanguageTag("es-CO"))
         val dateFormatter = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", Locale.forLanguageTag("es-CO"))
@@ -137,12 +138,13 @@ fun BookAppointmentScreen(
     }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .testTag(TestTags.PatientPortal.BOOK_APPT_ROOT),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = BiodontosScreenBgTop,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            // Barra inferior con botón de confirmación consciente de insets
             BiodontosBottomActionBar(
                 containerColor = BiodontosWhite,
                 contentPadding = PaddingValues(16.dp)
@@ -157,7 +159,9 @@ fun BookAppointmentScreen(
                     enabled = state.selectedSlot != null && !state.isSubmitting,
                     isLoading = state.isSubmitting,
                     onClick = { onEvent(BookAppointmentUiEvent.ConfirmBooking) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.PatientPortal.BOOK_APPT_CONFIRM_BUTTON)
                 )
             }
         }
@@ -170,14 +174,16 @@ fun BookAppointmentScreen(
                 .imePadding()
                 .padding(horizontal = 16.dp)
         ) {
-            // Barra superior
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBackClick) {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.testTag(TestTags.PatientPortal.BOOK_APPT_BACK_BUTTON)
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.ui_clinical_admission_screen_3),
@@ -197,13 +203,13 @@ fun BookAppointmentScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .testTag(TestTags.PatientPortal.BOOK_APPT_LIST),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 88.dp)
             ) {
-                // Tarjeta del Doctor
                 state.doctor?.let { doctor ->
-                    item {
+                    item(key = "doctor") {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -241,8 +247,7 @@ fun BookAppointmentScreen(
                     }
                 }
 
-                // Sección 1: Selector de fecha (Horizontal Strip)
-                item {
+                item(key = "dates") {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
@@ -260,14 +265,17 @@ fun BookAppointmentScreen(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             LazyRow(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.PatientPortal.BOOK_APPT_DATE_STRIP),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                items(state.availableDates) { date ->
+                                items(state.availableDates, key = { it.toString() }) { date ->
                                     DateStripItem(
                                         date = date,
                                         isSelected = date == state.selectedDate,
-                                        onClick = { onEvent(BookAppointmentUiEvent.SelectDate(date)) }
+                                        onClick = { onEvent(BookAppointmentUiEvent.SelectDate(date)) },
+                                        modifier = Modifier.testTag(TestTags.PatientPortal.dateItem(date.toString()))
                                     )
                                 }
                             }
@@ -275,8 +283,7 @@ fun BookAppointmentScreen(
                     }
                 }
 
-                // Sección 2: Horarios disponibles
-                item {
+                item(key = "slots") {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
@@ -301,7 +308,10 @@ fun BookAppointmentScreen(
                                             .height(100.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        CircularProgressIndicator(color = BiodontosDark)
+                                        CircularProgressIndicator(
+                                            color = BiodontosDark,
+                                            modifier = Modifier.testTag(TestTags.PatientPortal.BOOK_APPT_SLOTS_LOADING)
+                                        )
                                     }
                                 }
                                 state.errorMessage != null && state.slots.isEmpty() -> {
@@ -312,6 +322,7 @@ fun BookAppointmentScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Column(
+                                            modifier = Modifier.testTag(TestTags.PatientPortal.BOOK_APPT_SLOTS_ERROR),
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                             verticalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
@@ -323,7 +334,8 @@ fun BookAppointmentScreen(
                                             BiodontosPillButton(
                                                 text = stringResource(R.string.ui_book_appointment_screen_362),
                                                 variant = PillButtonVariant.OUTLINED,
-                                                onClick = { onEvent(BookAppointmentUiEvent.RetrySlots) }
+                                                onClick = { onEvent(BookAppointmentUiEvent.RetrySlots) },
+                                                modifier = Modifier.testTag(TestTags.PatientPortal.BOOK_APPT_RETRY_SLOTS_BUTTON)
                                             )
                                         }
                                     }
@@ -338,7 +350,8 @@ fun BookAppointmentScreen(
                                         Text(
                                             text = stringResource(R.string.doctor_availability_empty),
                                             fontSize = 13.sp,
-                                            color = BiodontosGreyText
+                                            color = BiodontosGreyText,
+                                            modifier = Modifier.testTag(TestTags.PatientPortal.BOOK_APPT_SLOTS_EMPTY)
                                         )
                                     }
                                 }
@@ -363,7 +376,10 @@ fun BookAppointmentScreen(
                                                 SlotChip(
                                                     slot = slot,
                                                     isSelected = slot == state.selectedSlot,
-                                                    onClick = { onEvent(BookAppointmentUiEvent.SelectSlot(slot)) }
+                                                    onClick = { onEvent(BookAppointmentUiEvent.SelectSlot(slot)) },
+                                                    modifier = Modifier.testTag(
+                                                        TestTags.PatientPortal.slotItem(slot.start.toLocalTime().toString())
+                                                    )
                                                 )
                                             }
                                         }
@@ -387,7 +403,10 @@ fun BookAppointmentScreen(
                                                 SlotChip(
                                                     slot = slot,
                                                     isSelected = slot == state.selectedSlot,
-                                                    onClick = { onEvent(BookAppointmentUiEvent.SelectSlot(slot)) }
+                                                    onClick = { onEvent(BookAppointmentUiEvent.SelectSlot(slot)) },
+                                                    modifier = Modifier.testTag(
+                                                        TestTags.PatientPortal.slotItem(slot.start.toLocalTime().toString())
+                                                    )
                                                 )
                                             }
                                         }
@@ -398,8 +417,7 @@ fun BookAppointmentScreen(
                     }
                 }
 
-                // Sección 3: Motivo de consulta
-                item {
+                item(key = "reason") {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
@@ -427,6 +445,7 @@ fun BookAppointmentScreen(
                                     Box(
                                         modifier = Modifier
                                             .defaultMinSize(minHeight = 48.dp)
+                                            .testTag(TestTags.PatientPortal.reasonChip(reason))
                                             .clip(RoundedCornerShape(16.dp))
                                             .background(if (isSelected) BiodontosDark else BiodontosInputBg)
                                             .clickable {
@@ -451,7 +470,9 @@ fun BookAppointmentScreen(
                             OutlinedTextField(
                                 value = state.customReason,
                                 onValueChange = { onEvent(BookAppointmentUiEvent.CustomReasonChanged(it)) },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.PatientPortal.BOOK_APPT_CUSTOM_REASON_FIELD),
                                 placeholder = {
                                     Text(
                                         text = stringResource(R.string.ui_book_appointment_screen_366),
@@ -479,7 +500,8 @@ fun BookAppointmentScreen(
 private fun DateStripItem(
     date: LocalDate,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
     val dayFormatter = DateTimeFormatter.ofPattern("EEE", Locale.forLanguageTag("es-CO"))
@@ -487,7 +509,7 @@ private fun DateStripItem(
     val dayNumber = date.dayOfMonth.toString()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .width(58.dp)
             .defaultMinSize(minHeight = 48.dp)
             .clip(RoundedCornerShape(18.dp))
@@ -520,14 +542,15 @@ private fun DateStripItem(
 private fun SlotChip(
     slot: TimeSlot,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
     val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.forLanguageTag("es-CO"))
     val timeStr = slot.start.format(timeFormatter)
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .defaultMinSize(minHeight = 48.dp, minWidth = 72.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(if (isSelected) BiodontosDark else BiodontosInputBg)

@@ -78,7 +78,6 @@ class ClinicalMaterialTest {
     fun `isNearExpiration returns true when expiring within 30 days and not expired`() {
         val refDate = LocalDate.of(2026, 10, 30)
 
-        // 10 days until expiration
         val in10Days = ClinicalMaterial(
             name = "M1",
             invimaRegistration = "I1",
@@ -88,7 +87,6 @@ class ClinicalMaterialTest {
         )
         assertTrue(in10Days.isNearExpiration(refDate, thresholdDays = 30))
 
-        // Exactly 30 days until expiration
         val in30Days = ClinicalMaterial(
             name = "M2",
             invimaRegistration = "I2",
@@ -98,7 +96,6 @@ class ClinicalMaterialTest {
         )
         assertTrue(in30Days.isNearExpiration(refDate, thresholdDays = 30))
 
-        // 31 days until expiration (not near expiration)
         val in31Days = ClinicalMaterial(
             name = "M3",
             invimaRegistration = "I3",
@@ -108,7 +105,6 @@ class ClinicalMaterialTest {
         )
         assertFalse(in31Days.isNearExpiration(refDate, thresholdDays = 30))
 
-        // Already expired (isNearExpiration must be false for expired)
         val expired = ClinicalMaterial(
             name = "M4",
             invimaRegistration = "I4",

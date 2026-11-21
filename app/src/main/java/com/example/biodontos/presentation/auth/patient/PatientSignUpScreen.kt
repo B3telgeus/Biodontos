@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -69,7 +70,10 @@ fun PatientSignUpScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.testTag(TestTags.Auth.PATIENT_SIGNUP_BACK_BUTTON)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
@@ -81,7 +85,9 @@ fun PatientSignUpScreen(
             )
         },
         containerColor = Color.Transparent,
-        modifier = Modifier.background(backgroundBrush)
+        modifier = Modifier
+            .background(backgroundBrush)
+            .testTag(TestTags.Auth.PATIENT_SIGNUP_ROOT)
     ) { padding ->
         Box(
             modifier = Modifier
@@ -106,7 +112,6 @@ fun PatientSignUpScreen(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // --- STEP INDICATOR (Dots de progreso estilo Figma) ---
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
@@ -140,7 +145,6 @@ fun PatientSignUpScreen(
 
                     when (state.currentStep) {
                         1 -> {
-                            // --- PASO 1: INFORMACIÓN PERSONAL ---
                             Text(
                                 text = stringResource(R.string.ui_patient_sign_up_screen_146),
                                 fontSize = 24.sp,
@@ -153,7 +157,6 @@ fun PatientSignUpScreen(
                                 color = BiodontosGreyText
                             )
 
-                            // Notice Banner estilo Figma
                             Card(
                                 colors = CardDefaults.cardColors(containerColor = Color(0xFFF3F4F6)),
                                 shape = RoundedCornerShape(12.dp)
@@ -177,7 +180,6 @@ fun PatientSignUpScreen(
                                 }
                             }
 
-                            // Nombres y Apellidos
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -186,7 +188,9 @@ fun PatientSignUpScreen(
                                     value = state.firstName,
                                     onValueChange = onFirstNameChange,
                                     label = { Text(stringResource(R.string.ui_clinical_admission_screen_9)) },
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag(TestTags.Auth.PATIENT_SIGNUP_FIRST_NAME_FIELD),
                                     singleLine = true,
                                     isError = state.firstNameError != null,
                                     supportingText = state.firstNameError?.let { { Text(it) } },
@@ -197,7 +201,9 @@ fun PatientSignUpScreen(
                                     value = state.lastName,
                                     onValueChange = onLastNameChange,
                                     label = { Text(stringResource(R.string.ui_doctor_registration_screen_113)) },
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag(TestTags.Auth.PATIENT_SIGNUP_LAST_NAME_FIELD),
                                     singleLine = true,
                                     isError = state.lastNameError != null,
                                     supportingText = state.lastNameError?.let { { Text(it) } },
@@ -206,12 +212,13 @@ fun PatientSignUpScreen(
                                 )
                             }
 
-                            // DNI / Documento de Identidad
                             OutlinedTextField(
                                 value = state.dniCedula,
                                 onValueChange = onDniChange,
                                 label = { Text(stringResource(R.string.ui_patient_sign_up_screen_149)) },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.Auth.PATIENT_SIGNUP_DNI_FIELD),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                                 isError = state.dniError != null,
@@ -220,12 +227,13 @@ fun PatientSignUpScreen(
                                 colors = biodontosTextFieldColors()
                             )
 
-                            // Teléfono
                             OutlinedTextField(
                                 value = state.phone,
                                 onValueChange = onPhoneChange,
                                 label = { Text(stringResource(R.string.ui_patient_sign_up_screen_150)) },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.Auth.PATIENT_SIGNUP_PHONE_FIELD),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
                                 isError = state.phoneError != null,
@@ -236,7 +244,6 @@ fun PatientSignUpScreen(
                         }
 
                         2 -> {
-                            // --- PASO 2: CREDENCIALES DE ACCESO ---
                             Text(
                                 text = stringResource(R.string.ui_patient_sign_up_screen_151),
                                 fontSize = 24.sp,
@@ -249,12 +256,13 @@ fun PatientSignUpScreen(
                                 color = BiodontosGreyText
                             )
 
-                            // Correo Electrónico
                             OutlinedTextField(
                                 value = state.email,
                                 onValueChange = onEmailChange,
                                 label = { Text(stringResource(R.string.ui_patient_sign_up_screen_153)) },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.Auth.PATIENT_SIGNUP_EMAIL_FIELD),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                                 isError = state.emailError != null,
@@ -263,16 +271,20 @@ fun PatientSignUpScreen(
                                 colors = biodontosTextFieldColors()
                             )
 
-                            // Contraseña
                             OutlinedTextField(
                                 value = state.password,
                                 onValueChange = onPasswordChange,
                                 label = { Text(stringResource(R.string.ui_doctor_registration_screen_116)) },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.Auth.PATIENT_SIGNUP_PASSWORD_FIELD),
                                 singleLine = true,
                                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                 trailingIcon = {
-                                    TextButton(onClick = onTogglePasswordVisibility) {
+                                    TextButton(
+                                        onClick = onTogglePasswordVisibility,
+                                        modifier = Modifier.testTag(TestTags.Auth.PATIENT_SIGNUP_PASSWORD_VISIBILITY_BUTTON)
+                                    ) {
                                         Text(
                                             text = if (state.isPasswordVisible) "Ocultar" else "Ver",
                                             color = BiodontosDark,
@@ -288,12 +300,13 @@ fun PatientSignUpScreen(
                                 colors = biodontosTextFieldColors()
                             )
 
-                            // Confirmar Contraseña
                             OutlinedTextField(
                                 value = state.confirmPassword,
                                 onValueChange = onConfirmPasswordChange,
                                 label = { Text(stringResource(R.string.ui_doctor_registration_screen_117)) },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag(TestTags.Auth.PATIENT_SIGNUP_CONFIRM_PASSWORD_FIELD),
                                 singleLine = true,
                                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
@@ -305,7 +318,6 @@ fun PatientSignUpScreen(
                         }
 
                         3 -> {
-                            // --- PASO 3: POLÍTICA Y TÉRMINOS (Figma 05_Registro_Paciente_Usuario2.png) ---
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
@@ -349,7 +361,8 @@ fun PatientSignUpScreen(
                                 Checkbox(
                                     checked = state.termsAccepted,
                                     onCheckedChange = onTermsAcceptedChange,
-                                    colors = CheckboxDefaults.colors(checkedColor = BiodontosDark)
+                                    colors = CheckboxDefaults.colors(checkedColor = BiodontosDark),
+                                    modifier = Modifier.testTag(TestTags.Auth.PATIENT_SIGNUP_TERMS_CHECKBOX)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
@@ -368,19 +381,19 @@ fun PatientSignUpScreen(
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(TestTags.Auth.PATIENT_SIGNUP_ERROR_TEXT)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // --- BARRA INFERIOR DE NAVEGACIÓN: [ <- ATRÁS ]  y  [ SIGUIENTE -> ] ---
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // BOTÓN RETROCEDER / ATRÁS
                         OutlinedButton(
                             onClick = onBackClick,
                             shape = RoundedCornerShape(24.dp),
@@ -404,7 +417,6 @@ fun PatientSignUpScreen(
                             )
                         }
 
-                        // BOTÓN SIGUIENTE / FINALIZAR REGISTRO
                         Button(
                             onClick = onNextClick,
                             enabled = !state.isLoading,
@@ -417,6 +429,7 @@ fun PatientSignUpScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(54.dp)
+                                .testTag(TestTags.Auth.PATIENT_SIGNUP_NEXT_BUTTON)
                         ) {
                             if (state.isLoading) {
                                 CircularProgressIndicator(

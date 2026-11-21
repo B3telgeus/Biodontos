@@ -18,13 +18,10 @@ class OdontogramRepositoryImpl : OdontogramRepository {
 
     override suspend fun getOdontogram(patientId: String): Result<List<Tooth>> = withContext(Dispatchers.IO) {
         try {
-            // 1. Get Clinical Record
             val record = SupabaseClient.client.from("clinical_records")
                 .select { filter { ClinicalRecordDto::patientId eq patientId } }
                 .decodeSingleOrNull<ClinicalRecordDto>() ?: return@withContext Result.success(emptyList())
 
-            // 2. Get all tooth states for this record via evolutions
-            // For simplicity, we'll fetch all and group by tooth/surface in memory
             // A more efficient way would be a RPC or a complex join
             val recordId = record.id ?: return@withContext Result.success(emptyList())
             val evolutions = SupabaseClient.client.from("evolutions")
@@ -38,7 +35,6 @@ class OdontogramRepositoryImpl : OdontogramRepository {
                 .select { filter { ToothStateDto::evolutionId isIn evolutionIds } }
                 .decodeList<ToothStateDto>()
 
-            // Group by tooth number and surface, taking the latest one (assuming created_at order or last in list)
             val toothMap = mutableMapOf<Int, MutableMap<ToothSurface, ToothCondition>>()
 
             toothStates.forEach { dto ->
@@ -70,7 +66,6 @@ class OdontogramRepositoryImpl : OdontogramRepository {
         comment: String?
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // 1. Get or create Clinical Record
             var record = SupabaseClient.client.from("clinical_records")
                 .select { filter { ClinicalRecordDto::patientId eq patientId } }
                 .decodeSingleOrNull<ClinicalRecordDto>()
@@ -83,18 +78,16 @@ class OdontogramRepositoryImpl : OdontogramRepository {
 
             val validRecordId = requireNotNull(record.id) { "Clinical record ID no puede ser nulo al registrar evolución" }
 
-            // 2. Create Evolution
             val evolution = SupabaseClient.client.from("evolutions")
                 .insert(EvolutionDto(
                     recordId = validRecordId,
                     description = comment ?: "Actualización de diente $toothNumber",
-                    doctorName = "Doctor General" // Placeholder
+                    doctorName = "Doctor General"
                 )) { select() }
                 .decodeSingle<EvolutionDto>()
 
             val validEvolutionId = requireNotNull(evolution.id) { "Evolution ID no puede ser nulo al registrar superficie" }
 
-            // 3. Insert Tooth State
             SupabaseClient.client.from("tooth_states").insert(
                 ToothStateDto(
                     evolutionId = validEvolutionId,

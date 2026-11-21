@@ -90,21 +90,17 @@ class DoctorDocumentsViewModelTest {
 
         val viewModel = DoctorDocumentsViewModel(getPatientsUseCase)
 
-        // Búsqueda por nombre
         viewModel.onEvent(DoctorDocumentsUiEvent.SearchQueryChanged("carlos"))
         assertEquals(1, viewModel.uiState.value.filteredPatients.size)
         assertEquals("Carlos", viewModel.uiState.value.filteredPatients.first().firstName)
 
-        // Búsqueda por DNI
         viewModel.onEvent(DoctorDocumentsUiEvent.SearchQueryChanged("9876"))
         assertEquals(1, viewModel.uiState.value.filteredPatients.size)
         assertEquals("Maria", viewModel.uiState.value.filteredPatients.first().firstName)
 
-        // Búsqueda sin coincidencias
         viewModel.onEvent(DoctorDocumentsUiEvent.SearchQueryChanged("99999999"))
         assertTrue(viewModel.uiState.value.filteredPatients.isEmpty())
 
-        // Limpiar búsqueda
         viewModel.onEvent(DoctorDocumentsUiEvent.SearchQueryChanged(""))
         assertEquals(3, viewModel.uiState.value.filteredPatients.size)
     }
@@ -116,22 +112,18 @@ class DoctorDocumentsViewModelTest {
 
         val viewModel = DoctorDocumentsViewModel(getPatientsUseCase)
 
-        // Consentimiento Firmado
         viewModel.onEvent(DoctorDocumentsUiEvent.FilterSelected(DocumentFilter.CONSENT_SIGNED))
         assertEquals(2, viewModel.uiState.value.filteredPatients.size)
         assertTrue(viewModel.uiState.value.filteredPatients.all { it.consentSigned })
 
-        // Firma Pendiente
         viewModel.onEvent(DoctorDocumentsUiEvent.FilterSelected(DocumentFilter.CONSENT_PENDING))
         assertEquals(1, viewModel.uiState.value.filteredPatients.size)
         assertEquals("Maria", viewModel.uiState.value.filteredPatients.first().firstName)
 
-        // Alergias Críticas
         viewModel.onEvent(DoctorDocumentsUiEvent.FilterSelected(DocumentFilter.CRITICAL_ALLERGIES))
         assertEquals(2, viewModel.uiState.value.filteredPatients.size)
         assertTrue(viewModel.uiState.value.filteredPatients.all { it.hasCriticalAllergies })
 
-        // Todos
         viewModel.onEvent(DoctorDocumentsUiEvent.FilterSelected(DocumentFilter.ALL))
         assertEquals(3, viewModel.uiState.value.filteredPatients.size)
     }
@@ -143,13 +135,11 @@ class DoctorDocumentsViewModelTest {
 
         val viewModel = DoctorDocumentsViewModel(getPatientsUseCase)
 
-        // Filtro Alergias Críticas + Búsqueda "Ana"
         viewModel.onEvent(DoctorDocumentsUiEvent.FilterSelected(DocumentFilter.CRITICAL_ALLERGIES))
         viewModel.onEvent(DoctorDocumentsUiEvent.SearchQueryChanged("Ana"))
         assertEquals(1, viewModel.uiState.value.filteredPatients.size)
         assertEquals("Ana", viewModel.uiState.value.filteredPatients.first().firstName)
 
-        // Filtro Alergias Críticas + Búsqueda "Carlos" (no tiene alergia)
         viewModel.onEvent(DoctorDocumentsUiEvent.SearchQueryChanged("Carlos"))
         assertTrue(viewModel.uiState.value.filteredPatients.isEmpty())
     }

@@ -55,6 +55,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -72,6 +73,7 @@ import com.example.biodontos.core.designsystem.Carmesi
 import com.example.biodontos.core.designsystem.DentalTheme
 import com.example.biodontos.core.designsystem.Esmeralda
 import com.example.biodontos.core.designsystem.SlateLight
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.Zafiro
 import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.AppointmentStatus
@@ -115,130 +117,128 @@ fun PatientHistoryTab(
 ) {
     val haptic = LocalHapticFeedback.current
 
-    if (historyState.isTimelineLoading) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(color = BiodontosDark)
-        }
-        return
-    }
-
-    if (historyState.timelineError != null && historyState.allActivities.isEmpty()) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = BiodontosWhite)
+    Box(modifier = modifier.fillMaxSize().testTag(TestTags.Patients.HISTORY_ROOT)) {
+        if (historyState.isTimelineLoading) {
+            CircularProgressIndicator(
+                color = BiodontosDark,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .testTag(TestTags.Patients.HISTORY_LOADING)
+            )
+        } else if (historyState.timelineError != null && historyState.allActivities.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Card(
+                    modifier = Modifier.testTag(TestTags.Patients.HISTORY_ERROR),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = BiodontosWhite)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = stringResource(R.string.ui_patient_history_tab_464),
-                        tint = Carmesi,
-                        modifier = Modifier.size(36.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = historyState.timelineError,
-                        color = BiodontosDark,
-                        textAlign = TextAlign.Center,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = onRetry,
-                        colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.ui_doctor_appointments_screen_175))
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = stringResource(R.string.ui_patient_history_tab_464),
+                            tint = Carmesi,
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = historyState.timelineError,
+                            color = BiodontosDark,
+                            textAlign = TextAlign.Center,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = onRetry,
+                            colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                            modifier = Modifier.testTag(TestTags.Patients.HISTORY_RETRY_BUTTON)
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.ui_doctor_appointments_screen_175))
+                        }
                     }
                 }
             }
-        }
-        return
-    }
-
-    val groupedByMonth: Map<YearMonth?, List<PatientActivity>> =
-        historyState.filteredActivities.groupBy { activity ->
-            if (activity.isDateValid) YearMonth.from(activity.occurredAt) else null
-        }
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // 1. Banner de advertencia si alguna fuente falló parcialmente
-        if (historyState.failedSources.isNotEmpty()) {
-            item(key = "partial-failure-banner") {
-                PartialSyncWarningBanner(
-                    failedSources = historyState.failedSources,
-                    onRetry = onRetry
-                )
-            }
-        }
-
-        // 2. KPI Header de Trazabilidad del Paciente
-        item(key = "kpi-summary-header") {
-            PatientHistoryKpiHeader(summary = historyState.summary)
-        }
-
-        // 3. Barra de Filtros por Mes y Tipo de Actividad
-        item(key = "activity-filter-bar") {
-            ActivityFilterBar(
-                availableMonths = historyState.availableMonths,
-                selectedMonth = historyState.filter.month,
-                selectedTypes = historyState.filter.types,
-                onSelectMonth = { month ->
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onSelectMonth(month)
-                },
-                onToggleType = { type ->
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onToggleType(type)
-                },
-                onClearFilters = onClearFilters
-            )
-        }
-
-        // 4. Estado vacío o Línea de Tiempo agrupada por Mes
-        if (historyState.filteredActivities.isEmpty()) {
-            item(key = "empty-timeline") {
-                EmptyHistoryStateCard(
-                    hasAnyActivities = historyState.allActivities.isNotEmpty(),
-                    onClearFilters = onClearFilters
-                )
-            }
         } else {
-            groupedByMonth.forEach { (yearMonth, monthActivities) ->
-                val headerKey = "header-${yearMonth ?: "invalid"}"
-                stickyHeader(key = headerKey) {
-                    MonthStickyHeader(yearMonth = yearMonth, count = monthActivities.size)
+            val groupedByMonth: Map<YearMonth?, List<PatientActivity>> =
+                historyState.filteredActivities.groupBy { activity ->
+                    if (activity.isDateValid) YearMonth.from(activity.occurredAt) else null
                 }
 
-                items(
-                    items = monthActivities,
-                    key = { it.id }
-                ) { activity ->
-                    PatientActivityTimelineCard(
-                        activity = activity,
-                        isExpanded = historyState.expandedActivityId == activity.id,
-                        onToggleExpand = { onToggleExpandActivity(activity.id) },
-                        onRequestVoid = { onRequestVoidActivity(activity) },
-                        onOpenClarification = onOpenClarificationDialog,
-                        onOpenTreatmentStatus = onOpenTreatmentStatusDialog,
-                        onOpenNewPaymentForTreatment = onOpenNewPaymentForTreatment
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(TestTags.Patients.HISTORY_LIST),
+                contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (historyState.failedSources.isNotEmpty()) {
+                    item(key = "partial-failure-banner") {
+                        PartialSyncWarningBanner(
+                            failedSources = historyState.failedSources,
+                            onRetry = onRetry
+                        )
+                    }
+                }
+
+                item(key = "kpi-summary-header") {
+                    PatientHistoryKpiHeader(summary = historyState.summary)
+                }
+
+                item(key = "activity-filter-bar") {
+                    ActivityFilterBar(
+                        availableMonths = historyState.availableMonths,
+                        selectedMonth = historyState.filter.month,
+                        selectedTypes = historyState.filter.types,
+                        onSelectMonth = { month ->
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onSelectMonth(month)
+                        },
+                        onToggleType = { type ->
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onToggleType(type)
+                        },
+                        onClearFilters = onClearFilters
                     )
+                }
+
+                if (historyState.filteredActivities.isEmpty()) {
+                    item(key = "empty-timeline") {
+                        EmptyHistoryStateCard(
+                            hasAnyActivities = historyState.allActivities.isNotEmpty(),
+                            onClearFilters = onClearFilters
+                        )
+                    }
+                } else {
+                    groupedByMonth.forEach { (yearMonth, monthActivities) ->
+                        val headerKey = "header-${yearMonth ?: "invalid"}"
+                        stickyHeader(key = headerKey) {
+                            MonthStickyHeader(yearMonth = yearMonth, count = monthActivities.size)
+                        }
+
+                        items(
+                            items = monthActivities,
+                            key = { it.id }
+                        ) { activity ->
+                            PatientActivityTimelineCard(
+                                activity = activity,
+                                isExpanded = historyState.expandedActivityId == activity.id,
+                                onToggleExpand = { onToggleExpandActivity(activity.id) },
+                                onRequestVoid = { onRequestVoidActivity(activity) },
+                                onOpenClarification = onOpenClarificationDialog,
+                                onOpenTreatmentStatus = onOpenTreatmentStatusDialog,
+                                onOpenNewPaymentForTreatment = onOpenNewPaymentForTreatment
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -289,7 +289,9 @@ private fun PartialSyncWarningBanner(
 @Composable
 private fun PatientHistoryKpiHeader(summary: PatientHistorySummary) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.Patients.HISTORY_KPI_CARD),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosDark),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -402,7 +404,9 @@ private fun ActivityFilterBar(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Zafiro,
-                        modifier = Modifier.clickable(onClick = onClearFilters)
+                        modifier = Modifier
+                            .clickable(onClick = onClearFilters)
+                            .testTag(TestTags.Patients.HISTORY_CLEAR_FILTERS_BUTTON)
                     )
                 }
             }
@@ -414,7 +418,8 @@ private fun ActivityFilterBar(
                     FilterChip(
                         selected = selectedMonth == null,
                         onClick = { onSelectMonth(null) },
-                        label = { Text(stringResource(R.string.ui_patient_history_tab_471), fontSize = 12.sp) }
+                        label = { Text(stringResource(R.string.ui_patient_history_tab_471), fontSize = 12.sp) },
+                        modifier = Modifier.testTag(TestTags.Patients.HISTORY_FILTER_ALL_MONTHS)
                     )
                 }
                 items(availableMonths, key = { it.toString() }) { ym ->
@@ -423,7 +428,8 @@ private fun ActivityFilterBar(
                     FilterChip(
                         selected = selectedMonth == ym,
                         onClick = { onSelectMonth(if (selectedMonth == ym) null else ym) },
-                        label = { Text(formatted, fontSize = 12.sp) }
+                        label = { Text(formatted, fontSize = 12.sp) },
+                        modifier = Modifier.testTag(TestTags.Patients.historyMonthChip(ym.toString()))
                     )
                 }
             }
@@ -447,7 +453,8 @@ private fun ActivityFilterBar(
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = activityAccentColor(type).copy(alpha = 0.16f),
                             selectedLabelColor = BiodontosDark
-                        )
+                        ),
+                        modifier = Modifier.testTag(TestTags.Patients.historyTypeChip(type.name))
                     )
                 }
             }
@@ -511,7 +518,8 @@ private fun PatientActivityTimelineCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onToggleExpand),
+            .clickable(onClick = onToggleExpand)
+            .testTag(TestTags.Patients.historyItem(activity.id)),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isVoided) BiodontosInputBg else BiodontosWhite
@@ -519,7 +527,6 @@ private fun PatientActivityTimelineCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            // Cabecera de tipo + fecha + estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -559,7 +566,6 @@ private fun PatientActivityTimelineCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Contenido específico según el subtipo de actividad
             when (activity) {
                 is PatientActivity.AppointmentActivity -> AppointmentActivityContent(activity)
                 is PatientActivity.EvolutionActivity -> EvolutionActivityContent(activity)
@@ -569,11 +575,9 @@ private fun PatientActivityTimelineCard(
                 is PatientActivity.RecordLifecycleActivity -> RecordLifecycleActivityContent(activity)
             }
 
-            // Sello de Auditoría ("Registrado por ...")
             Spacer(modifier = Modifier.height(8.dp))
             AuditFooterRow(stamp = activity.createdStamp)
 
-            // Sección expandible con historial de auditoría y acciones contextuales
             AnimatedVisibility(visible = isExpanded) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Spacer(modifier = Modifier.height(10.dp))
@@ -598,7 +602,6 @@ private fun PatientActivityTimelineCard(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    // Acciones CRUD / Normativas según tipo
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -609,14 +612,18 @@ private fun PatientActivityTimelineCard(
                                     OutlinedButton(
                                         onClick = { onOpenClarification(activity.evolution) },
                                         shape = RoundedCornerShape(10.dp),
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag(TestTags.Patients.historyClarifyButton(activity.id))
                                     ) {
                                         Text(stringResource(R.string.ui_patient_history_tab_477), fontSize = 12.sp)
                                     }
                                     OutlinedButton(
                                         onClick = onRequestVoid,
                                         shape = RoundedCornerShape(10.dp),
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag(TestTags.Patients.historyVoidButton(activity.id))
                                     ) {
                                         Text(stringResource(R.string.ui_patient_history_tab_478), fontSize = 12.sp, color = Carmesi)
                                     }
@@ -627,7 +634,9 @@ private fun PatientActivityTimelineCard(
                                     OutlinedButton(
                                         onClick = onRequestVoid,
                                         shape = RoundedCornerShape(10.dp),
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag(TestTags.Patients.historyVoidButton(activity.id))
                                     ) {
                                         Text(stringResource(R.string.ui_patient_history_tab_479), fontSize = 12.sp, color = Carmesi)
                                     }
@@ -639,7 +648,9 @@ private fun PatientActivityTimelineCard(
                                     OutlinedButton(
                                         onClick = { onOpenTreatmentStatus(activity.treatment) },
                                         shape = RoundedCornerShape(10.dp),
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag(TestTags.Patients.historyStatusButton(activity.id))
                                     ) {
                                         Text(stringResource(R.string.ui_patient_history_tab_480), fontSize = 12.sp)
                                     }
@@ -651,7 +662,9 @@ private fun PatientActivityTimelineCard(
                                         onClick = { onOpenNewPaymentForTreatment(activity.treatment.id) },
                                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
                                         shape = RoundedCornerShape(10.dp),
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag(TestTags.Patients.historyPaymentButton(activity.id))
                                     ) {
                                         Text(stringResource(R.string.ui_clinical_history_dialogs_463), fontSize = 12.sp)
                                     }
@@ -1043,7 +1056,9 @@ private fun EmptyHistoryStateCard(
     onClearFilters: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.Patients.HISTORY_EMPTY),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = BiodontosWhite)
     ) {

@@ -13,7 +13,7 @@ import java.time.LocalTime
 class SlotCalculatorTest {
 
     private val doctorId = DoctorId("doc-123")
-    private val testDate = LocalDate.of(2026, 10, 19) // Lunes
+    private val testDate = LocalDate.of(2026, 10, 19)
 
     @Test
     fun `calculateAvailableSlots generates slots within morning availability`() {
@@ -27,7 +27,7 @@ class SlotCalculatorTest {
             )
         )
 
-        val currentTime = LocalDateTime.of(2026, 10, 18, 12, 0) // El día anterior
+        val currentTime = LocalDateTime.of(2026, 10, 18, 12, 0)
         val busyIntervals = emptyList<ClosedRange<LocalDateTime>>()
 
         val slots = SlotCalculator.calculateAvailableSlots(
@@ -38,7 +38,6 @@ class SlotCalculatorTest {
             minLeadTimeHours = 2
         )
 
-        // 8:00-8:30, 8:30-9:00, 9:00-9:30, 9:30-10:00 -> 4 slots
         assertEquals(4, slots.size)
         assertEquals(LocalDateTime.of(2026, 10, 19, 8, 0), slots[0].start)
         assertEquals(LocalDateTime.of(2026, 10, 19, 8, 30), slots[0].end)
@@ -58,7 +57,6 @@ class SlotCalculatorTest {
         )
 
         val currentTime = LocalDateTime.of(2026, 10, 18, 12, 0)
-        // Cita ocupada de 8:30 a 9:00
         val busyIntervals = listOf(
             LocalDateTime.of(2026, 10, 19, 8, 30)..LocalDateTime.of(2026, 10, 19, 9, 0)
         )
@@ -72,7 +70,6 @@ class SlotCalculatorTest {
         )
 
         assertEquals(3, slots.size)
-        // No debe estar el slot de 8:30
         assertTrue(slots.none { it.start == LocalDateTime.of(2026, 10, 19, 8, 30) })
     }
 
@@ -88,7 +85,6 @@ class SlotCalculatorTest {
             )
         )
 
-        // Hora actual: Lunes 8:15 AM -> Con 2 horas mínimas de anticipación, solo a partir de 10:15 AM
         val currentTime = LocalDateTime.of(2026, 10, 19, 8, 15)
 
         val slots = SlotCalculator.calculateAvailableSlots(

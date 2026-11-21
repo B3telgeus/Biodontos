@@ -70,7 +70,6 @@ sealed interface MaterialsUiEvent {
     data class TabSelected(val tab: MaterialTabFilter) : MaterialsUiEvent
     data object Refresh : MaterialsUiEvent
 
-    // Form Events
     data object OpenCreateForm : MaterialsUiEvent
     data class OpenEditForm(val material: ClinicalMaterial) : MaterialsUiEvent
     data object DismissForm : MaterialsUiEvent
@@ -81,7 +80,6 @@ sealed interface MaterialsUiEvent {
     data class FormExpirationDateChanged(val date: LocalDate) : MaterialsUiEvent
     data object SaveMaterial : MaterialsUiEvent
 
-    // Deactivation / Reactivation Events
     data class RequestDeactivate(val material: ClinicalMaterial) : MaterialsUiEvent
     data object DismissDeactivateDialog : MaterialsUiEvent
     data object ConfirmDeactivate : MaterialsUiEvent

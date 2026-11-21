@@ -17,12 +17,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -85,12 +87,16 @@ fun PatientRegistrationScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     Scaffold(
+        modifier = Modifier.testTag(TestTags.Patients.REG_ROOT),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.ui_patient_registration_screen_565)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.testTag(TestTags.Patients.REG_BACK_BUTTON)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.ui_doctor_registration_screen_110)
@@ -114,7 +120,9 @@ fun PatientRegistrationScreen(
                 value = state.dniCedula,
                 onValueChange = onDniChange,
                 label = { Text(stringResource(R.string.ui_patient_registration_screen_566)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Patients.REG_DNI_FIELD),
                 singleLine = true,
                 isError = state.dniError != null,
                 supportingText = state.dniError?.let { { Text(it) } },
@@ -125,7 +133,9 @@ fun PatientRegistrationScreen(
                 value = state.firstName,
                 onValueChange = onFirstNameChange,
                 label = { Text(stringResource(R.string.ui_doctor_profile_screen_316)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Patients.REG_FIRST_NAME_FIELD),
                 singleLine = true,
                 isError = state.firstNameError != null,
                 supportingText = state.firstNameError?.let { { Text(it) } },
@@ -136,7 +146,9 @@ fun PatientRegistrationScreen(
                 value = state.lastName,
                 onValueChange = onLastNameChange,
                 label = { Text(stringResource(R.string.ui_doctor_profile_screen_318)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Patients.REG_LAST_NAME_FIELD),
                 singleLine = true,
                 isError = state.lastNameError != null,
                 supportingText = state.lastNameError?.let { { Text(it) } },
@@ -147,7 +159,9 @@ fun PatientRegistrationScreen(
                 value = state.phone,
                 onValueChange = onPhoneChange,
                 label = { Text(stringResource(R.string.ui_doctor_registration_screen_115)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Patients.REG_PHONE_FIELD),
                 singleLine = true,
                 colors = biodontosTextFieldColors()
             )
@@ -161,6 +175,7 @@ fun PatientRegistrationScreen(
                         onValueChange = onConsentChange,
                         role = Role.Checkbox
                     )
+                    .testTag(TestTags.Patients.REG_CONSENT_ROW)
             ) {
                 Checkbox(
                     checked = state.consentSigned,
@@ -178,6 +193,7 @@ fun PatientRegistrationScreen(
                         onValueChange = onAllergiesChange,
                         role = Role.Checkbox
                     )
+                    .testTag(TestTags.Patients.REG_ALLERGIES_ROW)
             ) {
                 Checkbox(
                     checked = state.hasCriticalAllergies,
@@ -192,7 +208,9 @@ fun PatientRegistrationScreen(
                     onValueChange = onAllergiesDescriptionChange,
                     label = { Text(stringResource(R.string.ui_patient_registration_screen_568)) },
                     placeholder = { Text(stringResource(R.string.ui_patient_registration_screen_569)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Patients.REG_ALLERGIES_DESC_FIELD),
                     singleLine = true,
                     colors = biodontosTextFieldColors()
                 )
@@ -202,7 +220,8 @@ fun PatientRegistrationScreen(
                 Text(
                     text = error,
                     color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.testTag(TestTags.Patients.REG_ERROR_TEXT)
                 )
             }
 
@@ -220,6 +239,7 @@ fun PatientRegistrationScreen(
                     modifier = Modifier
                         .weight(1f)
                         .height(52.dp)
+                        .testTag(TestTags.Patients.REG_CANCEL_BUTTON)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -244,6 +264,7 @@ fun PatientRegistrationScreen(
                     modifier = Modifier
                         .weight(1.3f)
                         .height(52.dp)
+                        .testTag(TestTags.Patients.REG_SAVE_BUTTON)
                 ) {
                     if (state.isLoading) {
                         CircularProgressIndicator(

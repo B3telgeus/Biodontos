@@ -152,15 +152,12 @@ class PatientPaymentsViewModelTest {
         val viewModel = PatientPaymentsViewModel(getCurrentPatientUseCase, getPaymentSummaryUseCase)
         advanceUntilIdle()
 
-        // Filter: ALL
         assertEquals(2, viewModel.uiState.value.filteredBalances.size)
 
-        // Filter: PENDING
         viewModel.onEvent(PatientPaymentsUiEvent.SelectFilter(PaymentFilter.PENDING))
         assertEquals(1, viewModel.uiState.value.filteredBalances.size)
         assertEquals("tr-1", viewModel.uiState.value.filteredBalances.first().treatment.id)
 
-        // Filter: COMPLETED
         viewModel.onEvent(PatientPaymentsUiEvent.SelectFilter(PaymentFilter.COMPLETED))
         assertEquals(1, viewModel.uiState.value.filteredBalances.size)
         assertEquals("tr-2", viewModel.uiState.value.filteredBalances.first().treatment.id)

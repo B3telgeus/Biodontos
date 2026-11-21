@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -51,7 +52,10 @@ fun ForgotPasswordScreen(
             TopAppBar(
                 title = { },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.testTag(TestTags.Auth.FORGOT_PASSWORD_BACK_BUTTON)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
@@ -63,7 +67,9 @@ fun ForgotPasswordScreen(
             )
         },
         containerColor = Color.Transparent,
-        modifier = Modifier.background(backgroundBrush)
+        modifier = Modifier
+            .background(backgroundBrush)
+            .testTag(TestTags.Auth.FORGOT_PASSWORD_ROOT)
     ) { padding ->
         Box(
             modifier = Modifier
@@ -89,45 +95,50 @@ fun ForgotPasswordScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (state.isSubmittedSuccess) {
-                        // Success View
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = Esmeralda,
-                            modifier = Modifier.size(72.dp)
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Text(
-                            text = stringResource(R.string.ui_forgot_password_screen_160),
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BiodontosDark,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = stringResource(R.string.ui_forgot_password_screen_161, state.email),
-                            fontSize = 15.sp,
-                            color = BiodontosGreyText,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 22.sp
-                        )
-                        Spacer(modifier = Modifier.height(32.dp))
-                        Button(
-                            onClick = onBackClick,
-                            shape = RoundedCornerShape(28.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = BiodontosDark,
-                                contentColor = Color.White
-                            ),
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(56.dp)
+                                .testTag(TestTags.Auth.FORGOT_PASSWORD_SUCCESS_VIEW),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(stringResource(R.string.ui_forgot_password_screen_162), fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Esmeralda,
+                                modifier = Modifier.size(72.dp)
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Text(
+                                text = stringResource(R.string.ui_forgot_password_screen_160),
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BiodontosDark,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = stringResource(R.string.ui_forgot_password_screen_161, state.email),
+                                fontSize = 15.sp,
+                                color = BiodontosGreyText,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 22.sp
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Button(
+                                onClick = onBackClick,
+                                shape = RoundedCornerShape(28.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = BiodontosDark,
+                                    contentColor = Color.White
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp)
+                            ) {
+                                Text(stringResource(R.string.ui_forgot_password_screen_162), fontWeight = FontWeight.Bold)
+                            }
                         }
                     } else {
-                        // Request View
                         Text(
                             text = stringResource(R.string.ui_forgot_password_screen_163),
                             fontSize = 28.sp,
@@ -160,7 +171,9 @@ fun ForgotPasswordScreen(
                             supportingText = state.emailError?.let { { Text(it) } },
                             shape = RoundedCornerShape(16.dp),
                             colors = biodontosTextFieldColors(),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(TestTags.Auth.FORGOT_PASSWORD_EMAIL_FIELD)
                         )
 
                         if (state.error != null) {
@@ -169,7 +182,8 @@ fun ForgotPasswordScreen(
                                 text = state.error,
                                 color = MaterialTheme.colorScheme.error,
                                 fontSize = 14.sp,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.testTag(TestTags.Auth.FORGOT_PASSWORD_ERROR_TEXT)
                             )
                         }
 
@@ -208,6 +222,7 @@ fun ForgotPasswordScreen(
                                 modifier = Modifier
                                     .weight(1.3f)
                                     .height(54.dp)
+                                    .testTag(TestTags.Auth.FORGOT_PASSWORD_SUBMIT_BUTTON)
                             ) {
                                 if (state.isLoading) {
                                     CircularProgressIndicator(

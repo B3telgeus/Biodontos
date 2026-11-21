@@ -40,6 +40,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -50,6 +51,7 @@ import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.Carmesi
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.domain.model.Evolution
 import com.example.biodontos.domain.model.Treatment
@@ -67,7 +69,8 @@ fun QuickCreateActivityBottomSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = BiodontosWhite
+        containerColor = BiodontosWhite,
+        modifier = Modifier.testTag(TestTags.Patients.QUICK_SHEET)
     ) {
         Column(
             modifier = Modifier
@@ -93,25 +96,29 @@ fun QuickCreateActivityBottomSheet(
                 title = "Nueva Evolución Clínica",
                 subtitle = "Registrar procedimiento, pieza FDI y materiales INVIMA",
                 icon = Icons.Default.Edit,
-                onClick = onCreateEvolution
+                onClick = onCreateEvolution,
+                modifier = Modifier.testTag(TestTags.Patients.QUICK_SHEET_EVOLUTION)
             )
             QuickActionOptionRow(
                 title = "Agendar Cita",
                 subtitle = "Programar control o sesión odontológica",
                 icon = Icons.Default.DateRange,
-                onClick = onCreateAppointment
+                onClick = onCreateAppointment,
+                modifier = Modifier.testTag(TestTags.Patients.QUICK_SHEET_APPOINTMENT)
             )
             QuickActionOptionRow(
                 title = "Nuevo Presupuesto de Tratamiento",
                 subtitle = "Crear plan de tratamiento valorizado en COP",
                 icon = Icons.Default.Add,
-                onClick = onCreateTreatmentBudget
+                onClick = onCreateTreatmentBudget,
+                modifier = Modifier.testTag(TestTags.Patients.QUICK_SHEET_TREATMENT)
             )
             QuickActionOptionRow(
                 title = "Registrar Pago / Abono",
                 subtitle = "Imputar abono a un presupuesto activo del paciente",
                 icon = Icons.Default.Add,
-                onClick = onCreatePayment
+                onClick = onCreatePayment,
+                modifier = Modifier.testTag(TestTags.Patients.QUICK_SHEET_PAYMENT)
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -123,10 +130,11 @@ private fun QuickActionOptionRow(
     title: String,
     subtitle: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
@@ -172,6 +180,7 @@ fun VoidActivityDialog(
 
     AlertDialog(
         onDismissRequest = { if (!isProcessing) onDismiss() },
+        modifier = Modifier.testTag(TestTags.Patients.VOID_DIALOG),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -219,7 +228,9 @@ fun VoidActivityDialog(
                         onValueChange = onReasonChange,
                         label = { Text(stringResource(R.string.ui_clinical_history_dialogs_433)) },
                         placeholder = { Text(stringResource(R.string.ui_clinical_history_dialogs_434)) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.Patients.VOID_REASON_FIELD),
                         colors = biodontosTextFieldColors()
                     )
                 } else {
@@ -263,7 +274,8 @@ fun VoidActivityDialog(
                 Button(
                     onClick = onAdvanceStep,
                     enabled = reason.trim().length >= 10,
-                    colors = ButtonDefaults.buttonColors(containerColor = Carmesi)
+                    colors = ButtonDefaults.buttonColors(containerColor = Carmesi),
+                    modifier = Modifier.testTag(TestTags.Patients.VOID_CONFIRM_BUTTON)
                 ) {
                     Text(stringResource(R.string.ui_clinical_history_dialogs_439))
                 }
@@ -271,7 +283,8 @@ fun VoidActivityDialog(
                 Button(
                     onClick = onConfirmVoid,
                     enabled = !isProcessing,
-                    colors = ButtonDefaults.buttonColors(containerColor = Carmesi)
+                    colors = ButtonDefaults.buttonColors(containerColor = Carmesi),
+                    modifier = Modifier.testTag(TestTags.Patients.VOID_CONFIRM_BUTTON)
                 ) {
                     if (isProcessing) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
@@ -282,7 +295,11 @@ fun VoidActivityDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isProcessing) {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isProcessing,
+                modifier = Modifier.testTag(TestTags.Patients.VOID_DISMISS_BUTTON)
+            ) {
                 Text(stringResource(R.string.ui_doctor_appointments_screen_191))
             }
         }
@@ -300,6 +317,7 @@ fun ClarificationNoteDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isSaving) onDismiss() },
+        modifier = Modifier.testTag(TestTags.Patients.CLARIFICATION_DIALOG),
         title = { Text(stringResource(R.string.ui_clinical_history_dialogs_441), fontWeight = FontWeight.Bold) },
         text = {
             Column(
@@ -330,7 +348,9 @@ fun ClarificationNoteDialog(
                     onValueChange = onTextChange,
                     label = { Text(stringResource(R.string.ui_clinical_history_dialogs_444)) },
                     placeholder = { Text(stringResource(R.string.ui_clinical_history_dialogs_445)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Patients.CLARIFICATION_TEXT_FIELD),
                     colors = biodontosTextFieldColors()
                 )
             }
@@ -339,7 +359,8 @@ fun ClarificationNoteDialog(
             Button(
                 onClick = onSave,
                 enabled = !isSaving && clarificationText.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                modifier = Modifier.testTag(TestTags.Patients.CLARIFICATION_SAVE_BUTTON)
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
@@ -372,6 +393,7 @@ fun TreatmentStatusUpdateDialog(
 
     AlertDialog(
         onDismissRequest = { if (!isUpdating) onDismiss() },
+        modifier = Modifier.testTag(TestTags.Patients.STATUS_DIALOG),
         title = { Text(stringResource(R.string.ui_clinical_history_dialogs_447), fontWeight = FontWeight.Bold) },
         text = {
             Column(
@@ -409,7 +431,8 @@ fun TreatmentStatusUpdateDialog(
                         ) {
                             RadioButton(
                                 selected = selectedTargetStatus == option,
-                                onClick = { onSelectStatus(option) }
+                                onClick = { onSelectStatus(option) },
+                                modifier = Modifier.testTag(TestTags.Patients.statusOption(option.name))
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(text = option.displayName, fontSize = 13.sp, color = BiodontosDark)
@@ -422,7 +445,9 @@ fun TreatmentStatusUpdateDialog(
                             onValueChange = onReasonChange,
                             label = { Text(stringResource(R.string.ui_clinical_history_dialogs_450)) },
                             placeholder = { Text(stringResource(R.string.ui_clinical_history_dialogs_451)) },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(TestTags.Patients.STATUS_REASON_FIELD),
                             colors = biodontosTextFieldColors()
                         )
                     }
@@ -434,7 +459,8 @@ fun TreatmentStatusUpdateDialog(
                 Button(
                     onClick = onConfirm,
                     enabled = !isUpdating && selectedTargetStatus != null,
-                    colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                    colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                    modifier = Modifier.testTag(TestTags.Patients.STATUS_CONFIRM_BUTTON)
                 ) {
                     if (isUpdating) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
@@ -464,6 +490,7 @@ fun NewTreatmentBudgetDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isSaving) onDismiss() },
+        modifier = Modifier.testTag(TestTags.Patients.NEW_TREATMENT_DIALOG),
         title = { Text(stringResource(R.string.ui_clinical_history_dialogs_453), fontWeight = FontWeight.Bold) },
         text = {
             Column(
@@ -477,7 +504,9 @@ fun NewTreatmentBudgetDialog(
                     onValueChange = onDescriptionChange,
                     label = { Text(stringResource(R.string.ui_clinical_history_dialogs_454)) },
                     placeholder = { Text(stringResource(R.string.ui_clinical_history_dialogs_455)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Patients.NEW_TREATMENT_DESC_FIELD),
                     colors = biodontosTextFieldColors()
                 )
                 OutlinedTextField(
@@ -485,7 +514,9 @@ fun NewTreatmentBudgetDialog(
                     onValueChange = onTotalCostChange,
                     label = { Text(stringResource(R.string.ui_clinical_history_dialogs_456)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Patients.NEW_TREATMENT_COST_FIELD),
                     colors = biodontosTextFieldColors()
                 )
             }
@@ -494,7 +525,8 @@ fun NewTreatmentBudgetDialog(
             Button(
                 onClick = onSave,
                 enabled = !isSaving,
-                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                modifier = Modifier.testTag(TestTags.Patients.NEW_TREATMENT_SAVE_BUTTON)
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
@@ -531,6 +563,7 @@ fun NewPaymentDialog(
 
     AlertDialog(
         onDismissRequest = { if (!isSaving) onDismiss() },
+        modifier = Modifier.testTag(TestTags.Patients.NEW_PAYMENT_DIALOG),
         title = { Text(stringResource(R.string.ui_clinical_history_dialogs_458), fontWeight = FontWeight.Bold) },
         text = {
             Column(
@@ -566,7 +599,9 @@ fun NewPaymentDialog(
                         onValueChange = onAmountChange,
                         label = { Text(stringResource(R.string.ui_clinical_history_dialogs_462)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.Patients.NEW_PAYMENT_AMOUNT_FIELD),
                         colors = biodontosTextFieldColors()
                     )
 
@@ -575,7 +610,8 @@ fun NewPaymentDialog(
                             FilterChip(
                                 selected = method == m,
                                 onClick = { onMethodChange(m) },
-                                label = { Text(m, fontSize = 11.sp) }
+                                label = { Text(m, fontSize = 11.sp) },
+                                modifier = Modifier.testTag(TestTags.Patients.paymentMethodChip(m))
                             )
                         }
                     }
@@ -587,7 +623,8 @@ fun NewPaymentDialog(
                 Button(
                     onClick = onSave,
                     enabled = !isSaving,
-                    colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                    colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                    modifier = Modifier.testTag(TestTags.Patients.NEW_PAYMENT_SAVE_BUTTON)
                 ) {
                     if (isSaving) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)

@@ -76,9 +76,6 @@ class EvolutionRepositoryImplTest {
         unmockkAll()
     }
 
-    // =========================================================================
-    // Test Data Factory Helpers
-    // =========================================================================
 
     private fun createSampleEvolution(
         id: String = "evo-100",
@@ -147,9 +144,6 @@ class EvolutionRepositoryImplTest {
         return user
     }
 
-    // =========================================================================
-    // Tier 1: Core Feature Coverage (Requirements R3, R4)
-    // =========================================================================
 
     @Test
     fun `saveEvolution invokes RPC save_evolution_with_materials with evolution payload and materials list`() = runTest(testDispatcher) {
@@ -285,11 +279,9 @@ class EvolutionRepositoryImplTest {
             )
         } returns postgrestResult
 
-        // Intento 1
         val result1 = repository.saveEvolution(evolution = evolutionAttempt1)
         assertTrue(result1.isSuccess)
 
-        // Intento 2 (Reintento idempotente con material corregido a 2.0 unidades)
         val matUpdated = createSampleMaterialUsed(id = "mat-init", quantityUsed = 2.0)
         val evolutionAttempt2 = createSampleEvolution(id = evoId, materialsUsed = listOf(matUpdated))
 
@@ -338,9 +330,6 @@ class EvolutionRepositoryImplTest {
         }
     }
 
-    // =========================================================================
-    // Tier 2: Boundary & Corner Cases (Requirements R3, Coroutines)
-    // =========================================================================
 
     @Test
     fun `saveEvolution with empty materials list passes empty array to RPC without throwing`() = runTest(testDispatcher) {
@@ -513,9 +502,6 @@ class EvolutionRepositoryImplTest {
         }
     }
 
-    // =========================================================================
-    // Tier 3: Combinations & Pairwise Coverage
-    // =========================================================================
 
     @Test
     fun `Pairwise C1 - closeRecord true with full closure details and multiple INVIMA materials`() = runTest(testDispatcher) {
@@ -648,9 +634,6 @@ class EvolutionRepositoryImplTest {
         assertEquals("doc-444", clarification.doctorId)
     }
 
-    // =========================================================================
-    // Tier 4: Real-World Clinical Workload Scenarios
-    // =========================================================================
 
     @Test
     fun `Workload S1 - Multi-material operative restoration with complete medical record closure`() = runTest(testDispatcher) {
@@ -739,7 +722,6 @@ class EvolutionRepositoryImplTest {
         )
         val evolution = createSampleEvolution(id = evoId, materialsUsed = materials)
 
-        // Intento 1: Cae la conexión HTTP / Timeout
         coEvery {
             postgrest.rpc(
                 function = eq("save_evolution_with_materials"),
@@ -764,7 +746,6 @@ class EvolutionRepositoryImplTest {
         assertEquals(evoId, attempt2Result.getOrThrow().id)
         assertEquals(2, attempt2Result.getOrThrow().materialsUsed.size)
 
-        // Verificamos que se ejecutaron ambos intentos
         coVerify(exactly = 2) {
             postgrest.rpc(
                 function = eq("save_evolution_with_materials"),
@@ -782,14 +763,12 @@ class EvolutionRepositoryImplTest {
         )
         coEvery { auth.currentUserOrNull() } returns createSampleDoctorUser("doc-auditor-1")
 
-        // Paso 1: Anulación formal de la nota clínica por error en pieza
         val voidResult = repository.voidEvolution(
             evolutionId = originalEvolution.id,
             reason = "Diente incorrecto registrado (se digitó 16 en lugar de 26)"
         )
         assertTrue(voidResult.isSuccess)
 
-        // Paso 2: Creación de nota aclaratoria con referencia explícita al ID original
         coEvery {
             postgrest.rpc(
                 function = eq("save_evolution_with_materials"),

@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,6 +78,7 @@ import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.Carmesi
 import com.example.biodontos.core.designsystem.Esmeralda
 import com.example.biodontos.core.designsystem.Slate
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.Zafiro
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.core.designsystem.components.TwoStepConfirmationDialog
@@ -143,6 +145,7 @@ fun MaterialsContent(
                 onClick = { onEvent(MaterialsUiEvent.OpenCreateForm) },
                 containerColor = BiodontosDark,
                 contentColor = BiodontosWhite,
+                modifier = Modifier.testTag(TestTags.Doctor.MATERIALS_FAB_ADD),
                 icon = { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ui_materials_screen_291)) },
                 text = { Text(stringResource(R.string.ui_materials_screen_292), fontWeight = FontWeight.Bold) }
             )
@@ -154,6 +157,7 @@ fun MaterialsContent(
                 .background(BiodontosScreenGradient)
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
+                .testTag(TestTags.Doctor.MATERIALS_ROOT)
         ) {
             Column(
                 modifier = Modifier
@@ -162,7 +166,6 @@ fun MaterialsContent(
             ) {
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Top Bar / Encabezado
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -172,6 +175,7 @@ fun MaterialsContent(
                         modifier = Modifier
                             .size(40.dp)
                             .background(BiodontosWhite, CircleShape)
+                            .testTag(TestTags.Doctor.MATERIALS_BACK_BUTTON)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -201,6 +205,7 @@ fun MaterialsContent(
                         modifier = Modifier
                             .size(40.dp)
                             .background(BiodontosWhite, CircleShape)
+                            .testTag(TestTags.Doctor.MATERIALS_REFRESH_BUTTON)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -212,7 +217,6 @@ fun MaterialsContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // KPI Metrics Summary Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -239,7 +243,6 @@ fun MaterialsContent(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Buscador de Insumos
                 OutlinedTextField(
                     value = state.searchQuery,
                     onValueChange = { onEvent(MaterialsUiEvent.SearchQueryChanged(it)) },
@@ -253,7 +256,10 @@ fun MaterialsContent(
                     },
                     trailingIcon = {
                         if (state.searchQuery.isNotBlank()) {
-                            IconButton(onClick = { onEvent(MaterialsUiEvent.SearchQueryChanged("")) }) {
+                            IconButton(
+                                onClick = { onEvent(MaterialsUiEvent.SearchQueryChanged("")) },
+                                modifier = Modifier.testTag(TestTags.Doctor.MATERIALS_SEARCH_CLEAR_BUTTON)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = stringResource(R.string.ui_doctor_appointments_screen_213),
@@ -264,13 +270,14 @@ fun MaterialsContent(
                     },
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Doctor.MATERIALS_SEARCH_FIELD),
                     singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Pestañas Activos / Inactivos
                 TabRow(
                     selectedTabIndex = state.selectedTab.ordinal,
                     containerColor = Color.Transparent,
@@ -290,6 +297,10 @@ fun MaterialsContent(
                         Tab(
                             selected = isSelected,
                             onClick = { onEvent(MaterialsUiEvent.TabSelected(tab)) },
+                            modifier = Modifier.testTag(
+                                if (tab == MaterialTabFilter.ACTIVE) TestTags.Doctor.MATERIALS_TAB_ACTIVE
+                                else TestTags.Doctor.MATERIALS_TAB_INACTIVE
+                            ),
                             text = {
                                 Text(
                                     text = stringResource(R.string.ui_doctor_documents_screen_229, tab.label, count),
@@ -304,13 +315,13 @@ fun MaterialsContent(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Contenido de la lista o estados de carga/error
                 when {
                     state.isLoading -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.MATERIALS_LOADING),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(color = BiodontosDark)
@@ -331,6 +342,7 @@ fun MaterialsContent(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(16.dp)
+                                    .testTag(TestTags.Doctor.MATERIALS_ERROR)
                             ) {
                                 Column(
                                     modifier = Modifier.padding(20.dp),
@@ -352,7 +364,8 @@ fun MaterialsContent(
                                     Spacer(modifier = Modifier.height(12.dp))
                                     Button(
                                         onClick = { onEvent(MaterialsUiEvent.Refresh) },
-                                        colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
+                                        colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                                        modifier = Modifier.testTag(TestTags.Doctor.MATERIALS_RETRY_BUTTON)
                                     ) {
                                         Text(stringResource(R.string.ui_doctor_appointments_screen_175))
                                     }
@@ -365,7 +378,8 @@ fun MaterialsContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.MATERIALS_EMPTY),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
@@ -407,7 +421,8 @@ fun MaterialsContent(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(1f),
+                                .weight(1f)
+                                .testTag(TestTags.Doctor.MATERIALS_LIST),
                             contentPadding = PaddingValues(top = 8.dp, bottom = 88.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
@@ -419,7 +434,8 @@ fun MaterialsContent(
                                     material = material,
                                     onEdit = { onEvent(MaterialsUiEvent.OpenEditForm(material)) },
                                     onDeactivate = { onEvent(MaterialsUiEvent.RequestDeactivate(material)) },
-                                    onReactivate = { onEvent(MaterialsUiEvent.ReactivateMaterial(material)) }
+                                    onReactivate = { onEvent(MaterialsUiEvent.ReactivateMaterial(material)) },
+                                    modifier = Modifier.testTag(TestTags.Doctor.materialItem(material.rawId))
                                 )
                             }
                         }
@@ -429,7 +445,6 @@ fun MaterialsContent(
         }
     }
 
-    // Modal Formulario de Creación / Edición
     if (state.isFormOpen) {
         MaterialFormBottomSheet(
             formState = state.formState,
@@ -443,7 +458,6 @@ fun MaterialsContent(
         )
     }
 
-    // Diálogo de Confirmación en 2 Pasos para Desactivación
     state.materialToDeactivate?.let { material ->
         TwoStepConfirmationDialog(
             title = "Desactivar Insumo Clínico",
@@ -475,7 +489,6 @@ fun MaterialCard(
         modifier = modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Fila superior: Nombre y Badge de estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -491,7 +504,6 @@ fun MaterialCard(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Expiration / Status Badges
                 when {
                     !material.isActive -> {
                         MaterialStatusBadge(
@@ -526,7 +538,6 @@ fun MaterialCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Fila de datos regulatorios: INVIMA y Lote
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -537,7 +548,6 @@ fun MaterialCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Fila de Fechas (Elaboración y Vencimiento)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -565,7 +575,6 @@ fun MaterialCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botones de Acción
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -575,7 +584,8 @@ fun MaterialCard(
                     onClick = onEdit,
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                    border = BorderStroke(1.dp, BiodontosBorder.copy(alpha = 0.6f))
+                    border = BorderStroke(1.dp, BiodontosBorder.copy(alpha = 0.6f)),
+                    modifier = Modifier.testTag(TestTags.Doctor.materialEditButton(material.rawId))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -594,7 +604,8 @@ fun MaterialCard(
                         onClick = onDeactivate,
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                        border = BorderStroke(1.dp, BiodontosErrorRed.copy(alpha = 0.5f))
+                        border = BorderStroke(1.dp, BiodontosErrorRed.copy(alpha = 0.5f)),
+                        modifier = Modifier.testTag(TestTags.Doctor.materialDeactivateButton(material.rawId))
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -610,7 +621,8 @@ fun MaterialCard(
                         onClick = onReactivate,
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                        border = BorderStroke(1.dp, Esmeralda.copy(alpha = 0.6f))
+                        border = BorderStroke(1.dp, Esmeralda.copy(alpha = 0.6f)),
+                        modifier = Modifier.testTag(TestTags.Doctor.materialReactivateButton(material.rawId))
                     ) {
                         Icon(
                             imageVector = Icons.Default.Check,

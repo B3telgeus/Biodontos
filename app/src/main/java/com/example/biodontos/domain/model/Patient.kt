@@ -19,7 +19,6 @@ data class Patient(
     val email: String? = null,
     val address: String? = null,
     val locality: String? = null,
-    // Acudiente / Representante (Relacional 1:N)
     val guardianId: String? = null,
     val guardianRelationship: String? = null,
     val guardian: Guardian? = null,
@@ -27,12 +26,10 @@ data class Patient(
     val guardianLastName: String? = guardian?.lastName,
     val guardianPhone: String? = guardian?.phone,
     val guardianAddress: String? = guardian?.address,
-    // Antecedentes
     val lastDentalVisit: String? = null,
     val consultationReason: String? = null,
     val currentConsultationReason: String? = null,
     val illnessHistory: String? = null,
-    // Clínico básico
     val consentSigned: Boolean = false,
     val hasCriticalAllergies: Boolean = false,
     val allergiesDescription: String = if (hasCriticalAllergies) "Alergias presentes" else "Ninguna"

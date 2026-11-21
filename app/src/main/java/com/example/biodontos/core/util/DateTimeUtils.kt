@@ -27,7 +27,7 @@ object DateTimeUtils {
     private val spanishLocale = Locale.forLanguageTag("es-CO")
 
     fun getTodayDate(): String {
-        return LocalDate.now(CLINICAL_ZONE).toString() // YYYY-MM-DD
+        return LocalDate.now(CLINICAL_ZONE).toString()
     }
 
     fun getUpcomingDays(count: Int = 14): List<String> {
@@ -35,7 +35,6 @@ object DateTimeUtils {
         val days = mutableListOf<String>()
         var current = today
         while (days.size < count) {
-            // Excluir domingos si la clínica está cerrada
             if (current.dayOfWeek.value != 7) {
                 days.add(current.toString())
             }

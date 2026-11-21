@@ -158,7 +158,6 @@ class DoctorAppointmentsViewModel(
                 return@launch
             }
 
-            // Ejecutar en paralelo: pacientes, citas y disponibilidad
             val (patientsResult, appointmentsResult, availabilitiesResult) = coroutineScope {
                 val pDef = async { patientRepository.getPatients() }
                 val aDef = async { getDoctorAppointmentsUseCase(doctor.id.value) }
@@ -335,7 +334,6 @@ class DoctorAppointmentsViewModel(
         val doctorId = _uiState.value.doctorId
         if (doctorId.isBlank()) return
 
-        // Validación defensiva en ViewModel
         val invalidActiveDay = _uiState.value.weeklyAvailability.find { it.isActive && !it.endTime.isAfter(it.startTime) }
         if (invalidActiveDay != null) {
             val dayName = when (invalidActiveDay.dayOfWeek) {

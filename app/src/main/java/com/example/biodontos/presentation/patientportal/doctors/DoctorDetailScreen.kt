@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -56,6 +57,7 @@ import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
 import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.components.BiodontosPillButton
 import com.example.biodontos.core.designsystem.components.PillButtonVariant
 import com.example.biodontos.domain.model.Doctor
@@ -100,7 +102,9 @@ fun DoctorDetailScreen(
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .testTag(TestTags.PatientPortal.DOCTOR_DETAIL_ROOT),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = BiodontosScreenBgTop,
 
@@ -115,7 +119,9 @@ fun DoctorDetailScreen(
                         text = stringResource(R.string.ui_doctor_detail_screen_376, detail.doctor.firstName),
                         variant = PillButtonVariant.DARK,
                         onClick = { onEvent(DoctorDetailUiEvent.BookAppointment) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(TestTags.PatientPortal.DOCTOR_DETAIL_BOOK_BUTTON)
                     )
                 }
             }
@@ -129,12 +135,14 @@ fun DoctorDetailScreen(
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(8.dp))
-            // Top navigation bar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBackClick) {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_DETAIL_BACK_BUTTON)
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.ui_clinical_admission_screen_3),
@@ -161,7 +169,10 @@ fun DoctorDetailScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = BiodontosDark)
+                    CircularProgressIndicator(
+                        color = BiodontosDark,
+                        modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_DETAIL_LOADING)
+                    )
                 }
             }
             state.errorMessage != null || state.doctorDetail == null -> {
@@ -172,6 +183,7 @@ fun DoctorDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
+                        modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_DETAIL_ERROR),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -182,7 +194,8 @@ fun DoctorDetailScreen(
                         )
                         BiodontosPillButton(
                             text = stringResource(R.string.ui_doctor_appointments_screen_175),
-                            onClick = { onEvent(DoctorDetailUiEvent.Retry) }
+                            onClick = { onEvent(DoctorDetailUiEvent.Retry) },
+                            modifier = Modifier.testTag(TestTags.PatientPortal.DOCTOR_DETAIL_RETRY_BUTTON)
                         )
                     }
                 }
@@ -194,11 +207,11 @@ fun DoctorDetailScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f)
+                        .testTag(TestTags.PatientPortal.DOCTOR_DETAIL_LIST),
                     contentPadding = PaddingValues(bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Tarjeta Principal (Hero)
                     item {
                         Card(
                             modifier = Modifier
@@ -213,7 +226,6 @@ fun DoctorDetailScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // Avatar grande con foto Base64 o iniciales
                                 DoctorAvatar(
                                     photoUrl = doctor.photoUrl,
                                     firstName = doctor.firstName,
@@ -266,12 +278,12 @@ fun DoctorDetailScreen(
                                     }
                                 }
 
-                                // Chip de estado disponible hoy
                                 if (detail.isAvailableToday) {
                                     Box(
                                         modifier = Modifier
                                             .background(StatusConfirmed, shape = RoundedCornerShape(12.dp))
                                             .padding(horizontal = 12.dp, vertical = 6.dp)
+                                            .testTag(TestTags.PatientPortal.DOCTOR_DETAIL_AVAILABILITY_BADGE)
                                     ) {
                                         Text(
                                             text = stringResource(R.string.ui_doctor_detail_screen_380),
@@ -286,6 +298,7 @@ fun DoctorDetailScreen(
                                         modifier = Modifier
                                             .background(BiodontosInputBg, shape = RoundedCornerShape(12.dp))
                                             .padding(horizontal = 12.dp, vertical = 6.dp)
+                                            .testTag(TestTags.PatientPortal.DOCTOR_DETAIL_AVAILABILITY_BADGE)
                                     ) {
                                         Text(
                                             text = stringResource(R.string.ui_doctor_detail_screen_381),
@@ -299,7 +312,6 @@ fun DoctorDetailScreen(
                         }
                     }
 
-                    // Acerca del especialista
                     doctor.bio?.takeIf { it.isNotBlank() }?.let { bio ->
                         item {
                             Card(
@@ -330,7 +342,6 @@ fun DoctorDetailScreen(
                         }
                     }
 
-                    // Servicios que ofrece
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -395,7 +406,6 @@ fun DoctorDetailScreen(
                         }
                     }
 
-                    // Horario de atención semanal
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),

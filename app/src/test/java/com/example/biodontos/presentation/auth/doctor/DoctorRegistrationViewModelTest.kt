@@ -87,7 +87,6 @@ class DoctorRegistrationViewModelTest {
             )
         } returns Result.success(RegistrationOutcome.Authenticated(session))
 
-        // Step 1
         viewModel.onFirstNameChange("Carlos")
         viewModel.onLastNameChange("Gomez")
         viewModel.onEmailChange("carlos@biodontos.com")
@@ -95,7 +94,6 @@ class DoctorRegistrationViewModelTest {
         viewModel.onConfirmPasswordChange("password123")
         viewModel.nextStep()
 
-        // Step 2
         viewModel.onLicenseNumberChange("RM-12345")
         viewModel.onSpecialtyChange("Ortodoncia")
         viewModel.nextStep()
@@ -111,7 +109,6 @@ class DoctorRegistrationViewModelTest {
             registerDoctorUseCase(any(), any(), any(), any(), any(), any(), any())
         } returns Result.failure(Exception("User already registered"))
 
-        // Step 1
         viewModel.onFirstNameChange("Carlos")
         viewModel.onLastNameChange("Gomez")
         viewModel.onEmailChange("carlos@biodontos.com")
@@ -119,7 +116,6 @@ class DoctorRegistrationViewModelTest {
         viewModel.onConfirmPasswordChange("password123")
         viewModel.nextStep()
 
-        // Step 2
         viewModel.onLicenseNumberChange("RM-12345")
         viewModel.onSpecialtyChange("Ortodoncia")
         viewModel.nextStep()

@@ -47,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,6 +58,7 @@ import com.example.biodontos.core.designsystem.BiodontosErrorRed
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.BiodontosInputBg
 import com.example.biodontos.core.designsystem.BiodontosWhite
+import com.example.biodontos.core.designsystem.TestTags
 import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.core.designsystem.insets.BiodontosBottomActionBar
 import com.example.biodontos.core.designsystem.insets.BiodontosFormColumn
@@ -90,14 +92,13 @@ fun MaterialFormBottomSheet(
         containerColor = BiodontosWhite,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         dragHandle = null,
-        modifier = modifier
+        modifier = modifier.testTag(TestTags.Doctor.MATERIAL_FORM_SHEET)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .imePadding()
         ) {
-            // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -118,7 +119,10 @@ fun MaterialFormBottomSheet(
                         color = BiodontosGreyText
                     )
                 }
-                IconButton(onClick = onDismiss) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag(TestTags.Doctor.MATERIAL_FORM_CLOSE_BUTTON)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = stringResource(R.string.ui_operative_consent_dialog_89),
@@ -129,7 +133,6 @@ fun MaterialFormBottomSheet(
 
             HorizontalDivider(color = BiodontosInputBg)
 
-            // Form Fields
             BiodontosFormColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -137,7 +140,6 @@ fun MaterialFormBottomSheet(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Nombre Comercial
                 OutlinedTextField(
                     value = formState.name,
                     onValueChange = onNameChange,
@@ -147,11 +149,12 @@ fun MaterialFormBottomSheet(
                     supportingText = formState.nameError?.let { { Text(it, color = BiodontosErrorRed) } },
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Doctor.MATERIAL_FORM_NAME_FIELD),
                     singleLine = true
                 )
 
-                // Registro INVIMA
                 OutlinedTextField(
                     value = formState.invimaRegistration,
                     onValueChange = onInvimaChange,
@@ -161,11 +164,12 @@ fun MaterialFormBottomSheet(
                     supportingText = formState.invimaError?.let { { Text(it, color = BiodontosErrorRed) } },
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Doctor.MATERIAL_FORM_INVIMA_FIELD),
                     singleLine = true
                 )
 
-                // Número de Lote
                 OutlinedTextField(
                     value = formState.batchLotNumber,
                     onValueChange = onLotChange,
@@ -175,16 +179,16 @@ fun MaterialFormBottomSheet(
                     supportingText = formState.lotError?.let { { Text(it, color = BiodontosErrorRed) } },
                     colors = biodontosTextFieldColors(),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TestTags.Doctor.MATERIAL_FORM_LOT_FIELD),
                     singleLine = true
                 )
 
-                // Fechas: Fabricación y Vencimiento
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Fecha de Elaboración
                     Box(modifier = Modifier.weight(1f)) {
                         OutlinedTextField(
                             value = formState.manufacturingDate.format(dateFormatter),
@@ -209,10 +213,10 @@ fun MaterialFormBottomSheet(
                             modifier = Modifier
                                 .matchParentSize()
                                 .clickable { showMfgDatePicker = true }
+                                .testTag(TestTags.Doctor.MATERIAL_FORM_MFG_DATE_FIELD)
                         )
                     }
 
-                    // Fecha de Vencimiento
                     Box(modifier = Modifier.weight(1f)) {
                         OutlinedTextField(
                             value = formState.expirationDate.format(dateFormatter),
@@ -237,17 +241,18 @@ fun MaterialFormBottomSheet(
                             modifier = Modifier
                                 .matchParentSize()
                                 .clickable { showExpDatePicker = true }
+                                .testTag(TestTags.Doctor.MATERIAL_FORM_EXP_DATE_FIELD)
                         )
                     }
                 }
 
-                // Error general de fechas si existe
                 if (formState.dateError != null) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(BiodontosErrorBg, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .testTag(TestTags.Doctor.MATERIAL_FORM_DATE_ERROR),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -266,7 +271,6 @@ fun MaterialFormBottomSheet(
                     }
                 }
 
-                // Regulatory clarification notice
                 if (formState.isEditing) {
                     Row(
                         modifier = Modifier
@@ -292,7 +296,6 @@ fun MaterialFormBottomSheet(
                 }
             }
 
-            // Bottom Action Bar with Insets
             BiodontosBottomActionBar(
                 containerColor = BiodontosWhite,
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
@@ -303,7 +306,9 @@ fun MaterialFormBottomSheet(
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag(TestTags.Doctor.MATERIAL_FORM_CANCEL_BUTTON),
                         shape = RoundedCornerShape(12.dp),
                         enabled = !formState.isSaving
                     ) {
@@ -312,7 +317,9 @@ fun MaterialFormBottomSheet(
 
                     Button(
                         onClick = onSave,
-                        modifier = Modifier.weight(1.5f),
+                        modifier = Modifier
+                            .weight(1.5f)
+                            .testTag(TestTags.Doctor.MATERIAL_FORM_SAVE_BUTTON),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
                         enabled = !formState.isSaving
@@ -335,7 +342,6 @@ fun MaterialFormBottomSheet(
         }
     }
 
-    // Material 3 DatePickerDialog para Fecha de Elaboración
     if (showMfgDatePicker) {
         val initialEpochMillis = remember(formState.manufacturingDate) {
             formState.manufacturingDate.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
@@ -379,7 +385,6 @@ fun MaterialFormBottomSheet(
         }
     }
 
-    // Material 3 DatePickerDialog para Fecha de Vencimiento
     if (showExpDatePicker) {
         val initialEpochMillis = remember(formState.expirationDate) {
             formState.expirationDate.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()

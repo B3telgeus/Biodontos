@@ -12,7 +12,6 @@ sealed interface ClinicalAdmissionEvent {
     data class JumpToStep(val step: Int) : ClinicalAdmissionEvent
     data object ClearMessages : ClinicalAdmissionEvent
 
-    // Paso 1
     data class UpdateDni(val value: String) : ClinicalAdmissionEvent
     data class UpdateFirstName(val value: String) : ClinicalAdmissionEvent
     data class UpdateFirstLastName(val value: String) : ClinicalAdmissionEvent
@@ -47,7 +46,6 @@ sealed interface ClinicalAdmissionEvent {
     ) : ClinicalAdmissionEvent
     data class UpdateAllergies(val hasAllergies: Boolean, val description: String) : ClinicalAdmissionEvent
 
-    // Consentimiento de Operatoria (Modal Especializado)
     data class ToggleOperativeConsentDialog(val show: Boolean) : ClinicalAdmissionEvent
     data class UpdateOperativeConsentTreatment(val treatment: String) : ClinicalAdmissionEvent
     data class UpdateOperativeConsentSigner(val signerType: String, val repName: String, val repId: String) : ClinicalAdmissionEvent
@@ -56,25 +54,20 @@ sealed interface ClinicalAdmissionEvent {
     data class ConfirmOperativeConsentSignatures(val patientSig: String, val doctorSig: String) : ClinicalAdmissionEvent
     data object SaveOperativeConsent : ClinicalAdmissionEvent
 
-    // Paso 2: Anamnesis
     data class ToggleAnamnesisQuestion(val questionKey: String, val value: Boolean) : ClinicalAdmissionEvent
     data class UpdateAnamnesisObservations(val observations: String, val familiares: String, val meds: String) : ClinicalAdmissionEvent
 
-    // Paso 3: Odontograma
     data class ChangeDentitionType(val type: DentitionType) : ClinicalAdmissionEvent
     data class SelectOdontogramTooth(val toothNumber: Int) : ClinicalAdmissionEvent
     data class SelectConditionToApply(val condition: ToothCondition) : ClinicalAdmissionEvent
     data class ApplySurfaceCondition(val toothNumber: Int, val surface: ToothSurface) : ClinicalAdmissionEvent
 
-    // Paso 4: Periodontograma
     data class SelectPeriodontalTooth(val toothNumber: Int) : ClinicalAdmissionEvent
     data class UpdatePeriodontalMeasurement(val measurement: PeriodontalSiteMeasurement) : ClinicalAdmissionEvent
 
-    // Paso 5: Tratamiento & Consentimiento
     data class UpdateDiagnoses(val main: String, val related: String, val exams: String, val plan: String) : ClinicalAdmissionEvent
     data class ConfirmConsentSignature(val signature: String) : ClinicalAdmissionEvent
 
-    // Paso 6: Evolución & Materiales
     data class UpdateEvolution(val description: String, val cost: String, val payment: String) : ClinicalAdmissionEvent
     data class SelectMaterialFromCatalog(val material: ClinicalMaterial) : ClinicalAdmissionEvent
     data class AddMaterialUsed(val quantity: Double) : ClinicalAdmissionEvent
@@ -82,7 +75,6 @@ sealed interface ClinicalAdmissionEvent {
     data class ConfirmEvolutionSignature(val signature: String) : ClinicalAdmissionEvent
     data class ToggleCloseRecord(val close: Boolean, val summary: String) : ClinicalAdmissionEvent
 
-    // Paso 7: Próxima Cita
     data class UpdateNextAppointment(val date: String, val time: String, val reason: String) : ClinicalAdmissionEvent
     data object FinishAdmission : ClinicalAdmissionEvent
 }

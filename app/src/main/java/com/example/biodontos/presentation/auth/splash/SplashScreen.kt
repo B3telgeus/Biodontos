@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -90,10 +91,10 @@ fun SplashContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundGradient),
+            .background(backgroundGradient)
+            .testTag(TestTags.Auth.SPLASH_ROOT),
         contentAlignment = Alignment.Center
     ) {
-        // Halo luminoso de fondo en tono Zafiro
         Box(
             modifier = Modifier
                 .size(320.dp)
@@ -106,7 +107,6 @@ fun SplashContent(
                 )
         )
 
-        // Contenido Central: Logo, Marca y Subtítulo
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -116,7 +116,6 @@ fun SplashContent(
                 .safeDrawingPadding()
                 .padding(horizontal = 32.dp)
         ) {
-            // Emblema con sombra y borde sutil
             Surface(
                 modifier = Modifier
                     .size(110.dp)
@@ -140,7 +139,8 @@ fun SplashContent(
                         contentDescription = stringResource(R.string.ui_splash_screen_167),
                         modifier = Modifier
                             .size(86.dp)
-                            .clip(CircleShape),
+                            .clip(CircleShape)
+                            .testTag(TestTags.Auth.SPLASH_LOGO),
                         contentScale = ContentScale.Crop
                     )
                 }
@@ -148,7 +148,6 @@ fun SplashContent(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Título Institucional
             Text(
                 text = stringResource(R.string.ui_login_screen_126),
                 fontSize = 32.sp,
@@ -160,7 +159,6 @@ fun SplashContent(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Subtítulo Clínico
             Text(
                 text = stringResource(R.string.ui_splash_screen_168),
                 fontSize = 12.sp,
@@ -172,7 +170,6 @@ fun SplashContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Badge de Entorno Seguro
             Surface(
                 shape = RoundedCornerShape(20.dp),
                 color = Color(0xFF1E293B).copy(alpha = 0.7f),
@@ -199,7 +196,6 @@ fun SplashContent(
             }
         }
 
-        // Pie de Página: Loader y Estado de Seguridad
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -212,7 +208,9 @@ fun SplashContent(
                 CircularProgressIndicator(
                     color = Zafiro,
                     strokeWidth = 2.5.dp,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .testTag(TestTags.Auth.SPLASH_LOADER)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -224,7 +222,8 @@ fun SplashContent(
                     color = if (errorMessage != null) Carmesi else Color(0xFF64748B),
                     fontWeight = FontWeight.Medium,
                     fontSize = 12.sp
-                )
+                ),
+                modifier = Modifier.testTag(TestTags.Auth.SPLASH_STATUS)
             )
         }
     }

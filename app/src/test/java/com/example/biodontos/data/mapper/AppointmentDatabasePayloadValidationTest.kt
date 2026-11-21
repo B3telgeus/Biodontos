@@ -92,7 +92,6 @@ class AppointmentDatabasePayloadValidationTest {
             assertTrue("El payload debe incluir el header de base de datos '$header'", payloadHeaders.contains(header))
         }
 
-        // 2. Verificación estricta de que NO existan fugas camelCase de Kotlin
         val forbiddenCamelCaseProperties = listOf(
             "patientId",
             "doctorId",
@@ -106,7 +105,6 @@ class AppointmentDatabasePayloadValidationTest {
             assertFalse("El payload serializado NO debe contener la propiedad camelCase '$leak'", payloadHeaders.contains(leak))
         }
 
-        // 3. Verificación de valores y formatos de IDs
         assertEquals(validPatientUuid, jsonObject["patient_id"]?.jsonPrimitive?.content)
         assertEquals(validDoctorUuid, jsonObject["doctor_id"]?.jsonPrimitive?.content)
         assertEquals(validEvolutionUuid, jsonObject["origin_evolution_id"]?.jsonPrimitive?.content)
@@ -120,7 +118,6 @@ class AppointmentDatabasePayloadValidationTest {
     @Test
     fun doctorIdEmptyOrBlankStringIsSanitizedToNullPreventingPostgresUuidError() {
         // En PostgreSQL un doctor_id con string vacío ("") genera error 22P02:
-        // invalid input syntax for type uuid: ""
         val testCasesWithBlankDoctor = listOf("", "   ", null)
 
         for (blankDoctorId in testCasesWithBlankDoctor) {
@@ -132,15 +129,12 @@ class AppointmentDatabasePayloadValidationTest {
 
             val dto = appointment.toDto()
 
-            // En el DTO debe haberse normalizado a null
             assertNull("Un doctorId vacío o con espacios debe mapearse a null en el DTO", dto.doctorId)
 
-            // Con el serializador real de Supabase (explicitNulls = false), no debe enviar la clave
             val supabaseJsonString = supabaseSerializerJson.encodeToString(dto)
             val supabaseJsonObject = supabaseSerializerJson.parseToJsonElement(supabaseJsonString).jsonObject
             assertFalse("Con explicitNulls=false, doctor_id nulo no debe estar presente como clave", supabaseJsonObject.containsKey("doctor_id"))
 
-            // Con serializador estricto (explicitNulls = true), debe ser JsonNull y NUNCA un string vacío ""
             val strictJsonString = strictNullsJson.encodeToString(dto)
             val strictJsonObject = strictNullsJson.parseToJsonElement(strictJsonString).jsonObject
             val doctorIdElement = strictJsonObject["doctor_id"]
@@ -177,25 +171,22 @@ class AppointmentDatabasePayloadValidationTest {
         val doctorUuid = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 
         val appointment = Appointment(
-            patientId = "  $patientUuid  ", // con espacios accidentales
+            patientId = "  $patientUuid  ",
             doctorId = "  $doctorUuid  ",
             startTime = LocalDateTime.of(2026, 10, 18, 11, 0)
         )
 
         val dto = appointment.toDto()
 
-        // Deben ser recortados limpiamente
         assertEquals(patientUuid, dto.patientId)
         assertEquals(doctorUuid, dto.doctorId)
 
-        // Deben cumplir con el estándar UUID
         assertTrue("patientId debe ser un UUID válido", uuidRegex.matches(dto.patientId))
         assertTrue("doctorId debe ser un UUID válido", dto.doctorId?.let { uuidRegex.matches(it) } == true)
     }
 
     @Test
     fun appointmentConfirmationStatusHeaderAndStateMapping() {
-        // Caso 1: Cita PENDING sin confirmación
         val pendingAppt = Appointment(
             patientId = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
             startTime = LocalDateTime.of(2026, 10, 19, 8, 0),
@@ -206,7 +197,6 @@ class AppointmentDatabasePayloadValidationTest {
         assertEquals("SCHEDULED", pendingJson["status"]?.jsonPrimitive?.content)
         assertEquals(false, pendingJson["confirmation_status"]?.jsonPrimitive?.booleanOrNull)
 
-        // Caso 2: Cita con confirmación activada
         val confirmedAppt = Appointment(
             patientId = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
             startTime = LocalDateTime.of(2026, 10, 19, 8, 0),
@@ -216,7 +206,6 @@ class AppointmentDatabasePayloadValidationTest {
         val confirmedJson = strictNullsJson.parseToJsonElement(strictNullsJson.encodeToString(confirmedAppt.toDto())).jsonObject
         assertEquals(true, confirmedJson["confirmation_status"]?.jsonPrimitive?.booleanOrNull)
 
-        // Caso 3: Cita cancelada
         val cancelledAppt = Appointment(
             patientId = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
             startTime = LocalDateTime.of(2026, 10, 19, 8, 0),
@@ -225,7 +214,6 @@ class AppointmentDatabasePayloadValidationTest {
         val cancelledJson = strictNullsJson.parseToJsonElement(strictNullsJson.encodeToString(cancelledAppt.toDto())).jsonObject
         assertEquals("CANCELLED", cancelledJson["status"]?.jsonPrimitive?.content)
 
-        // Caso 4: Cita completada
         val completedAppt = Appointment(
             patientId = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
             startTime = LocalDateTime.of(2026, 10, 19, 8, 0),
@@ -266,10 +254,9 @@ class AppointmentDatabasePayloadValidationTest {
 
     @Test
     fun crossTableHeadersValidationForPatientAndDoctorEntities() {
-        // 1. PatientDto headers validation
         val patient = Patient(
             id = "36b8f84d-df4e-4d49-b662-bcde71a8764f",
-            userId = "  ", // debe sanitizarse a null
+            userId = "  ",
             dniCedula = "1020304050",
             firstName = "Valentina",
             lastName = "Gómez Martínez"
@@ -287,7 +274,6 @@ class AppointmentDatabasePayloadValidationTest {
         assertFalse("NO debe incluir camelCase dniCedula", patientJsonObject.containsKey("dniCedula"))
         assertFalse("NO debe incluir camelCase userId", patientJsonObject.containsKey("userId"))
 
-        // 2. DoctorDto headers validation
         val doctorDto = DoctorDto(
             id = "550e8400-e29b-41d4-a716-446655440000",
             userId = "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
@@ -309,7 +295,6 @@ class AppointmentDatabasePayloadValidationTest {
         assertFalse("NO debe contener 'licenseNumber'", doctorJsonObject.containsKey("licenseNumber"))
         assertFalse("NO debe contener 'photoUrl'", doctorJsonObject.containsKey("photoUrl"))
 
-        // 3. DoctorAvailabilityDto headers validation
         val availabilityDto = DoctorAvailabilityDto(
             id = "avail-uuid-1",
             doctorId = "550e8400-e29b-41d4-a716-446655440000",

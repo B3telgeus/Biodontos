@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.example.biodontos.core.designsystem.BiodontosDark
 import com.example.biodontos.core.designsystem.BiodontosGreyText
 import com.example.biodontos.core.designsystem.DentalTheme
+import com.example.biodontos.core.designsystem.TestTags
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +48,10 @@ fun UserTypeSelectionScreen(
             TopAppBar(
                 title = { },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.testTag(TestTags.Auth.USER_TYPE_BACK_BUTTON)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.ui_doctor_registration_screen_110),
@@ -60,7 +65,9 @@ fun UserTypeSelectionScreen(
             )
         },
         containerColor = Color.Transparent,
-        modifier = Modifier.background(backgroundBrush)
+        modifier = Modifier
+            .background(backgroundBrush)
+            .testTag(TestTags.Auth.USER_TYPE_ROOT)
     ) { padding ->
         Box(
             modifier = Modifier
@@ -105,7 +112,6 @@ fun UserTypeSelectionScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Soy Doctor
                         Button(
                             onClick = onDoctorClick,
                             shape = RoundedCornerShape(28.dp),
@@ -116,6 +122,7 @@ fun UserTypeSelectionScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(68.dp)
+                                .testTag(TestTags.Auth.USER_TYPE_DOCTOR_BUTTON)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AccountCircle,
@@ -130,7 +137,6 @@ fun UserTypeSelectionScreen(
                             )
                         }
 
-                        // Soy Paciente
                         Button(
                             onClick = onPatientClick,
                             shape = RoundedCornerShape(28.dp),
@@ -141,6 +147,7 @@ fun UserTypeSelectionScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(68.dp)
+                                .testTag(TestTags.Auth.USER_TYPE_PATIENT_BUTTON)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Person,

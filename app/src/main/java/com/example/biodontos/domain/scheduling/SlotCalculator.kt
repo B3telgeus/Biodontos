@@ -50,9 +50,7 @@ object SlotCalculator {
         }
 
         return potentialSlots.filter { slot ->
-            // Debe estar en el futuro respetando la ventana mínima
             slot.start >= minAllowedTime &&
-            // No debe intersectar con citas existentes
             busyIntervals.none { busy ->
                 slot.start < busy.endInclusive && slot.end > busy.start
             }

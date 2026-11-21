@@ -63,7 +63,6 @@ data class DoctorAppointmentsUiState(
     val isDayOff: Boolean = false,
     val weeklyAvailability: List<DayAvailabilityConfig> = emptyList(),
     val registeredPatients: List<Patient> = emptyList(),
-    // Diálogos activos
     val showAvailabilityDialog: Boolean = false,
     val bookingTargetSlot: DoctorTimelineSlot? = null,
     val reschedulingAppointment: DoctorAppointmentItem? = null,
@@ -89,7 +88,6 @@ sealed interface DoctorAppointmentsUiEvent {
     data class SelectFilter(val filter: DoctorAppointmentFilter) : DoctorAppointmentsUiEvent
     data class ToggleConfirm(val appointmentId: String, val currentConfirmed: Boolean) : DoctorAppointmentsUiEvent
 
-    // Disponibilidad
     data object OpenAvailabilityEditor : DoctorAppointmentsUiEvent
     data object DismissAvailabilityEditor : DoctorAppointmentsUiEvent
     data class UpdateDayAvailability(
@@ -102,18 +100,15 @@ sealed interface DoctorAppointmentsUiEvent {
     data class CopyWeekdayAvailability(val sourceDay: DayOfWeek) : DoctorAppointmentsUiEvent
     data object SaveAvailability : DoctorAppointmentsUiEvent
 
-    // Reserva Directa en Slot Libre
     data class OpenQuickBooking(val slot: DoctorTimelineSlot) : DoctorAppointmentsUiEvent
     data object DismissQuickBooking : DoctorAppointmentsUiEvent
     data class ConfirmQuickBooking(val patientId: String, val reason: String) : DoctorAppointmentsUiEvent
 
-    // Reagendamiento
     data class OpenReschedule(val appointment: DoctorAppointmentItem) : DoctorAppointmentsUiEvent
     data object DismissReschedule : DoctorAppointmentsUiEvent
     data class ChangeRescheduleTargetDate(val date: LocalDate) : DoctorAppointmentsUiEvent
     data class ConfirmReschedule(val newStartTime: LocalDateTime) : DoctorAppointmentsUiEvent
 
-    // Cancelación
     data class RequestCancelAppointment(val appointment: DoctorAppointmentItem) : DoctorAppointmentsUiEvent
     data object DismissCancelAppointment : DoctorAppointmentsUiEvent
     data object ConfirmCancelAppointment : DoctorAppointmentsUiEvent

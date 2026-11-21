@@ -73,7 +73,6 @@ data class PatientDetailState(
     val errorMessage: String? = null,
     val successMessage: String? = null,
 
-    // Diálogo de Nueva Evolución
     val showNewEvolutionDialog: Boolean = false,
     val newEvolutionDescription: String = "",
     val newEvolutionToothTreated: Int? = null,
@@ -83,20 +82,17 @@ data class PatientDetailState(
     val selectedCatalogMaterial: ClinicalMaterial? = null,
     val isSavingEvolution: Boolean = false,
 
-    // Diálogo de Nueva Cita para este paciente
     val showNewAppointmentDialog: Boolean = false,
     val newAppointmentDate: String = "",
     val newAppointmentTime: String = "10:00",
     val newAppointmentReason: String = "Control y seguimiento post-tratamiento",
     val isSavingAppointment: Boolean = false,
 
-    // Diálogo de Nuevo Presupuesto de Tratamiento
     val showNewTreatmentDialog: Boolean = false,
     val newTreatmentDescription: String = "",
     val newTreatmentTotalCost: String = "",
     val isSavingTreatment: Boolean = false,
 
-    // Diálogo de Registrar Pago / Abono
     val showNewPaymentDialog: Boolean = false,
     val selectedPaymentTreatmentId: String = "",
     val newPaymentAmount: String = "",
