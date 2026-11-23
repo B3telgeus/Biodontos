@@ -26,6 +26,12 @@ import com.example.biodontos.domain.repository.EvolutionRepository
 import com.example.biodontos.domain.repository.InformedConsentRepository
 import com.example.biodontos.domain.repository.MaterialRepository
 import com.example.biodontos.domain.repository.PatientRepository
+import com.example.biodontos.domain.model.Doctor
+import com.example.biodontos.domain.model.DoctorId
+import com.example.biodontos.domain.model.PeriodontalSiteLocation
+import com.example.biodontos.domain.model.PeriodontalSiteMeasurement
+import com.example.biodontos.domain.repository.PeriodontalRepository
+import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -57,6 +63,7 @@ class PatientDetailViewModelTest {
     private val appointmentRepository: AppointmentRepository = mockk(relaxed = true)
     private val materialRepository: MaterialRepository = mockk(relaxed = true)
     private val clinicalAuditRepository: ClinicalAuditRepository = mockk(relaxed = true)
+    private val periodontalRepository: PeriodontalRepository = mockk(relaxed = true)
 
     private val testPatientId = "pat-12345"
 
@@ -137,6 +144,7 @@ class PatientDetailViewModelTest {
         coEvery { appointmentRepository.getAppointmentsByPatientId(testPatientId) } returns Result.success(emptyList())
         coEvery { materialRepository.getMaterials() } returns Result.success(listOf(testMaterial))
         coEvery { clinicalAuditRepository.getAuditTrail(testPatientId, any()) } returns Result.success(emptyList())
+        coEvery { periodontalRepository.getExaminationByRecordId(any()) } returns Result.success(null)
 
         viewModel = PatientDetailViewModel(
             patientId = testPatientId,
@@ -148,7 +156,8 @@ class PatientDetailViewModelTest {
             billingRepository = billingRepository,
             appointmentRepository = appointmentRepository,
             materialRepository = materialRepository,
-            clinicalAuditRepository = clinicalAuditRepository
+            clinicalAuditRepository = clinicalAuditRepository,
+            periodontalRepository = periodontalRepository
         )
     }
 
@@ -234,6 +243,8 @@ class PatientDetailViewModelTest {
         viewModel.openNewEvolutionDialog()
         assertTrue(viewModel.state.value.showNewEvolutionDialog)
 
+        viewModel.onNewEvolutionCie10Change(com.example.biodontos.domain.model.DentalClinicalCodes.findCie10ByCode("K02.1"))
+        viewModel.onNewEvolutionCupsChange(com.example.biodontos.domain.model.DentalClinicalCodes.findCupsByCode("232102"))
         viewModel.onNewEvolutionDescriptionChange("Restauración oclusal diente 16")
         viewModel.onNewEvolutionToothChange(16)
         viewModel.onNewEvolutionCostChange("120000")
@@ -250,6 +261,33 @@ class PatientDetailViewModelTest {
         coVerify { evolutionRepository.saveEvolution(any()) }
         assertFalse(viewModel.state.value.showNewEvolutionDialog)
         assertNotNull(viewModel.state.value.successMessage)
+    }
+
+    @Test
+    fun `Saving new evolution without CUPS succeeds without blocking save`() = runTest {
+        coEvery { evolutionRepository.saveEvolution(any()) } returns Result.success(mockk(relaxed = true))
+
+        viewModel.openNewEvolutionDialog()
+        assertTrue(viewModel.state.value.showNewEvolutionDialog)
+
+        // Select CIE-10 only, leaving CUPS null (optional non-blocking CUPS)
+        viewModel.onNewEvolutionCie10Change(com.example.biodontos.domain.model.DentalClinicalCodes.findCie10ByCode("K02.1"))
+        viewModel.onNewEvolutionCupsChange(null)
+        viewModel.onNewEvolutionDescriptionChange("Control y valoración preventiva")
+        viewModel.onNewEvolutionToothChange(null)
+        viewModel.onNewEvolutionCostChange("0")
+        viewModel.onNewEvolutionPaymentChange("0")
+
+        assertNull(viewModel.state.value.newEvolutionCups)
+        assertNull(viewModel.state.value.newEvolutionCupsError)
+
+        viewModel.saveEvolution()
+
+        // Verify save was NOT blocked and evolution was saved with null CUPS
+        coVerify { evolutionRepository.saveEvolution(match { it.cupsCode == null }) }
+        assertFalse(viewModel.state.value.showNewEvolutionDialog)
+        assertNotNull(viewModel.state.value.successMessage)
+        assertNull(viewModel.state.value.errorMessage)
     }
 
     @Test
@@ -333,5 +371,75 @@ class PatientDetailViewModelTest {
         assertFalse(viewModel.state.value.showClinicalConsentDialog)
         coVerify(exactly = 1) { informedConsentRepository.saveConsent(any()) }
         assertTrue(viewModel.state.value.evolutionConsentStatus is ConsentRequirementStatus.Satisfied)
+    }
+
+    @Test
+    fun `Periodontogram tab updates measurement, observations and saves successfully`() = runTest {
+        val periodontalRepository: PeriodontalRepository = mockk(relaxed = true)
+        val doctorUseCase: GetCurrentDoctorUseCase = mockk(relaxed = true)
+        val doctor = Doctor(
+            id = DoctorId("doc-periodontal-123"),
+            firstName = "Periodoncista",
+            lastName = "Especialista",
+            specialty = "Periodoncia"
+        )
+        coEvery { doctorUseCase() } returns Result.success(doctor)
+        coEvery { periodontalRepository.getExaminationByRecordId(any()) } returns Result.success(null)
+        coEvery { periodontalRepository.saveExamination(any()) } answers {
+            Result.success(firstArg())
+        }
+
+        val vm = PatientDetailViewModel(
+            patientId = testPatientId,
+            patientRepository = patientRepository,
+            clinicalRecordRepository = clinicalRecordRepository,
+            anamnesisRepository = anamnesisRepository,
+            informedConsentRepository = informedConsentRepository,
+            evolutionRepository = evolutionRepository,
+            billingRepository = billingRepository,
+            appointmentRepository = appointmentRepository,
+            materialRepository = materialRepository,
+            clinicalAuditRepository = clinicalAuditRepository,
+            periodontalRepository = periodontalRepository,
+            getCurrentDoctorUseCase = doctorUseCase,
+            initialTab = "PERIODONTOGRAM"
+        )
+
+        assertEquals(PatientDetailTab.PERIODONTOGRAM, vm.state.value.selectedTab)
+
+        // Select tooth 21
+        vm.selectPeriodontalTooth(21)
+        assertEquals(21, vm.state.value.periodontalSelectedTooth)
+
+        // Update site measurement
+        val measurement = PeriodontalSiteMeasurement(
+            toothNumber = 21,
+            siteLocation = PeriodontalSiteLocation.MESIO_VESTIBULAR,
+            pocketDepthMm = 4.5f,
+            gingivalRecessionMm = 1.0f,
+            bleedingOnProbing = true
+        )
+        vm.updatePeriodontalMeasurement(measurement)
+        assertEquals(measurement, vm.state.value.periodontalSiteMeasurements[21 to PeriodontalSiteLocation.MESIO_VESTIBULAR])
+
+        // Update observations
+        vm.updatePeriodontalObservations("Bolsa periodontal moderada de 4.5mm con sangrado")
+        assertEquals("Bolsa periodontal moderada de 4.5mm con sangrado", vm.state.value.periodontalObservations)
+
+        // Save
+        vm.savePeriodontogram()
+
+        assertFalse(vm.state.value.isSavingPeriodontogram)
+        assertEquals("Periodontograma guardado correctamente", vm.state.value.successMessage)
+        coVerify(exactly = 1) {
+            periodontalRepository.saveExamination(
+                match {
+                    it.recordId == "rec-54321" &&
+                    it.doctorId == "doc-periodontal-123" &&
+                    it.generalObservations == "Bolsa periodontal moderada de 4.5mm con sangrado" &&
+                    it.sites.any { m -> m.toothNumber == 21 && m.pocketDepthMm == 4.5f }
+                }
+            )
+        }
     }
 }

@@ -97,17 +97,23 @@ import com.example.biodontos.core.designsystem.biodontosTextFieldColors
 import com.example.biodontos.core.designsystem.components.DateBadge
 import com.example.biodontos.domain.model.Anamnesis
 import com.example.biodontos.domain.model.Appointment
+import com.example.biodontos.domain.model.Cie10Code
 import com.example.biodontos.domain.model.ClinicalMaterial
 import com.example.biodontos.domain.model.ConsentType
+import com.example.biodontos.domain.model.CupsCode
 import com.example.biodontos.domain.model.Evolution
 import com.example.biodontos.domain.model.EvolutionMaterialUsed
 import com.example.biodontos.domain.model.InformedConsent
 import com.example.biodontos.domain.model.Patient
+import com.example.biodontos.domain.model.PeriodontalSiteLocation
+import com.example.biodontos.domain.model.PeriodontalSiteMeasurement
 import com.example.biodontos.domain.model.Treatment
 import com.example.biodontos.domain.model.billing.TreatmentStatus
 import com.example.biodontos.domain.model.history.ActivityType
 import com.example.biodontos.domain.model.history.PatientActivity
 import com.example.biodontos.domain.usecase.clinical.ConsentRequirementStatus
+import com.example.biodontos.presentation.components.Cie10CodeDropdown
+import com.example.biodontos.presentation.components.CupsCodeDropdown
 import com.example.biodontos.presentation.patients.detail.history.ClarificationNoteDialog
 import com.example.biodontos.presentation.patients.detail.history.ClinicalConsentDialog
 import com.example.biodontos.presentation.patients.detail.history.EvolutionMaterialsSnapshotCard
@@ -117,6 +123,8 @@ import com.example.biodontos.presentation.patients.detail.history.PatientHistory
 import com.example.biodontos.presentation.patients.detail.history.QuickCreateActivityBottomSheet
 import com.example.biodontos.presentation.patients.detail.history.TreatmentStatusUpdateDialog
 import com.example.biodontos.presentation.patients.detail.history.VoidActivityDialog
+import com.example.biodontos.presentation.periodontogram.InteractivePeriodontogram
+import com.example.biodontos.presentation.patients.detail.tabs.*
 import java.time.YearMonth
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,25 +133,27 @@ fun PatientDetailScreen(
     state: PatientDetailState,
     onTabSelected: (PatientDetailTab) -> Unit,
     onNavigateBack: () -> Unit,
-    onNavigateToOdontogram: () -> Unit,
-    onNavigateToAdmission: () -> Unit,
-    onOpenNewEvolutionDialog: () -> Unit,
-    onDismissNewEvolutionDialog: () -> Unit,
-    onEvolutionDescriptionChange: (String) -> Unit,
-    onEvolutionToothChange: (Int?) -> Unit,
-    onEvolutionCostChange: (String) -> Unit,
-    onEvolutionPaymentChange: (String) -> Unit,
-    onSelectCatalogMaterial: (ClinicalMaterial) -> Unit,
-    onAddMaterial: (Double) -> Unit,
-    onRemoveMaterial: (String) -> Unit,
-    onSaveEvolution: () -> Unit,
-    onOpenNewAppointmentDialog: () -> Unit,
-    onDismissNewAppointmentDialog: () -> Unit,
-    onAppointmentDateChange: (String) -> Unit,
-    onAppointmentTimeChange: (String) -> Unit,
-    onAppointmentReasonChange: (String) -> Unit,
-    onSaveAppointment: () -> Unit,
-    onClearMessages: () -> Unit,
+    onNavigateToOdontogram: () -> Unit = {},
+    onNavigateToAdmission: () -> Unit = {},
+    onOpenNewEvolutionDialog: () -> Unit = {},
+    onDismissNewEvolutionDialog: () -> Unit = {},
+    onEvolutionCie10Change: (Cie10Code?) -> Unit = {},
+    onEvolutionCupsChange: (CupsCode?) -> Unit = {},
+    onEvolutionDescriptionChange: (String) -> Unit = {},
+    onEvolutionToothChange: (Int?) -> Unit = {},
+    onEvolutionCostChange: (String) -> Unit = {},
+    onEvolutionPaymentChange: (String) -> Unit = {},
+    onSelectCatalogMaterial: (ClinicalMaterial) -> Unit = {},
+    onAddMaterial: (Double) -> Unit = {},
+    onRemoveMaterial: (String) -> Unit = {},
+    onSaveEvolution: () -> Unit = {},
+    onOpenNewAppointmentDialog: () -> Unit = {},
+    onDismissNewAppointmentDialog: () -> Unit = {},
+    onAppointmentDateChange: (String) -> Unit = {},
+    onAppointmentTimeChange: (String) -> Unit = {},
+    onAppointmentReasonChange: (String) -> Unit = {},
+    onSaveAppointment: () -> Unit = {},
+    onClearMessages: () -> Unit = {},
     onSelectMonthFilter: (YearMonth?) -> Unit = {},
     onToggleActivityTypeFilter: (ActivityType) -> Unit = {},
     onClearHistoryFilters: () -> Unit = {},
@@ -178,7 +188,11 @@ fun PatientDetailScreen(
     onRefreshTimeline: () -> Unit = {},
     onOpenClinicalConsentDialog: (ConsentType, Int?) -> Unit = { _, _ -> },
     onDismissClinicalConsentDialog: () -> Unit = {},
-    onSaveClinicalConsent: (InformedConsent) -> Unit = {}
+    onSaveClinicalConsent: (InformedConsent) -> Unit = {},
+    onSelectPeriodontalTooth: (Int) -> Unit = {},
+    onUpdatePeriodontalMeasurement: (PeriodontalSiteMeasurement) -> Unit = {},
+    onPeriodontalObservationsChange: (String) -> Unit = {},
+    onSavePeriodontogram: () -> Unit = {}
 ) {
     val patient = state.patient
     val snackbarHostState = remember { SnackbarHostState() }
@@ -360,7 +374,22 @@ fun PatientDetailScreen(
                                     dentitionType = state.clinicalRecord?.dentitionType?.name ?: "ADULT",
                                     mainDiagnosis = state.clinicalRecord?.mainDiagnosis ?: "Sin diagnóstico registrado",
                                     onOpenOdontogram = onNavigateToOdontogram,
-                                    onOpenAdmission = onNavigateToAdmission
+                                    onOpenPeriodontogram = { onTabSelected(PatientDetailTab.PERIODONTOGRAM) }
+                                )
+                            }
+                        }
+                        PatientDetailTab.PERIODONTOGRAM -> {
+                            item(key = "periodontogram-content") {
+                                PeriodontogramTabContent(
+                                    selectedTooth = state.periodontalSelectedTooth,
+                                    availableTeeth = state.availableFdiTeeth,
+                                    siteMeasurements = state.periodontalSiteMeasurements,
+                                    observations = state.periodontalObservations,
+                                    isSaving = state.isSavingPeriodontogram,
+                                    onToothSelected = onSelectPeriodontalTooth,
+                                    onMeasurementChanged = onUpdatePeriodontalMeasurement,
+                                    onObservationsChanged = onPeriodontalObservationsChange,
+                                    onSave = onSavePeriodontogram
                                 )
                             }
                         }
@@ -535,6 +564,10 @@ fun PatientDetailScreen(
 
     if (state.showNewEvolutionDialog) {
         NewEvolutionDialog(
+            selectedCie10 = state.newEvolutionCie10,
+            selectedCups = state.newEvolutionCups,
+            cie10Error = state.newEvolutionCie10Error,
+            cupsError = state.newEvolutionCupsError,
             description = state.newEvolutionDescription,
             tooth = state.newEvolutionToothTreated,
             cost = state.newEvolutionCost,
@@ -545,6 +578,8 @@ fun PatientDetailScreen(
             isSaving = state.isSavingEvolution,
             consentStatus = state.evolutionConsentStatus,
             onOpenConsentForm = { type, tooth -> onOpenClinicalConsentDialog(type, tooth) },
+            onCie10Change = onEvolutionCie10Change,
+            onCupsChange = onEvolutionCupsChange,
             onDescriptionChange = onEvolutionDescriptionChange,
             onToothChange = onEvolutionToothChange,
             onCostChange = onEvolutionCostChange,
@@ -580,883 +615,6 @@ fun PatientDetailScreen(
             onDismiss = onDismissNewAppointmentDialog
         )
     }
-}
-
-@Composable
-private fun PatientDemographicsCard(patient: Patient?) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(R.string.ui_patient_detail_screen_509),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium,
-                color = BiodontosDark
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column {
-                    Text(stringResource(R.string.ui_patient_detail_screen_510), fontSize = 11.sp, color = BiodontosGreyText)
-                    Text(patient?.phone?.ifBlank { "No registrado" } ?: "—", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                }
-                Column {
-                    Text(stringResource(R.string.ui_patient_detail_screen_511), fontSize = 11.sp, color = BiodontosGreyText)
-                    Text(stringResource(R.string.ui_patient_detail_screen_512, patient?.bloodGroup ?: "O", patient?.rhFactor ?: "+"), fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                }
-                Column {
-                    Text(stringResource(R.string.ui_patient_detail_screen_513), fontSize = 11.sp, color = BiodontosGreyText)
-                    Text(patient?.maritalStatus ?: "Soltero(a)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                }
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            if (!patient?.email.isNullOrBlank()) {
-                Text(stringResource(R.string.ui_clinical_admission_screen_20), fontSize = 11.sp, color = BiodontosGreyText)
-                Text(patient?.email ?: "", fontSize = 13.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            if (!patient?.address.isNullOrBlank()) {
-                Text(stringResource(R.string.ui_clinical_admission_screen_21), fontSize = 11.sp, color = BiodontosGreyText)
-                Text(patient?.address ?: "", fontSize = 13.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            if (patient?.hasCriticalAllergies == true) {
-                Surface(
-                    color = BiodontosErrorBg,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.ui_patient_detail_screen_514, patient.allergiesDescription),
-                            color = Carmesi,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AnamnesisSummaryCard(anamnesis: Anamnesis?) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(R.string.ui_patient_detail_screen_515),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium,
-                color = BiodontosDark
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            if (anamnesis == null) {
-                Text(stringResource(R.string.ui_patient_detail_screen_516), color = BiodontosGreyText, fontSize = 13.sp)
-            } else {
-                val positives = mutableListOf<String>()
-                if (anamnesis.tratamientoMedicoActual) positives.add("Tratamiento médico actual")
-                if (anamnesis.tomaMedicamentos) positives.add("Toma medicamentos")
-                if (anamnesis.alergias) positives.add("Alergias")
-                if (anamnesis.cardiopatias) positives.add("Cardiopatías")
-                if (anamnesis.alteracionPresionArterial) positives.add("Presión arterial")
-                if (anamnesis.diabetes) positives.add("Diabetes")
-                if (anamnesis.embarazo) positives.add("Embarazo")
-                if (anamnesis.epilepsia) positives.add("Epilepsia")
-                if (anamnesis.enfermedadesRenales) positives.add("Enf. Renales")
-                if (anamnesis.inmunosupresion) positives.add("Inmunosupresión")
-
-                if (positives.isEmpty()) {
-                    Text(stringResource(R.string.ui_patient_detail_screen_517), color = Esmeralda, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                } else {
-                    Text(stringResource(R.string.ui_patient_detail_screen_518), color = Carmesi, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(positives.joinToString(" · "), fontSize = 12.sp, color = BiodontosDark)
-                }
-
-                if (!anamnesis.observaciones.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(stringResource(R.string.ui_patient_detail_screen_519, anamnesis.observaciones), fontSize = 12.sp, color = BiodontosGreyText)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ConsentSummaryCard(consent: InformedConsent?) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.ui_patient_detail_screen_520), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = BiodontosDark)
-                Spacer(modifier = Modifier.height(4.dp))
-                val isSigned = consent?.status == "SIGNED" || !consent?.patientSignatureUrl.isNullOrBlank()
-                Text(
-                    text = if (isSigned) "Firmado legalmente por el paciente" else "Pendiente de firma digital",
-                    fontSize = 12.sp,
-                    color = if (isSigned) Esmeralda else Carmesi,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(if (consent?.status == "SIGNED") Esmeralda.copy(alpha = 0.15f) else BiodontosInputBg)
-                    .padding(8.dp)
-            ) {
-                Icon(
-                    imageVector = if (consent?.status == "SIGNED") Icons.Default.Check else Icons.Default.Edit,
-                    contentDescription = null,
-                    tint = if (consent?.status == "SIGNED") Esmeralda else BiodontosGreyText,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun OdontogramHubCard(
-    dentitionType: String,
-    mainDiagnosis: String,
-    onOpenOdontogram: () -> Unit,
-    onOpenAdmission: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = stringResource(R.string.ui_patient_detail_screen_521),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium,
-                color = BiodontosDark
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.ui_patient_detail_screen_522, dentitionType, mainDiagnosis),
-                fontSize = 12.sp,
-                color = BiodontosGreyText
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Button(
-                    onClick = onOpenOdontogram,
-                    colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag(TestTags.Patients.DETAIL_OPEN_ODONTOGRAM_BUTTON)
-                ) {
-                    Text(stringResource(R.string.ui_patient_detail_screen_523))
-                }
-                OutlinedButton(
-                    onClick = onOpenAdmission,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag(TestTags.Patients.DETAIL_OPEN_ADMISSION_BUTTON)
-                ) {
-                    Text(stringResource(R.string.ui_patient_detail_screen_524))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun EvolutionItemCard(evolution: Evolution) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(TestTags.Patients.evolutionItem(evolution.id)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = evolution.date,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = BiodontosDark
-                )
-                if (evolution.toothTreated != null) {
-                    Surface(
-                        color = BiodontosDark,
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.ui_patient_detail_screen_525, evolution.toothTreated),
-                            color = BiodontosWhite,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = evolution.description,
-                fontSize = 14.sp,
-                color = BiodontosDark
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.ui_patient_detail_screen_526, evolution.cost.toInt(), evolution.paymentAmount.toInt()),
-                    fontSize = 12.sp,
-                    color = BiodontosGreyText
-                )
-                Text(
-                    text = stringResource(R.string.ui_patient_detail_screen_527, evolution.balance.toInt()),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (evolution.balance > 0) Carmesi else Esmeralda
-                )
-            }
-            if (evolution.materialsUsed.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                EvolutionMaterialsSnapshotCard(materials = evolution.materialsUsed)
-            }
-        }
-    }
-}
-
-@Composable
-private fun TreatmentsBalanceHeaderCard(
-    totalBilled: Double,
-    totalPaid: Double,
-    balance: Double
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosDark),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.ui_patient_detail_screen_528), color = BiodontosWhite.copy(alpha = 0.8f), fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.ui_patient_detail_screen_529, balance.toInt()),
-                color = BiodontosWhite,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.ui_patient_detail_screen_530, totalBilled.toInt()), color = BiodontosWhite.copy(alpha = 0.8f), fontSize = 12.sp)
-                Text(stringResource(R.string.ui_patient_detail_screen_531, totalPaid.toInt()), color = Esmeralda, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@Composable
-private fun TreatmentItemCard(treatment: Treatment) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(TestTags.Patients.treatmentItem(treatment.id)),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(treatment.description, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = BiodontosDark)
-                Text(stringResource(R.string.ui_patient_detail_screen_532, treatment.status), fontSize = 12.sp, color = BiodontosGreyText)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(stringResource(R.string.ui_patient_detail_screen_533, treatment.totalCost.pesos), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BiodontosDark)
-            }
-        }
-    }
-}
-
-@Composable
-private fun PatientAppointmentItemCard(appointment: Appointment) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(TestTags.Patients.appointmentItem(appointment.id)),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            DateBadge(dateTime = appointment.startTime)
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(appointment.reason ?: "Cita Odontológica", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = BiodontosDark)
-                Text(
-                    stringResource(R.string.ui_patient_detail_screen_534, appointment.status.name, if (appointment.isConfirmed) "Confirmada" else "Sin confirmar"),
-                    fontSize = 12.sp,
-                    color = BiodontosGreyText
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NewEvolutionDialog(
-    description: String,
-    tooth: Int?,
-    cost: String,
-    payment: String,
-    materials: List<EvolutionMaterialUsed>,
-    catalog: List<ClinicalMaterial>,
-    selectedMaterial: ClinicalMaterial?,
-    isSaving: Boolean,
-    consentStatus: ConsentRequirementStatus = ConsentRequirementStatus.NotRequired,
-    onOpenConsentForm: (ConsentType, Int?) -> Unit = { _, _ -> },
-    onDescriptionChange: (String) -> Unit,
-    onToothChange: (Int?) -> Unit,
-    onCostChange: (String) -> Unit,
-    onPaymentChange: (String) -> Unit,
-    onSelectCatalogMaterial: (ClinicalMaterial) -> Unit,
-    onAddMaterial: (Double) -> Unit,
-    onRemoveMaterial: (String) -> Unit,
-    onSave: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    var materialQty by remember { mutableStateOf("1.0") }
-    var isDropdownExpanded by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_DIALOG),
-        title = { Text(stringResource(R.string.ui_patient_detail_screen_535), fontWeight = FontWeight.Bold) },
-        text = {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                item {
-                    when (consentStatus) {
-                        is ConsentRequirementStatus.Missing -> {
-                            Surface(
-                                color = Ambar.copy(alpha = 0.14f),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag(TestTags.Patients.EVOLUTION_CONSENT_BANNER)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            Icons.Default.Warning,
-                                            contentDescription = null,
-                                            tint = Ambar,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "Consentimiento Requerido (${consentStatus.requiredType.label})",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 12.sp,
-                                            color = BiodontosDark
-                                        )
-                                    }
-                                    Text(
-                                        text = consentStatus.reason,
-                                        fontSize = 11.sp,
-                                        color = BiodontosDark,
-                                        lineHeight = 14.sp
-                                    )
-                                    OutlinedButton(
-                                        onClick = { onOpenConsentForm(consentStatus.requiredType, tooth) },
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Zafiro),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .testTag(TestTags.Patients.EVOLUTION_CONSENT_ACTION_BUTTON)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Check,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "Diligenciar y Firmar Consentimiento",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        is ConsentRequirementStatus.Satisfied -> {
-                            Surface(
-                                color = Esmeralda.copy(alpha = 0.12f),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag(TestTags.Patients.EVOLUTION_CONSENT_BANNER)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = Esmeralda,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "Consentimiento firmado y vigente (${consentStatus.type.label})",
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 12.sp,
-                                        color = Esmeralda
-                                    )
-                                }
-                            }
-                        }
-                        ConsentRequirementStatus.NotRequired -> Unit
-                    }
-                }
-                item {
-                    OutlinedTextField(
-                        value = description,
-                        onValueChange = onDescriptionChange,
-                        label = { Text(stringResource(R.string.ui_patient_detail_screen_536)) },
-                        placeholder = { Text(stringResource(R.string.ui_patient_detail_screen_537)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_DESC_FIELD),
-                        colors = biodontosTextFieldColors()
-                    )
-                }
-                item {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = tooth?.toString() ?: "",
-                            onValueChange = { onToothChange(it.toIntOrNull()) },
-                            label = { Text(stringResource(R.string.ui_patient_detail_screen_538)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_TOOTH_FIELD),
-                            colors = biodontosTextFieldColors()
-                        )
-                        OutlinedTextField(
-                            value = cost,
-                            onValueChange = onCostChange,
-                            label = { Text(stringResource(R.string.ui_patient_detail_screen_539)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_COST_FIELD),
-                            colors = biodontosTextFieldColors()
-                        )
-                        OutlinedTextField(
-                            value = payment,
-                            onValueChange = onPaymentChange,
-                            label = { Text(stringResource(R.string.ui_patient_detail_screen_540)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_PAYMENT_FIELD),
-                            colors = biodontosTextFieldColors()
-                        )
-                    }
-                }
-                item {
-                    Text(stringResource(R.string.ui_patient_detail_screen_541), fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BiodontosDark)
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    if (catalog.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.ui_patient_detail_screen_542),
-                            fontSize = 11.sp,
-                            color = BiodontosGreyText
-                        )
-                    } else {
-                        ExposedDropdownMenuBox(
-                            expanded = isDropdownExpanded,
-                            onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }
-                        ) {
-                            val selectedDisplayText = selectedMaterial?.let {
-                                "${it.name} (Lote: ${it.batchLotNumber})"
-                            } ?: "Seleccione un material del catálogo"
-
-                            OutlinedTextField(
-                                value = selectedDisplayText,
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text(stringResource(R.string.ui_patient_detail_screen_543)) },
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded) },
-                                modifier = Modifier
-                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                    .fillMaxWidth(),
-                                colors = biodontosTextFieldColors(),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = isDropdownExpanded,
-                                onDismissRequest = { isDropdownExpanded = false },
-                                modifier = Modifier.heightIn(max = 260.dp)
-                            ) {
-                                catalog.forEach { mat ->
-                                    val isExpired = mat.isExpired()
-                                    val isNearExpiry = mat.isNearExpiration()
-
-                                    DropdownMenuItem(
-                                        text = {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 4.dp)
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Text(
-                                                        text = mat.name,
-                                                        fontWeight = FontWeight.Bold,
-                                                        fontSize = 12.sp,
-                                                        color = if (isExpired) BiodontosGreyText else BiodontosDark
-                                                    )
-                                                    if (isExpired) {
-                                                        Surface(
-                                                            color = Carmesi.copy(alpha = 0.14f),
-                                                            shape = RoundedCornerShape(4.dp)
-                                                        ) {
-                                                            Text(
-                                                                text = stringResource(R.string.ui_materials_screen_299),
-                                                                color = Carmesi,
-                                                                fontSize = 9.sp,
-                                                                fontWeight = FontWeight.Bold,
-                                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                            )
-                                                        }
-                                                    } else if (isNearExpiry) {
-                                                        Surface(
-                                                            color = Ambar.copy(alpha = 0.15f),
-                                                            shape = RoundedCornerShape(4.dp)
-                                                        ) {
-                                                            Text(
-                                                                text = stringResource(R.string.ui_patient_detail_screen_544),
-                                                                color = Ambar,
-                                                                fontSize = 9.sp,
-                                                                fontWeight = FontWeight.Bold,
-                                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                                Text(
-                                                    text = stringResource(R.string.ui_patient_detail_screen_545, mat.invimaRegistration, mat.batchLotNumber),
-                                                    fontSize = 10.sp,
-                                                    color = BiodontosGreyText
-                                                )
-                                                Text(
-                                                    text = stringResource(R.string.ui_materials_screen_303, mat.expirationDate),
-                                                    fontSize = 10.sp,
-                                                    color = if (isExpired) Carmesi else if (isNearExpiry) Ambar else BiodontosGreyText
-                                                )
-                                            }
-                                        },
-                                        enabled = !isExpired,
-                                        onClick = {
-                                            if (!isExpired) {
-                                                onSelectCatalogMaterial(mat)
-                                                isDropdownExpanded = false
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        selectedMaterial?.let { selMat ->
-                            val isExpired = selMat.isExpired()
-                            val isNear = selMat.isNearExpiration()
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = SlateLight),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Column(modifier = Modifier.padding(10.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(text = selMat.name, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BiodontosDark)
-                                        if (isExpired) {
-                                            Surface(color = Carmesi.copy(alpha = 0.14f), shape = RoundedCornerShape(4.dp)) {
-                                                Text(stringResource(R.string.ui_materials_screen_299), color = Carmesi, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp))
-                                            }
-                                        } else if (isNear) {
-                                            Surface(color = Ambar.copy(alpha = 0.15f), shape = RoundedCornerShape(4.dp)) {
-                                                Text(stringResource(R.string.ui_patient_detail_screen_546), color = Ambar, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp))
-                                            }
-                                        }
-                                    }
-                                    Text(text = stringResource(R.string.ui_clinical_admission_screen_68, selMat.invimaRegistration), fontSize = 11.sp, color = BiodontosGreyText)
-                                    Text(text = stringResource(R.string.ui_patient_detail_screen_547, selMat.batchLotNumber, selMat.expirationDate), fontSize = 11.sp, color = if (isExpired) Carmesi else BiodontosGreyText)
-                                    if (isExpired) {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = stringResource(R.string.ui_patient_detail_screen_548),
-                                            fontSize = 11.sp,
-                                            color = Carmesi,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        OutlinedTextField(
-                                            value = materialQty,
-                                            onValueChange = { input ->
-                                                if (input.isEmpty() || input.matches(Regex("""^\d*\.?\d*$"""))) {
-                                                    materialQty = input
-                                                }
-                                            },
-                                            label = { Text(stringResource(R.string.ui_patient_detail_screen_549)) },
-                                            placeholder = { Text(stringResource(R.string.ui_patient_detail_screen_550)) },
-                                            enabled = !isExpired,
-                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                            modifier = Modifier.weight(1f),
-                                            colors = biodontosTextFieldColors()
-                                        )
-
-                                        val qtyDouble = materialQty.toDoubleOrNull() ?: 0.0
-                                        val canAdd = !isExpired && qtyDouble > 0.0
-                                        Button(
-                                            onClick = {
-                                                if (canAdd) {
-                                                    onAddMaterial(qtyDouble)
-                                                    materialQty = "1.0"
-                                                }
-                                            },
-                                            enabled = canAdd,
-                                            colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark)
-                                        ) {
-                                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(stringResource(R.string.ui_patient_detail_screen_551))
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (materials.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = stringResource(R.string.ui_patient_detail_screen_552, materials.size),
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 12.sp,
-                            color = Zafiro
-                        )
-                    }
-                    items(materials, key = { it.materialId }) { mat ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = BiodontosInputBg.copy(alpha = 0.5f)),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = stringResource(R.string.ui_patient_detail_screen_553, mat.quantityUsed, mat.materialName),
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = BiodontosDark
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.ui_patient_detail_screen_554, mat.invimaSnapshot, mat.lotNumberSnapshot, mat.expirationDateSnapshot),
-                                        fontSize = 10.sp,
-                                        color = BiodontosGreyText
-                                    )
-                                }
-                                IconButton(
-                                    onClick = { onRemoveMaterial(mat.materialId) },
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = stringResource(R.string.ui_patient_detail_screen_555),
-                                        tint = Carmesi,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = onSave,
-                enabled = !isSaving,
-                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
-                modifier = Modifier.testTag(TestTags.Patients.DETAIL_NEW_EVOLUTION_SAVE_BUTTON)
-            ) {
-                if (isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
-                } else {
-                    Text(stringResource(R.string.ui_patient_detail_screen_556))
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text(stringResource(R.string.ui_doctor_appointments_screen_191))
-            }
-        }
-    )
-}
-
-@Composable
-private fun NewAppointmentDialog(
-    date: String,
-    time: String,
-    reason: String,
-    isSaving: Boolean,
-    onDateChange: (String) -> Unit,
-    onTimeChange: (String) -> Unit,
-    onReasonChange: (String) -> Unit,
-    onSave: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(TestTags.Patients.DETAIL_NEW_APPT_DIALOG),
-        title = { Text(stringResource(R.string.ui_patient_detail_screen_557), fontWeight = FontWeight.Bold) },
-        text = {
-            Column(
-                modifier = Modifier.imePadding(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                OutlinedTextField(
-                    value = date,
-                    onValueChange = onDateChange,
-                    label = { Text(stringResource(R.string.ui_patient_detail_screen_558)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(TestTags.Patients.DETAIL_NEW_APPT_DATE_FIELD),
-                    colors = biodontosTextFieldColors()
-                )
-                OutlinedTextField(
-                    value = time,
-                    onValueChange = onTimeChange,
-                    label = { Text(stringResource(R.string.ui_patient_detail_screen_559)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(TestTags.Patients.DETAIL_NEW_APPT_TIME_FIELD),
-                    colors = biodontosTextFieldColors()
-                )
-                OutlinedTextField(
-                    value = reason,
-                    onValueChange = onReasonChange,
-                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_36)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(TestTags.Patients.DETAIL_NEW_APPT_REASON_FIELD),
-                    colors = biodontosTextFieldColors()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = onSave,
-                enabled = !isSaving,
-                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
-                modifier = Modifier.testTag(TestTags.Patients.DETAIL_NEW_APPT_SAVE_BUTTON)
-            ) {
-                if (isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BiodontosWhite)
-                } else {
-                    Text(stringResource(R.string.ui_patient_detail_screen_502))
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text(stringResource(R.string.ui_doctor_appointments_screen_191))
-            }
-        }
-    )
 }
 
 @Composable

@@ -53,7 +53,11 @@ data class Evolution(
     val doctorSignatureUrl: String? = null,
     val materialsUsed: List<EvolutionMaterialUsed> = emptyList(),
     val voidInfo: VoidInfo? = null,
-    val amendsEvolutionId: String? = null
+    val amendsEvolutionId: String? = null,
+    val cie10Code: String? = null,
+    val cie10Description: String? = null,
+    val cupsCode: String? = null,
+    val cupsDescription: String? = null
 ) {
     val isVoided: Boolean get() = voidInfo != null
     val isClarification: Boolean get() = !amendsEvolutionId.isNullOrBlank()

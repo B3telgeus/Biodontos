@@ -30,3 +30,14 @@ data class ClinicalAuditLogDto(
         occurredAt = ClinicalDateParser.parseIsoDateTime(occurredAt).dateTime
     )
 }
+
+@Serializable
+data class ClinicalAuditLogInsertDto(
+    @SerialName("patient_id") val patientId: String,
+    @SerialName("entity_table") val entityTable: String,
+    @SerialName("entity_id") val entityId: String,
+    val action: String,
+    @SerialName("changed_fields") val changedFields: List<String> = emptyList(),
+    @SerialName("actor_user_id") val actorUserId: String? = null,
+    @SerialName("actor_name") val actorName: String? = null
+)

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsEqualTo
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -214,7 +215,13 @@ class OdontogramPeriodontogramSignatureComposeTest {
             .assertWidthIsAtLeast(240.dp)
             .assertHeightIsAtLeast(200.dp)
 
+        // Upper arch tooth 18 should show CARA PALATINA
+        composeTestRule.onNodeWithTag(TestTags.Periodontogram.INNER_FACE_HEADER)
+            .performScrollTo()
+            .assertTextEquals("CARA PALATINA")
+
         composeTestRule.onNodeWithTag(TestTags.Periodontogram.TEETH_ROW)
+            .performScrollTo()
             .performTouchInput { swipeLeft() }
         composeTestRule.onNodeWithTag(TestTags.Periodontogram.TEETH_ROW)
             .performScrollToKey(36)
@@ -227,7 +234,14 @@ class OdontogramPeriodontogramSignatureComposeTest {
             assertThat(selectedTooth).isEqualTo(36)
         }
 
-        composeTestRule.onNodeWithTag(TestTags.Periodontogram.SUMMARY_BANNER).assertIsDisplayed()
+        // Lower arch tooth 36 should switch to CARA LINGUAL
+        composeTestRule.onNodeWithTag(TestTags.Periodontogram.INNER_FACE_HEADER)
+            .performScrollTo()
+            .assertTextEquals("CARA LINGUAL")
+
+        composeTestRule.onNodeWithTag(TestTags.Periodontogram.SUMMARY_BANNER)
+            .performScrollTo()
+            .assertIsDisplayed()
 
         composeTestRule.onNodeWithTag(
             TestTags.Periodontogram.bopToggle(PeriodontalSiteLocation.MESIO_VESTIBULAR.name)

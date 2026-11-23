@@ -48,9 +48,6 @@ object DoctorMaterials
 object DoctorProfile
 
 @Serializable
-object PatientRegistration
-
-@Serializable
 data class Odontogram(val patientId: String)
 
 @Serializable

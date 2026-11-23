@@ -1,16 +1,13 @@
 package com.example.biodontos.presentation.admission
 
-import com.example.biodontos.domain.model.ClinicalMaterial
 import com.example.biodontos.domain.model.DentitionType
-import com.example.biodontos.domain.model.PeriodontalSiteMeasurement
-import com.example.biodontos.domain.model.ToothCondition
-import com.example.biodontos.domain.model.ToothSurface
 
 sealed interface ClinicalAdmissionEvent {
     data object NextStep : ClinicalAdmissionEvent
     data object PreviousStep : ClinicalAdmissionEvent
     data class JumpToStep(val step: Int) : ClinicalAdmissionEvent
     data object ClearMessages : ClinicalAdmissionEvent
+    data object DismissSuccessDialog : ClinicalAdmissionEvent
 
     data class UpdateDni(val value: String) : ClinicalAdmissionEvent
     data class UpdateFirstName(val value: String) : ClinicalAdmissionEvent
@@ -46,35 +43,10 @@ sealed interface ClinicalAdmissionEvent {
     ) : ClinicalAdmissionEvent
     data class UpdateAllergies(val hasAllergies: Boolean, val description: String) : ClinicalAdmissionEvent
 
-    data class ToggleOperativeConsentDialog(val show: Boolean) : ClinicalAdmissionEvent
-    data class UpdateOperativeConsentTreatment(val treatment: String) : ClinicalAdmissionEvent
-    data class UpdateOperativeConsentSigner(val signerType: String, val repName: String, val repId: String) : ClinicalAdmissionEvent
-    data class AddOperativeConsentProcedure(val toothNumber: Int, val date: String) : ClinicalAdmissionEvent
-    data class RemoveOperativeConsentProcedure(val index: Int) : ClinicalAdmissionEvent
-    data class ConfirmOperativeConsentSignatures(val patientSig: String, val doctorSig: String) : ClinicalAdmissionEvent
-    data object SaveOperativeConsent : ClinicalAdmissionEvent
-
     data class ToggleAnamnesisQuestion(val questionKey: String, val value: Boolean) : ClinicalAdmissionEvent
+    data class UpdateAnamnesisOptionNote(val questionKey: String, val note: String) : ClinicalAdmissionEvent
     data class UpdateAnamnesisObservations(val observations: String, val familiares: String, val meds: String) : ClinicalAdmissionEvent
 
     data class ChangeDentitionType(val type: DentitionType) : ClinicalAdmissionEvent
-    data class SelectOdontogramTooth(val toothNumber: Int) : ClinicalAdmissionEvent
-    data class SelectConditionToApply(val condition: ToothCondition) : ClinicalAdmissionEvent
-    data class ApplySurfaceCondition(val toothNumber: Int, val surface: ToothSurface) : ClinicalAdmissionEvent
-
-    data class SelectPeriodontalTooth(val toothNumber: Int) : ClinicalAdmissionEvent
-    data class UpdatePeriodontalMeasurement(val measurement: PeriodontalSiteMeasurement) : ClinicalAdmissionEvent
-
-    data class UpdateDiagnoses(val main: String, val related: String, val exams: String, val plan: String) : ClinicalAdmissionEvent
-    data class ConfirmConsentSignature(val signature: String) : ClinicalAdmissionEvent
-
-    data class UpdateEvolution(val description: String, val cost: String, val payment: String) : ClinicalAdmissionEvent
-    data class SelectMaterialFromCatalog(val material: ClinicalMaterial) : ClinicalAdmissionEvent
-    data class AddMaterialUsed(val quantity: Double) : ClinicalAdmissionEvent
-    data class RemoveMaterialUsed(val materialId: String) : ClinicalAdmissionEvent
-    data class ConfirmEvolutionSignature(val signature: String) : ClinicalAdmissionEvent
-    data class ToggleCloseRecord(val close: Boolean, val summary: String) : ClinicalAdmissionEvent
-
-    data class UpdateNextAppointment(val date: String, val time: String, val reason: String) : ClinicalAdmissionEvent
     data object FinishAdmission : ClinicalAdmissionEvent
 }

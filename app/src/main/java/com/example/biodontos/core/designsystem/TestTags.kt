@@ -355,6 +355,8 @@ object TestTags {
         const val DETAIL_OPEN_ODONTOGRAM_BUTTON = "patients_detail_open_odontogram_button"
         const val DETAIL_OPEN_ADMISSION_BUTTON = "patients_detail_open_admission_button"
         const val DETAIL_NEW_EVOLUTION_DIALOG = "patients_detail_new_evolution_dialog"
+        const val DETAIL_NEW_EVOLUTION_CIE10_FIELD = "patients_detail_new_evolution_cie10_field"
+        const val DETAIL_NEW_EVOLUTION_CUPS_FIELD = "patients_detail_new_evolution_cups_field"
         const val DETAIL_NEW_EVOLUTION_DESC_FIELD = "patients_detail_new_evolution_desc_field"
         const val DETAIL_NEW_EVOLUTION_TOOTH_FIELD = "patients_detail_new_evolution_tooth_field"
         const val DETAIL_NEW_EVOLUTION_COST_FIELD = "patients_detail_new_evolution_cost_field"
@@ -425,6 +427,10 @@ object TestTags {
 
         fun statusOption(status: String): String = "patients_history_status_option_$status"
         fun paymentMethodChip(method: String): String = "patients_history_payment_method_$method"
+
+        const val PERIODONTOGRAM_TAB_CONTENT = "patients_periodontogram_tab_content"
+        const val PERIODONTOGRAM_OBSERVATIONS_INPUT = "patients_periodontogram_observations_input"
+        const val PERIODONTOGRAM_SAVE_BUTTON = "patients_periodontogram_save_button"
     }
 
     object Admission {
@@ -436,6 +442,10 @@ object TestTags {
         const val ERROR_BANNER = "admission_error_banner"
         const val PREV_BUTTON = "admission_prev_button"
         const val NEXT_BUTTON = "admission_next_button"
+        const val SUCCESS_DIALOG = "admission_success_dialog"
+        const val SUCCESS_DIALOG_PATIENT_NAME = "admission_success_dialog_patient_name"
+        const val SUCCESS_DIALOG_DNI = "admission_success_dialog_dni"
+        const val SUCCESS_DIALOG_GO_TO_DETAIL_BUTTON = "admission_success_dialog_go_to_detail_button"
         const val DNI_FIELD = "admission_dni_field"
         const val FIRST_NAME_FIELD = "admission_first_name_field"
         const val FIRST_LAST_NAME_FIELD = "admission_first_last_name_field"
@@ -443,6 +453,10 @@ object TestTags {
         const val BIRTH_DATE_FIELD = "admission_birth_date_field"
         const val PHONE_FIELD = "admission_phone_field"
         const val EMAIL_FIELD = "admission_email_field"
+        const val LOCALITY_DROPDOWN = "admission_locality_dropdown"
+        const val LOCALITY_CUSTOM_FIELD = "admission_locality_custom_field"
+        const val GUARDIAN_LOCALITY_DROPDOWN = "admission_guardian_locality_dropdown"
+        const val GUARDIAN_LOCALITY_CUSTOM_FIELD = "admission_guardian_locality_custom_field"
         const val GUARDIAN_SWITCH = "admission_guardian_switch"
         const val CONSULTATION_REASON_FIELD = "admission_consultation_reason_field"
         const val ALLERGIES_SWITCH = "admission_allergies_switch"
@@ -450,6 +464,8 @@ object TestTags {
         const val MAIN_DIAGNOSIS_FIELD = "admission_main_diagnosis_field"
         const val TREATMENT_PLAN_FIELD = "admission_treatment_plan_field"
         const val OPEN_OPERATIVE_CONSENT_BUTTON = "admission_open_operative_consent_button"
+        const val EVOLUTION_CIE10_FIELD = "admission_evolution_cie10_field"
+        const val EVOLUTION_CUPS_FIELD = "admission_evolution_cups_field"
         const val EVOLUTION_DESC_FIELD = "admission_evolution_desc_field"
         const val EVOLUTION_COST_FIELD = "admission_evolution_cost_field"
         const val EVOLUTION_PAYMENT_FIELD = "admission_evolution_payment_field"
@@ -460,6 +476,7 @@ object TestTags {
 
         fun stepChip(step: Int): String = "admission_step_chip_$step"
         fun anamnesisSwitch(key: String): String = "admission_anamnesis_$key"
+        fun anamnesisNoteField(key: String): String = "admission_anamnesis_note_$key"
         fun catalogMaterialItem(id: String): String = "admission_catalog_material_$id"
         fun usedMaterialItem(id: String): String = "admission_used_material_$id"
 
@@ -498,6 +515,7 @@ object TestTags {
         const val ROOT = "periodontogram_root"
         const val TEETH_ROW = "periodontogram_teeth_row"
         const val SUMMARY_BANNER = "periodontogram_summary_banner"
+        const val INNER_FACE_HEADER = "periodontogram_inner_face_header"
 
         fun toothChip(number: Int): String = "periodontogram_tooth_$number"
         fun toothSite(number: Int): String = "periodontogram_site_$number"

@@ -3,14 +3,19 @@ package com.example.biodontos.presentation.patients.detail
 import androidx.compose.runtime.Immutable
 import com.example.biodontos.domain.model.Anamnesis
 import com.example.biodontos.domain.model.Appointment
+import com.example.biodontos.domain.model.Cie10Code
 import com.example.biodontos.domain.model.ClinicalMaterial
 import com.example.biodontos.domain.model.ClinicalRecord
 import com.example.biodontos.domain.model.ConsentType
+import com.example.biodontos.domain.model.CupsCode
+import com.example.biodontos.domain.model.DentitionType
 import com.example.biodontos.domain.model.Evolution
 import com.example.biodontos.domain.model.EvolutionMaterialUsed
 import com.example.biodontos.domain.model.InformedConsent
 import com.example.biodontos.domain.model.Patient
 import com.example.biodontos.domain.model.Payment
+import com.example.biodontos.domain.model.PeriodontalSiteLocation
+import com.example.biodontos.domain.model.PeriodontalSiteMeasurement
 import com.example.biodontos.domain.model.Treatment
 import com.example.biodontos.domain.model.billing.TreatmentStatus
 import com.example.biodontos.domain.model.history.ActivityFilter
@@ -24,6 +29,7 @@ enum class PatientDetailTab(val label: String) {
     HISTORY("Historial"),
     SUMMARY("Ficha & Salud"),
     ODONTOGRAM("Odontograma"),
+    PERIODONTOGRAM("Periodontograma"),
     EVOLUTIONS("Evoluciones"),
     TREATMENTS("Tratamientos & Citas")
 }
@@ -77,6 +83,10 @@ data class PatientDetailState(
     val successMessage: String? = null,
 
     val showNewEvolutionDialog: Boolean = false,
+    val newEvolutionCie10: Cie10Code? = null,
+    val newEvolutionCups: CupsCode? = null,
+    val newEvolutionCie10Error: String? = null,
+    val newEvolutionCupsError: String? = null,
     val newEvolutionDescription: String = "",
     val newEvolutionToothTreated: Int? = null,
     val newEvolutionCost: String = "0",
@@ -105,7 +115,13 @@ data class PatientDetailState(
     val selectedPaymentTreatmentId: String = "",
     val newPaymentAmount: String = "",
     val newPaymentMethod: String = "EFECTIVO",
-    val isSavingPayment: Boolean = false
+    val isSavingPayment: Boolean = false,
+
+    val periodontalExaminationId: String = "",
+    val periodontalSelectedTooth: Int = 11,
+    val periodontalSiteMeasurements: Map<Pair<Int, PeriodontalSiteLocation>, PeriodontalSiteMeasurement> = emptyMap(),
+    val periodontalObservations: String = "",
+    val isSavingPeriodontogram: Boolean = false
 ) {
     val totalBilled: Double
         get() = treatments
@@ -117,4 +133,7 @@ data class PatientDetailState(
 
     val pendingBalance: Double
         get() = (totalBilled - totalPaid).coerceAtLeast(0.0)
+
+    val availableFdiTeeth: List<Int>
+        get() = clinicalRecord?.dentitionType?.allTeeth ?: DentitionType.ADULT_FDI_TEETH
 }

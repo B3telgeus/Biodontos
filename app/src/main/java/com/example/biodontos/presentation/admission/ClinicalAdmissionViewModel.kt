@@ -10,12 +10,13 @@ import com.example.biodontos.core.util.toUserFriendlyMessage
 import com.example.biodontos.data.local.dao.AdmissionDraftDao
 import com.example.biodontos.data.local.entity.AdmissionDraftEntity
 import com.example.biodontos.domain.model.*
-import com.example.biodontos.domain.repository.*
-import com.example.biodontos.domain.usecase.clinical.SaveAdmissionEvolutionAndCloseUseCase
-import com.example.biodontos.domain.usecase.clinical.ScheduleAdmissionFollowUpUseCase
+import com.example.biodontos.domain.model.history.AuditAction
+import com.example.biodontos.domain.repository.AnamnesisRepository
+import com.example.biodontos.domain.repository.ClinicalAuditRepository
+import com.example.biodontos.domain.repository.ClinicalRecordRepository
+import com.example.biodontos.domain.repository.GuardianRepository
+import com.example.biodontos.domain.repository.PatientRepository
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
-import com.example.biodontos.domain.usecase.materials.BuildEvolutionMaterialUsageUseCase
-import com.example.biodontos.domain.usecase.materials.GetMaterialsUseCase
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
@@ -27,37 +28,26 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ClinicalAdmissionViewModel(
     private val patientRepository: PatientRepository,
     private val clinicalRecordRepository: ClinicalRecordRepository,
     private val anamnesisRepository: AnamnesisRepository,
-    private val odontogramRepository: OdontogramRepository,
-    private val periodontalRepository: PeriodontalRepository,
-    private val evolutionRepository: EvolutionRepository,
-    private val materialRepository: MaterialRepository,
-    private val informedConsentRepository: InformedConsentRepository,
-    private val appointmentRepository: AppointmentRepository,
     private val guardianRepository: GuardianRepository,
-    initialPatientId: String? = null,
+    private val initialPatientId: String? = null,
     private val getCurrentDoctorUseCase: GetCurrentDoctorUseCase? = null,
-    private val doctorRepository: DoctorRepository? = null,
-    private val getMaterialsUseCase: GetMaterialsUseCase = GetMaterialsUseCase(materialRepository),
-    private val buildEvolutionMaterialUsageUseCase: BuildEvolutionMaterialUsageUseCase =
-        BuildEvolutionMaterialUsageUseCase(SystemClinicClock()),
     private val admissionDraftDao: AdmissionDraftDao? = null,
-    private val saveAdmissionEvolutionAndCloseUseCase: SaveAdmissionEvolutionAndCloseUseCase =
-        SaveAdmissionEvolutionAndCloseUseCase(evolutionRepository, clinicalRecordRepository),
-    private val scheduleAdmissionFollowUpUseCase: ScheduleAdmissionFollowUpUseCase =
-        ScheduleAdmissionFollowUpUseCase(appointmentRepository),
-    private val savedStateHandle: SavedStateHandle? = null
+    private val savedStateHandle: SavedStateHandle? = null,
+    private val clinicalAuditRepository: ClinicalAuditRepository? = null
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
         ClinicalAdmissionState(
             patientId = savedStateHandle?.get<String>(KEY_PATIENT_ID).orEmpty(),
             clinicalRecordId = savedStateHandle?.get<String>(KEY_CLINICAL_RECORD_ID).orEmpty(),
-            currentStep = (savedStateHandle?.get<Int>(KEY_CURRENT_STEP) ?: 1).coerceIn(1, 7)
+            currentStep = (savedStateHandle?.get<Int>(KEY_CURRENT_STEP) ?: 1).coerceIn(1, AdmissionStep.MAX_STEP)
         )
     )
     val state: StateFlow<ClinicalAdmissionState> = _state.asStateFlow()
@@ -65,7 +55,6 @@ class ClinicalAdmissionViewModel(
     private val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
     init {
-        loadMaterialsCatalog()
         loadCurrentDoctor()
         if (!initialPatientId.isNullOrBlank()) {
             loadExistingPatientData(initialPatientId)
@@ -84,7 +73,7 @@ class ClinicalAdmissionViewModel(
                 if (s.clinicalRecordId.isNotBlank()) {
                     handle[KEY_CLINICAL_RECORD_ID] = s.clinicalRecordId
                 }
-                handle[KEY_CURRENT_STEP] = s.currentStep
+                handle[KEY_CURRENT_STEP] = s.currentStep.coerceIn(1, AdmissionStep.MAX_STEP)
             }
         }
     }
@@ -104,13 +93,13 @@ class ClinicalAdmissionViewModel(
                 .collect { s ->
                     val docId = s.doctorId.trim()
                     val patId = s.patientId.trim()
-                    if (docId.isNotBlank() && patId.isNotBlank() && uuidRegex.matches(docId) && !s.isFinished) {
+                    if (docId.isNotBlank() && patId.isNotBlank() && uuidRegex.matches(docId) && !s.isFinished && s.completionResult == null) {
                         try {
                             admissionDraftDao.insertDraft(
                                 AdmissionDraftEntity(
                                     doctorId = docId,
                                     patientId = patId,
-                                    currentStep = s.currentStep,
+                                    currentStep = s.currentStep.coerceIn(1, AdmissionStep.MAX_STEP),
                                     draftJson = buildDraftJson(s)
                                 )
                             )
@@ -123,14 +112,12 @@ class ClinicalAdmissionViewModel(
     }
 
     private fun buildDraftJson(s: ClinicalAdmissionState): String {
-        return buildString {
-            append("{")
-            append("\"dni\":\"").append(s.dniCedula).append("\",")
-            append("\"firstName\":\"").append(s.firstName).append("\",")
-            append("\"firstLastName\":\"").append(s.firstLastName).append("\",")
-            append("\"step\":").append(s.currentStep)
-            append("}")
-        }
+        return buildJsonObject {
+            put("dni", s.dniCedula)
+            put("firstName", s.firstName)
+            put("firstLastName", s.firstLastName)
+            put("step", s.currentStep.coerceIn(1, AdmissionStep.MAX_STEP))
+        }.toString()
     }
 
     private fun loadCurrentDoctor() {
@@ -142,6 +129,7 @@ class ClinicalAdmissionViewModel(
                         _state.update {
                             it.copy(
                                 doctorId = doctor.id.value.trim(),
+                                doctorUserId = doctor.userId,
                                 doctorName = "${doctor.firstName} ${doctor.lastName}".trim(),
                                 doctorLicense = doctor.licenseNumber
                             )
@@ -159,18 +147,11 @@ class ClinicalAdmissionViewModel(
             is UiText.StringResource -> when (uiText.resId) {
                 R.string.admission_error_dni_required -> "El número de documento es obligatorio"
                 R.string.admission_error_name_required -> "El nombre y primer apellido son obligatorios"
-                R.string.admission_error_material_already_added -> "Este material ya fue anexado a la evolución."
-                R.string.admission_error_patient_id_required_for_consent -> "Debe registrar la identificación del paciente antes de emitir el consentimiento."
                 R.string.admission_error_invalid_doctor_session -> "Se requiere una sesión de doctor activa y válida para continuar."
                 R.string.admission_error_doctor_id_invalid -> "Identificador de doctor no válido. Verifique la sesión activa."
                 R.string.admission_error_saving_patient -> "Error al guardar paciente: ${uiText.args.firstOrNull() ?: ""}"
                 R.string.admission_error_saving_clinical_record -> "Error en historia: ${uiText.args.firstOrNull() ?: ""}"
                 R.string.admission_error_saving_anamnesis -> "Error en anamnesis: ${uiText.args.firstOrNull() ?: ""}"
-                R.string.admission_error_saving_odontogram -> "Error en odontograma: ${uiText.args.firstOrNull() ?: ""}"
-                R.string.admission_error_saving_periodontogram -> "Error en periodontograma: ${uiText.args.firstOrNull() ?: ""}"
-                R.string.admission_error_saving_consent -> "Error en consentimiento: ${uiText.args.firstOrNull() ?: ""}"
-                R.string.admission_error_saving_evolution -> "Error en evolución: ${uiText.args.firstOrNull() ?: ""}"
-                R.string.admission_error_saving_operative_consent -> "Error al guardar consentimiento de operatoria: ${uiText.args.firstOrNull() ?: ""}"
                 else -> "Error inesperado"
             }
         }
@@ -220,13 +201,17 @@ class ClinicalAdmissionViewModel(
                             phone = patient.phone,
                             email = patient.email ?: "",
                             address = patient.address ?: "",
+                            locality = patient.locality ?: "",
                             occupation = patient.occupation ?: "",
                             maritalStatus = patient.maritalStatus ?: "Soltero(a)",
+                            hasGuardian = !patient.guardianFirstName.isNullOrBlank() || patient.guardian != null,
+                            guardianId = patient.guardianId,
                             guardianRelationship = patient.guardianRelationship ?: "",
                             guardianFirstName = patient.guardianFirstName ?: "",
                             guardianLastName = patient.guardianLastName ?: "",
                             guardianPhone = patient.guardianPhone ?: "",
                             guardianAddress = patient.guardianAddress ?: "",
+                            guardianLocality = patient.guardian?.locality ?: "",
                             lastDentalVisit = patient.lastDentalVisit ?: "",
                             consultationReason = patient.consultationReason ?: "",
                             currentConsultationReason = patient.currentConsultationReason ?: "",
@@ -245,25 +230,9 @@ class ClinicalAdmissionViewModel(
                     _state.update {
                         it.copy(
                             clinicalRecordId = record.id,
-                            dentitionType = record.dentitionType,
-                            mainDiagnosis = record.mainDiagnosis ?: "",
-                            relatedDiagnoses = record.relatedDiagnoses ?: "",
-                            complementaryExams = record.complementaryExams ?: ""
+                            existingClinicalRecord = record,
+                            dentitionType = record.dentitionType
                         )
-                    }
-
-                    if (record.id.isNotBlank()) {
-                        periodontalRepository.getExaminationByRecordId(record.id).onSuccess { exam ->
-                            if (exam != null) {
-                                val siteMap = exam.sites.associateBy { it.toothNumber to it.siteLocation }
-                                _state.update {
-                                    it.copy(
-                                        siteMeasurements = siteMap,
-                                        periodontalObservations = exam.generalObservations ?: ""
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -272,71 +241,17 @@ class ClinicalAdmissionViewModel(
                 if (anamnesis != null) {
                     _state.update {
                         it.copy(
-                            tratamientoMedicoActual = anamnesis.tratamientoMedicoActual,
-                            tomaMedicamentos = anamnesis.tomaMedicamentos,
-                            alergias = anamnesis.alergias,
-                            cardiopatias = anamnesis.cardiopatias,
-                            alteracionPresionArterial = anamnesis.alteracionPresionArterial,
-                            embarazo = anamnesis.embarazo,
-                            diabetes = anamnesis.diabetes,
-                            hepatitis = anamnesis.hepatitis,
-                            irradiaciones = anamnesis.irradiaciones,
-                            discrasiasSanguineas = anamnesis.discrasiasSanguineas,
-                            fiebreReumatica = anamnesis.fiebreReumatica,
-                            enfermedadesRenales = anamnesis.enfermedadesRenales,
-                            inmunosupresion = anamnesis.inmunosupresion,
-                            trastornosEmocionales = anamnesis.trastornosEmocionales,
-                            patologiaRespiratoria = anamnesis.patologiaRespiratoria,
-                            trastornosGastricos = anamnesis.trastornosGastricos,
-                            epilepsia = anamnesis.epilepsia,
-                            cirugias = anamnesis.cirugias,
-                            enfermedadesOrales = anamnesis.enfermedadesOrales,
-                            otrasAlteraciones = anamnesis.otrasAlteraciones,
+                            activeAnamnesisConditions = anamnesis.activeConditions(),
                             anamnesisObservaciones = anamnesis.observaciones,
-                            antecedentesFamiliares = anamnesis.antecedentesFamiliares ?: "",
-                            medicamentosActuales = anamnesis.medicamentosActuales ?: ""
-                        )
-                    }
-                }
-            }
-
-            odontogramRepository.getOdontogram(pid).onSuccess { teethList ->
-                val surfacesMap = teethList.associateBy({ it.number }, { it.surfaceStates })
-                if (surfacesMap.isNotEmpty()) {
-                    _state.update { it.copy(teethSurfaces = surfacesMap) }
-                }
-            }
-
-            informedConsentRepository.getConsentByPatientId(pid).onSuccess { consent ->
-                if (consent != null) {
-                    _state.update {
-                        it.copy(
-                            treatmentPlanDescription = consent.treatmentSummary,
-                            consentSigned = (consent.status == "SIGNED") || !consent.patientSignatureUrl.isNullOrBlank(),
-                            consentPatientSignature = consent.patientSignatureUrl ?: ""
+                            antecedentesFamiliares = anamnesis.antecedentesFamiliares,
+                            medicamentosActuales = anamnesis.medicamentosActuales ?: "",
+                            anamnesisOptionNotes = anamnesis.optionNotes
                         )
                     }
                 }
             }
 
             _state.update { it.copy(isLoading = false) }
-        }
-    }
-
-    private fun loadMaterialsCatalog() {
-        viewModelScope.launch {
-            getMaterialsUseCase().fold(
-                ifLeft = { /* Catálogo vacío: el doctor puede gestionarlo desde Materiales */ },
-                ifRight = { list ->
-                    val today = LocalDate.now()
-                    _state.update {
-                        it.copy(
-                            materialsCatalog = list,
-                            selectedCatalogMaterial = list.firstOrNull { m -> !m.isExpired(today) }
-                        )
-                    }
-                }
-            )
         }
     }
 
@@ -350,7 +265,7 @@ class ClinicalAdmissionViewModel(
             is ClinicalAdmissionEvent.JumpToStep -> {
                 if (_state.value.isLoading) return
                 if (event.step < _state.value.currentStep || _state.value.patientId.isNotBlank()) {
-                    _state.update { it.copy(currentStep = event.step.coerceIn(1, 7)) }
+                    _state.update { it.copy(currentStep = event.step.coerceIn(1, AdmissionStep.MAX_STEP)) }
                 }
             }
             is ClinicalAdmissionEvent.ClearMessages -> {
@@ -362,6 +277,9 @@ class ClinicalAdmissionViewModel(
                         successUiText = null
                     )
                 }
+            }
+            is ClinicalAdmissionEvent.DismissSuccessDialog -> {
+                _state.update { it.copy(completionResult = null) }
             }
 
             is ClinicalAdmissionEvent.UpdateDni -> {
@@ -460,54 +378,15 @@ class ClinicalAdmissionViewModel(
                 }
             }
 
-            is ClinicalAdmissionEvent.ToggleOperativeConsentDialog -> {
-                _state.update { it.copy(showOperativeConsentDialog = event.show) }
-            }
-            is ClinicalAdmissionEvent.UpdateOperativeConsentTreatment -> {
-                _state.update { it.copy(operativeConsentProposedTreatment = event.treatment) }
-            }
-            is ClinicalAdmissionEvent.UpdateOperativeConsentSigner -> {
-                _state.update {
-                    it.copy(
-                        operativeConsentSignerType = event.signerType,
-                        operativeConsentRepresentativeName = event.repName,
-                        operativeConsentRepresentativeId = event.repId
-                    )
-                }
-            }
-            is ClinicalAdmissionEvent.AddOperativeConsentProcedure -> {
-                _state.update { current ->
-                    val proc = InformedConsentProcedure(
-                        consentId = "",
-                        toothNumber = event.toothNumber,
-                        procedureDate = event.date
-                    )
-                    current.copy(operativeConsentProcedures = current.operativeConsentProcedures + proc)
-                }
-            }
-            is ClinicalAdmissionEvent.RemoveOperativeConsentProcedure -> {
-                _state.update { current ->
-                    val updated = current.operativeConsentProcedures.toMutableList()
-                    if (event.index in updated.indices) {
-                        updated.removeAt(event.index)
-                    }
-                    current.copy(operativeConsentProcedures = updated)
-                }
-            }
-            is ClinicalAdmissionEvent.ConfirmOperativeConsentSignatures -> {
-                _state.update {
-                    it.copy(
-                        operativeConsentPatientSignature = event.patientSig,
-                        operativeConsentDoctorSignature = event.doctorSig
-                    )
-                }
-            }
-            is ClinicalAdmissionEvent.SaveOperativeConsent -> {
-                saveOperativeConsent()
-            }
-
             is ClinicalAdmissionEvent.ToggleAnamnesisQuestion -> {
                 toggleAnamnesisField(event.questionKey, event.value)
+            }
+            is ClinicalAdmissionEvent.UpdateAnamnesisOptionNote -> {
+                _state.update { current ->
+                    val updatedNotes = current.anamnesisOptionNotes.toMutableMap()
+                    updatedNotes[event.questionKey] = event.note
+                    current.copy(anamnesisOptionNotes = updatedNotes)
+                }
             }
             is ClinicalAdmissionEvent.UpdateAnamnesisObservations -> {
                 _state.update {
@@ -522,106 +401,7 @@ class ClinicalAdmissionViewModel(
             is ClinicalAdmissionEvent.ChangeDentitionType -> {
                 _state.update { it.copy(dentitionType = event.type) }
             }
-            is ClinicalAdmissionEvent.SelectOdontogramTooth -> {
-                _state.update { it.copy(selectedOdontogramTooth = event.toothNumber) }
-            }
-            is ClinicalAdmissionEvent.SelectConditionToApply -> {
-                _state.update { it.copy(selectedConditionToApply = event.condition) }
-            }
-            is ClinicalAdmissionEvent.ApplySurfaceCondition -> {
-                applySurfaceToTooth(event.toothNumber, event.surface)
-            }
-
-            is ClinicalAdmissionEvent.SelectPeriodontalTooth -> {
-                _state.update { it.copy(selectedPeriodontalTooth = event.toothNumber) }
-            }
-            is ClinicalAdmissionEvent.UpdatePeriodontalMeasurement -> {
-                val key = event.measurement.toothNumber to event.measurement.siteLocation
-                _state.update {
-                    val updated = it.siteMeasurements.toMutableMap()
-                    updated[key] = event.measurement
-                    it.copy(siteMeasurements = updated)
-                }
-            }
-
-            is ClinicalAdmissionEvent.UpdateDiagnoses -> {
-                _state.update {
-                    it.copy(
-                        mainDiagnosis = event.main,
-                        relatedDiagnoses = event.related,
-                        complementaryExams = event.exams,
-                        treatmentPlanDescription = event.plan
-                    )
-                }
-            }
-            is ClinicalAdmissionEvent.ConfirmConsentSignature -> {
-                _state.update {
-                    it.copy(
-                        consentPatientSignature = event.signature,
-                        consentSigned = event.signature.isNotBlank()
-                    )
-                }
-            }
-
-            is ClinicalAdmissionEvent.UpdateEvolution -> {
-                _state.update {
-                    it.copy(
-                        evolutionDescription = event.description,
-                        evolutionCost = event.cost,
-                        evolutionPayment = event.payment
-                    )
-                }
-            }
-            is ClinicalAdmissionEvent.SelectMaterialFromCatalog -> {
-                _state.update { it.copy(selectedCatalogMaterial = event.material) }
-            }
-            is ClinicalAdmissionEvent.AddMaterialUsed -> {
-                val mat = _state.value.selectedCatalogMaterial ?: return
-                if (_state.value.usedMaterials.any { it.materialId == mat.id.value }) {
-                    val msg = "Este material ya fue anexado a la evolución."
-                    setError(UiText.StringResource(R.string.admission_error_material_already_added), msg)
-                    return
-                }
-                viewModelScope.launch {
-                    buildEvolutionMaterialUsageUseCase(mat, event.quantity).fold(
-                        ifLeft = { error ->
-                            setError(UiText.DynamicString(error.userMessage), error.userMessage)
-                        },
-                        ifRight = { used ->
-                            _state.update {
-                                it.copy(usedMaterials = it.usedMaterials + used, errorMessage = null, errorUiText = null)
-                            }
-                        }
-                    )
-                }
-            }
-            is ClinicalAdmissionEvent.RemoveMaterialUsed -> {
-                _state.update {
-                    it.copy(usedMaterials = it.usedMaterials.filterNot { m -> m.materialId == event.materialId })
-                }
-            }
-            is ClinicalAdmissionEvent.ConfirmEvolutionSignature -> {
-                _state.update { it.copy(evolutionPatientSignature = event.signature) }
-            }
-            is ClinicalAdmissionEvent.ToggleCloseRecord -> {
-                _state.update {
-                    it.copy(
-                        closeRecordOnFinish = event.close,
-                        closureSummary = event.summary
-                    )
-                }
-            }
-
-            is ClinicalAdmissionEvent.UpdateNextAppointment -> {
-                _state.update {
-                    it.copy(
-                        nextAppointmentDate = event.date,
-                        nextAppointmentTime = event.time,
-                        nextAppointmentReason = event.reason
-                    )
-                }
-            }
-            is ClinicalAdmissionEvent.FinishAdmission -> finishAdmission()
+            is ClinicalAdmissionEvent.FinishAdmission -> persistStep2AndFinish()
         }
     }
 
@@ -636,41 +416,14 @@ class ClinicalAdmissionViewModel(
     }
 
     private fun toggleAnamnesisField(key: String, value: Boolean) {
+        val condition = AnamnesisCondition.fromKey(key) ?: return
         _state.update { current ->
-            when (key) {
-                "tratamientoMedicoActual" -> current.copy(tratamientoMedicoActual = value)
-                "tomaMedicamentos" -> current.copy(tomaMedicamentos = value)
-                "alergias" -> current.copy(alergias = value)
-                "cardiopatias" -> current.copy(cardiopatias = value)
-                "alteracionPresionArterial" -> current.copy(alteracionPresionArterial = value)
-                "embarazo" -> current.copy(embarazo = value)
-                "diabetes" -> current.copy(diabetes = value)
-                "hepatitis" -> current.copy(hepatitis = value)
-                "irradiaciones" -> current.copy(irradiaciones = value)
-                "discrasiasSanguineas" -> current.copy(discrasiasSanguineas = value)
-                "fiebreReumatica" -> current.copy(fiebreReumatica = value)
-                "enfermedadesRenales" -> current.copy(enfermedadesRenales = value)
-                "inmunosupresion" -> current.copy(inmunosupresion = value)
-                "trastornosEmocionales" -> current.copy(trastornosEmocionales = value)
-                "patologiaRespiratoria" -> current.copy(patologiaRespiratoria = value)
-                "trastornosGastricos" -> current.copy(trastornosGastricos = value)
-                "epilepsia" -> current.copy(epilepsia = value)
-                "cirugias" -> current.copy(cirugias = value)
-                "enfermedadesOrales" -> current.copy(enfermedadesOrales = value)
-                "otrasAlteraciones" -> current.copy(otrasAlteraciones = value)
-                else -> current
+            val updated = if (value) {
+                current.activeAnamnesisConditions + condition
+            } else {
+                current.activeAnamnesisConditions - condition
             }
-        }
-    }
-
-    private fun applySurfaceToTooth(toothNumber: Int, surface: ToothSurface) {
-        val condition = _state.value.selectedConditionToApply
-        _state.update { current ->
-            val toothMap = current.teethSurfaces[toothNumber]?.toMutableMap() ?: mutableMapOf()
-            toothMap[surface] = condition
-            val updatedTeeth = current.teethSurfaces.toMutableMap()
-            updatedTeeth[toothNumber] = toothMap
-            current.copy(teethSurfaces = updatedTeeth)
+            current.copy(activeAnamnesisConditions = updated)
         }
     }
 
@@ -678,12 +431,7 @@ class ClinicalAdmissionViewModel(
         val s = _state.value
         when (s.currentStep) {
             1 -> persistStep1AndAdvance()
-            2 -> persistStep2AndAdvance()
-            3 -> persistStep3AndAdvance()
-            4 -> persistStep4AndAdvance()
-            5 -> persistStep5AndAdvance()
-            6 -> persistStep6AndAdvance()
-            7 -> finishAdmission()
+            2 -> persistStep2AndFinish()
         }
     }
 
@@ -768,12 +516,18 @@ class ClinicalAdmissionViewModel(
             patientRepository.createOrUpdatePatient(patient)
                 .onSuccess { savedPatient ->
                     val pid = savedPatient.id
-                    val clinicalRecord = ClinicalRecord(
-                        id = s.clinicalRecordId,
-                        patientId = pid,
-                        dentitionType = s.dentitionType,
-                        status = ClinicalRecordStatus.ABIERTA
-                    )
+                    val clinicalRecord = if (s.existingClinicalRecord != null) {
+                        s.existingClinicalRecord.copy(
+                            dentitionType = s.dentitionType
+                        )
+                    } else {
+                        ClinicalRecord(
+                            id = s.clinicalRecordId,
+                            patientId = pid,
+                            dentitionType = s.dentitionType,
+                            status = ClinicalRecordStatus.ABIERTA
+                        )
+                    }
                     clinicalRecordRepository.saveRecord(clinicalRecord)
                         .onSuccess { savedRecord ->
                             _state.update {
@@ -781,6 +535,7 @@ class ClinicalAdmissionViewModel(
                                     isLoading = false,
                                     patientId = pid,
                                     clinicalRecordId = savedRecord.id,
+                                    existingClinicalRecord = savedRecord,
                                     currentStep = 2
                                 )
                             }
@@ -797,41 +552,62 @@ class ClinicalAdmissionViewModel(
         }
     }
 
-    private fun persistStep2AndAdvance() {
+    private fun persistStep2AndFinish() {
         val s = _state.value
         val validDoctorId = requireValidDoctorId() ?: return
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
             val anamnesis = Anamnesis(
                 patientId = s.patientId,
-                tratamientoMedicoActual = s.tratamientoMedicoActual,
-                tomaMedicamentos = s.tomaMedicamentos,
-                alergias = s.alergias,
-                cardiopatias = s.cardiopatias,
-                alteracionPresionArterial = s.alteracionPresionArterial,
-                embarazo = s.embarazo,
-                diabetes = s.diabetes,
-                hepatitis = s.hepatitis,
-                irradiaciones = s.irradiaciones,
-                discrasiasSanguineas = s.discrasiasSanguineas,
-                fiebreReumatica = s.fiebreReumatica,
-                enfermedadesRenales = s.enfermedadesRenales,
-                inmunosupresion = s.inmunosupresion,
-                trastornosEmocionales = s.trastornosEmocionales,
-                patologiaRespiratoria = s.patologiaRespiratoria,
-                trastornosGastricos = s.trastornosGastricos,
-                epilepsia = s.epilepsia,
-                cirugias = s.cirugias,
-                enfermedadesOrales = s.enfermedadesOrales,
-                otrasAlteraciones = s.otrasAlteraciones,
                 observaciones = s.anamnesisObservaciones,
                 antecedentesFamiliares = s.antecedentesFamiliares,
-                medicamentosActuales = s.medicamentosActuales.ifBlank { null }
-            )
+                medicamentosActuales = s.medicamentosActuales.ifBlank { null },
+                optionNotes = filterActiveAnamnesisNotes(s)
+            ).withConditions(s.activeAnamnesisConditions)
 
             anamnesisRepository.saveAnamnesis(anamnesis)
                 .onSuccess {
-                    _state.update { it.copy(isLoading = false, currentStep = 3) }
+                    val isNew = initialPatientId.isNullOrBlank()
+                    try {
+                        clinicalAuditRepository?.recordAudit(
+                            patientId = s.patientId,
+                            entityTable = "clinical_records",
+                            entityId = s.clinicalRecordId,
+                            action = if (isNew) AuditAction.CREATE else AuditAction.UPDATE,
+                            changedFields = listOf("patient_admission", "anamnesis"),
+                            actorUserId = s.doctorUserId ?: validDoctorId,
+                            actorName = s.doctorName.ifBlank { null }
+                        )
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                    }
+
+                    if (s.patientId.isNotBlank()) {
+                        try {
+                            admissionDraftDao?.deleteDraft(validDoctorId, s.patientId)
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                        }
+                    }
+
+                    val completion = AdmissionCompletionResult(
+                        patientId = s.patientId,
+                        patientFullName = s.patientFullName,
+                        dniCedula = s.dniCedula,
+                        clinicalRecordId = s.clinicalRecordId,
+                        isNewAdmission = isNew
+                    )
+
+                    val successMsg = "¡Proceso de ingreso clínico finalizado con éxito!"
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            isFinished = true,
+                            completionResult = completion,
+                            successMessage = successMsg,
+                            successUiText = UiText.DynamicString(successMsg)
+                        )
+                    }
                 }
                 .onFailure { err ->
                     val msg = "Error en anamnesis: ${err.toUserFriendlyMessage()}"
@@ -840,221 +616,10 @@ class ClinicalAdmissionViewModel(
         }
     }
 
-    private fun persistStep3AndAdvance() {
-        val s = _state.value
-        val validDoctorId = requireValidDoctorId() ?: return
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
-            for ((toothNum, surfaces) in s.teethSurfaces) {
-                for ((surface, condition) in surfaces) {
-                    val result = odontogramRepository.updateToothState(s.patientId, toothNum, surface, condition, "Admisión inicial")
-                    if (result.isFailure) {
-                        val err = result.exceptionOrNull()
-                        val friendly = err.toUserFriendlyMessage()
-                        val msg = "Error en odontograma: $friendly"
-                        setError(UiText.StringResource(R.string.admission_error_saving_odontogram, friendly), msg)
-                        return@launch
-                    }
-                }
-            }
-            _state.update { it.copy(isLoading = false, currentStep = 4) }
-        }
-    }
-
-    private fun persistStep4AndAdvance() {
-        val s = _state.value
-        val validDoctorId = requireValidDoctorId() ?: return
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
-            val exam = PeriodontalExamination(
-                recordId = s.clinicalRecordId,
-                doctorId = validDoctorId,
-                examinationDate = LocalDate.now().toString(),
-                generalObservations = s.periodontalObservations.ifBlank { null },
-                sites = s.siteMeasurements.values.toList()
-            )
-
-            periodontalRepository.saveExamination(exam)
-                .onSuccess {
-                    _state.update { it.copy(isLoading = false, currentStep = 5) }
-                }
-                .onFailure { err ->
-                    val msg = "Error en periodontograma: ${err.toUserFriendlyMessage()}"
-                    setError(UiText.StringResource(R.string.admission_error_saving_periodontogram, err.toUserFriendlyMessage()), msg)
-                }
-        }
-    }
-
-    private fun persistStep5AndAdvance() {
-        val s = _state.value
-        val validDoctorId = requireValidDoctorId() ?: return
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
-            val record = ClinicalRecord(
-                id = s.clinicalRecordId,
-                patientId = s.patientId,
-                dentitionType = s.dentitionType,
-                mainDiagnosis = s.mainDiagnosis.ifBlank { null },
-                relatedDiagnoses = s.relatedDiagnoses.ifBlank { null },
-                complementaryExams = s.complementaryExams.ifBlank { null },
-                status = ClinicalRecordStatus.ABIERTA
-            )
-            val recordResult = clinicalRecordRepository.saveRecord(record)
-            if (recordResult.isFailure) {
-                val err = recordResult.exceptionOrNull()
-                val friendly = err.toUserFriendlyMessage()
-                val msg = "Error en historia: $friendly"
-                setError(UiText.StringResource(R.string.admission_error_saving_clinical_record, friendly), msg)
-                return@launch
-            }
-
-            val consent = InformedConsent(
-                patientId = s.patientId,
-                doctorId = validDoctorId,
-                treatmentSummary = s.treatmentPlanDescription.ifBlank { "Tratamiento Integral de Odontología" },
-                patientCity = s.locality.ifBlank { s.birthPlace.ifBlank { "Bogotá D.C." } },
-                patientSignatureUrl = s.consentPatientSignature.ifBlank { null },
-                doctorLicenseNumber = s.doctorLicense,
-                status = if (s.consentSigned) "SIGNED" else "PENDING"
-            )
-            informedConsentRepository.saveConsent(consent)
-                .onSuccess {
-                    _state.update { it.copy(isLoading = false, currentStep = 6) }
-                }
-                .onFailure { err ->
-                    val msg = "Error en consentimiento: ${err.toUserFriendlyMessage()}"
-                    setError(UiText.StringResource(R.string.admission_error_saving_consent, err.toUserFriendlyMessage()), msg)
-                }
-        }
-    }
-
-    private fun persistStep6AndAdvance() {
-        val s = _state.value
-        val validDoctorId = requireValidDoctorId() ?: return
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
-            val cost = s.evolutionCost.toDoubleOrNull() ?: 0.0
-            val payment = s.evolutionPayment.toDoubleOrNull() ?: 0.0
-            val evolution = Evolution(
-                recordId = s.clinicalRecordId,
-                doctorId = validDoctorId,
-                date = LocalDate.now().toString(),
-                procedureTime = "10:00:00",
-                description = s.evolutionDescription.ifBlank { "Apertura de historia clínica e ingreso" },
-                doctorName = s.doctorName,
-                cost = cost,
-                paymentAmount = payment,
-                balance = (cost - payment).coerceAtLeast(0.0),
-                patientSignatureUrl = s.evolutionPatientSignature.ifBlank { null },
-                materialsUsed = s.usedMaterials
-            )
-
-            val saveResult = saveAdmissionEvolutionAndCloseUseCase(
-                evolution = evolution,
-                closeRecord = s.closeRecordOnFinish,
-                closureSummary = s.closureSummary.ifBlank { "Tratamiento de ingreso concluido." },
-                closureSignatureUrl = s.evolutionPatientSignature.ifBlank { null }
-            )
-
-            saveResult.onSuccess {
-                _state.update { it.copy(isLoading = false, currentStep = 7) }
-            }.onFailure { err ->
-                val msg = "Error en evolución: ${err.toUserFriendlyMessage()}"
-                setError(UiText.StringResource(R.string.admission_error_saving_evolution, err.toUserFriendlyMessage()), msg)
-            }
-        }
-    }
-
-    private fun finishAdmission() {
-        val s = _state.value
-        val validDoctorId = requireValidDoctorId() ?: return
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
-            val scheduledTimeNote = scheduleAdmissionFollowUpUseCase(
-                patientId = s.patientId,
-                doctorId = validDoctorId,
-                nextAppointmentDate = s.nextAppointmentDate,
-                nextAppointmentTime = s.nextAppointmentTime,
-                nextAppointmentReason = s.nextAppointmentReason
-            )
-
-            if (s.patientId.isNotBlank()) {
-                try {
-                    admissionDraftDao?.deleteDraft(validDoctorId, s.patientId)
-                } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                }
-            }
-
-            val successMsg = "¡Proceso de ingreso clínico finalizado con éxito!$scheduledTimeNote"
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                    isFinished = true,
-                    successMessage = successMsg,
-                    successUiText = UiText.DynamicString(successMsg)
-                )
-            }
-        }
-    }
-
-    private fun saveOperativeConsent() {
-        val s = _state.value
-        val validDoctorId = requireValidDoctorId() ?: return
-        val pid = s.patientId.ifBlank {
-            setError(
-                UiText.StringResource(R.string.admission_error_patient_id_required_for_consent),
-                "Debe registrar la identificación del paciente antes de emitir el consentimiento."
-            )
-            return
-        }
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null, errorUiText = null) }
-            val today = LocalDate.now().toString()
-            val documentCode = "consentimiento_preop_${pid}_$today"
-            val treatmentDescription = s.operativeConsentProposedTreatment.ifBlank { "Tratamiento de operatoria dental y obturaciones estéticas" }
-            val formattedTreatment = "[$documentCode] $treatmentDescription"
-
-            val consent = InformedConsent(
-                id = "",
-                patientId = pid,
-                doctorId = validDoctorId,
-                documentVersion = "2",
-                versionDate = "2019-06-01",
-                treatmentSummary = formattedTreatment,
-                representativeName = if (s.operativeConsentSignerType == "GUARDIAN") s.operativeConsentRepresentativeName.ifBlank { "${s.guardianFirstName} ${s.guardianLastName}".trim() } else null,
-                representativeId = if (s.operativeConsentSignerType == "GUARDIAN") s.operativeConsentRepresentativeId else null,
-                patientSignatureUrl = if (s.operativeConsentSignerType == "PATIENT") {
-                    s.operativeConsentPatientSignature.ifBlank { "${documentCode}_sig_paciente" }
-                } else null,
-                guardianSignatureUrl = if (s.operativeConsentSignerType == "GUARDIAN") {
-                    s.operativeConsentPatientSignature.ifBlank { "${documentCode}_sig_acudiente" }
-                } else null,
-                doctorSignatureUrl = s.operativeConsentDoctorSignature.ifBlank { "${documentCode}_sig_doctor" },
-                doctorLicenseNumber = s.doctorLicense,
-                patientCity = s.locality.ifBlank { s.birthPlace.ifBlank { "Bogotá D.C." } },
-                signedAt = today,
-                status = "SIGNED",
-                procedures = s.operativeConsentProcedures
-            )
-
-            informedConsentRepository.saveConsent(consent)
-                .onSuccess {
-                    val msg = "Consentimiento de operatoria guardado y firmado correctamente"
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            showOperativeConsentDialog = false,
-                            operativeConsentSaved = true,
-                            successMessage = msg,
-                            successUiText = UiText.StringResource(R.string.admission_success_operative_consent)
-                        )
-                    }
-                }
-                .onFailure { err ->
-                    val msg = err.toUserFriendlyMessage("Error al guardar consentimiento de operatoria")
-                    setError(UiText.StringResource(R.string.admission_error_saving_operative_consent, msg), msg)
-                }
-        }
+    private fun filterActiveAnamnesisNotes(s: ClinicalAdmissionState): Map<String, String> {
+        val activeKeys = s.activeAnamnesisConditions.map { it.key }.toSet()
+        return s.anamnesisOptionNotes
+            .filter { (key, value) -> key in activeKeys && value.isNotBlank() }
+            .mapValues { (_, value) -> value.trim() }
     }
 }

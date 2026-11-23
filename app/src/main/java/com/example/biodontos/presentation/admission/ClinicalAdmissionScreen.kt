@@ -38,10 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.biodontos.core.designsystem.*
 import com.example.biodontos.domain.model.*
-import com.example.biodontos.presentation.components.SignaturePad
-import com.example.biodontos.presentation.odontogram.InteractiveTooth
-import com.example.biodontos.presentation.odontogram.color
-import com.example.biodontos.presentation.periodontogram.InteractivePeriodontogram
+import com.example.biodontos.presentation.components.LocalityDropdownField
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,16 +46,10 @@ import java.util.Locale
 fun ClinicalAdmissionScreen(
     viewModel: ClinicalAdmissionViewModel,
     onNavigateBack: () -> Unit,
-    onAdmissionFinished: () -> Unit
+    onAdmissionFinished: (patientId: String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.isFinished) {
-        if (state.isFinished) {
-            onAdmissionFinished()
-        }
-    }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -76,6 +67,7 @@ fun ClinicalAdmissionScreen(
         state = state,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        onGoToDetail = onAdmissionFinished,
         snackbarHostState = snackbarHostState
     )
 }
@@ -86,28 +78,13 @@ fun ClinicalAdmissionContent(
     state: ClinicalAdmissionState,
     onEvent: (ClinicalAdmissionEvent) -> Unit,
     onNavigateBack: () -> Unit,
+    onGoToDetail: (patientId: String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
-    if (state.showOperativeConsentDialog) {
-        OperativeConsentDialog(
-            state = state,
-            onDismiss = { onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(false)) },
-            onUpdateTreatment = { onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentTreatment(it)) },
-            onUpdateSigner = { signerType, repName, repId ->
-                onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentSigner(signerType, repName, repId))
-            },
-            onAddProcedure = { tooth, date ->
-                onEvent(ClinicalAdmissionEvent.AddOperativeConsentProcedure(tooth, date))
-            },
-            onRemoveProcedure = { index ->
-                onEvent(ClinicalAdmissionEvent.RemoveOperativeConsentProcedure(index))
-            },
-            onConfirmSignatures = { pSig, dSig ->
-                onEvent(ClinicalAdmissionEvent.ConfirmOperativeConsentSignatures(pSig, dSig))
-            },
-            onSaveConsent = {
-                onEvent(ClinicalAdmissionEvent.SaveOperativeConsent)
-            }
+    if (state.completionResult != null) {
+        AdmissionSuccessDialog(
+            completion = state.completionResult,
+            onGoToDetail = onGoToDetail
         )
     }
 
@@ -126,7 +103,7 @@ fun ClinicalAdmissionContent(
                             modifier = Modifier.semantics { heading() }
                         )
                         Text(
-                            text = stringResource(R.string.ui_clinical_admission_screen_2, state.currentStep, getStepTitle(state.currentStep)),
+                            text = getStepTitle(state.currentStep),
                             style = MaterialTheme.typography.bodySmall,
                             color = BiodontosGreyText
                         )
@@ -142,23 +119,6 @@ fun ClinicalAdmissionContent(
                             contentDescription = stringResource(R.string.ui_clinical_admission_screen_3),
                             tint = BiodontosDark
                         )
-                    }
-                },
-                actions = {
-                    FilledTonalButton(
-                        onClick = { onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true)) },
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = Zafiro.copy(alpha = 0.12f),
-                            contentColor = Zafiro
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .testTag(TestTags.Admission.CONSENT_ACTION_BUTTON)
-                    ) {
-                        Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.ui_clinical_admission_screen_4), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BiodontosWhite)
@@ -192,7 +152,7 @@ fun ClinicalAdmissionContent(
                         enabled = !state.isLoading,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (state.currentStep == 7) Esmeralda else BiodontosDark
+                            containerColor = if (state.currentStep == 2) Esmeralda else BiodontosDark
                         ),
                         modifier = Modifier.testTag(TestTags.Admission.NEXT_BUTTON)
                     ) {
@@ -204,7 +164,7 @@ fun ClinicalAdmissionContent(
                             )
                         } else {
                             Text(
-                                text = if (state.currentStep == 7) "Finalizar Admisión" else "Guardar y Continuar",
+                                text = if (state.currentStep == 2) "Finalizar Registro" else "Guardar y Continuar",
                                 color = BiodontosWhite,
                                 fontWeight = FontWeight.Bold
                             )
@@ -257,11 +217,6 @@ fun ClinicalAdmissionContent(
                 when (state.currentStep) {
                     1 -> item(key = "step_1") { Step1IdentificationContent(state, onEvent) }
                     2 -> item(key = "step_2") { Step2AnamnesisContent(state, onEvent) }
-                    3 -> item(key = "step_3") { Step3OdontogramContent(state, onEvent) }
-                    4 -> item(key = "step_4") { Step4PeriodontogramContent(state, onEvent) }
-                    5 -> item(key = "step_5") { Step5TreatmentConsentContent(state, onEvent) }
-                    6 -> item(key = "step_6") { Step6EvolutionMaterialsContent(state, onEvent) }
-                    7 -> item(key = "step_7") { Step7NextAppointmentContent(state, onEvent) }
                 }
             }
         }
@@ -270,12 +225,7 @@ fun ClinicalAdmissionContent(
 
 private fun getStepTitle(step: Int): String = when (step) {
     1 -> "Identificación del Paciente"
-    2 -> "Anamnesis (20 Preguntas)"
-    3 -> "Odontograma FDI"
-    4 -> "Periodontograma de 6 Sitios"
-    5 -> "Plan de Tratamiento & Consentimiento"
-    6 -> "Evolución, Costos & INVIMA"
-    7 -> "Agendar Próxima Cita"
+    2 -> "Anamnesis Médica"
     else -> ""
 }
 
@@ -293,7 +243,7 @@ private fun StepProgressHeader(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        items((1..7).toList(), key = { it }) { step ->
+        items((1..AdmissionStep.MAX_STEP).toList(), key = { it }) { step ->
             val isActive = step == currentStep
             val isCompleted = step < currentStep
 
@@ -346,13 +296,8 @@ private fun StepProgressHeader(
 
                     Text(
                         text = when (step) {
-                            1 -> "Datos"
+                            1 -> "Datos del Paciente"
                             2 -> "Anamnesis"
-                            3 -> "Odonto"
-                            4 -> "Periodonto"
-                            5 -> "Plan/Firma"
-                            6 -> "Evolución"
-                            7 -> "Cita"
                             else -> ""
                         },
                         fontSize = 12.sp,
@@ -532,25 +477,23 @@ private fun Step1IdentificationContent(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = state.address,
-                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateAddress(it)) },
-                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_21)) },
-                    modifier = Modifier.weight(1.3f),
-                    colors = biodontosTextFieldColors(),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                OutlinedTextField(
-                    value = state.locality,
-                    onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateLocality(it)) },
-                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_22)) },
-                    placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_23)) },
-                    modifier = Modifier.weight(1f),
-                    colors = biodontosTextFieldColors(),
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
+            OutlinedTextField(
+                value = state.address,
+                onValueChange = { onEvent(ClinicalAdmissionEvent.UpdateAddress(it)) },
+                label = { Text(stringResource(R.string.ui_clinical_admission_screen_21)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = biodontosTextFieldColors(),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            LocalityDropdownField(
+                selectedLocality = state.locality,
+                onLocalityChange = { onEvent(ClinicalAdmissionEvent.UpdateLocality(it)) },
+                label = stringResource(R.string.ui_clinical_admission_screen_22),
+                dropdownTestTag = TestTags.Admission.LOCALITY_DROPDOWN,
+                customInputTestTag = TestTags.Admission.LOCALITY_CUSTOM_FIELD,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             if (state.isMinor) {
                 Surface(
@@ -706,37 +649,36 @@ private fun Step1IdentificationContent(
                                 }
                             }
 
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedTextField(
-                                    value = state.guardianAddress,
-                                    onValueChange = { addr ->
-                                        onEvent(
-                                            ClinicalAdmissionEvent.UpdateGuardian(
-                                                relationship = state.guardianRelationship,
-                                                firstName = state.guardianFirstName,
-                                                lastName = state.guardianLastName,
-                                                phone = state.guardianPhone,
-                                                address = addr,
-                                                locality = state.guardianLocality
-                                            )
+                            OutlinedTextField(
+                                value = state.guardianAddress,
+                                onValueChange = { addr ->
+                                    onEvent(
+                                        ClinicalAdmissionEvent.UpdateGuardian(
+                                            relationship = state.guardianRelationship,
+                                            firstName = state.guardianFirstName,
+                                            lastName = state.guardianLastName,
+                                            phone = state.guardianPhone,
+                                            address = addr,
+                                            locality = state.guardianLocality
                                         )
-                                    },
-                                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_33)) },
-                                    modifier = Modifier.weight(1.3f),
-                                    colors = biodontosTextFieldColors(),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                OutlinedTextField(
-                                    value = state.guardianLocality,
-                                    onValueChange = { loc ->
-                                        onEvent(ClinicalAdmissionEvent.UpdateGuardianLocality(loc))
-                                    },
-                                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_34)) },
-                                    modifier = Modifier.weight(1f),
-                                    colors = biodontosTextFieldColors(),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                            }
+                                    )
+                                },
+                                label = { Text(stringResource(R.string.ui_clinical_admission_screen_33)) },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = biodontosTextFieldColors(),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+
+                            LocalityDropdownField(
+                                selectedLocality = state.guardianLocality,
+                                onLocalityChange = { loc ->
+                                    onEvent(ClinicalAdmissionEvent.UpdateGuardianLocality(loc))
+                                },
+                                label = stringResource(R.string.ui_clinical_admission_screen_34),
+                                dropdownTestTag = TestTags.Admission.GUARDIAN_LOCALITY_DROPDOWN,
+                                customInputTestTag = TestTags.Admission.GUARDIAN_LOCALITY_CUSTOM_FIELD,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
                 }
@@ -857,54 +799,55 @@ private fun Step2AnamnesisContent(
 
             HorizontalDivider(color = SlateLight)
 
-            val questions = listOf(
-                "tratamientoMedicoActual" to "¿Está bajo tratamiento médico actual?" to state.tratamientoMedicoActual,
-                "tomaMedicamentos" to "¿Toma medicamentos habitualmente?" to state.tomaMedicamentos,
-                "alergias" to "¿Tiene o ha tenido alergias?" to state.alergias,
-                "cardiopatias" to "¿Sufre del corazón o cardiopatías?" to state.cardiopatias,
-                "alteracionPresionArterial" to "¿Alteración en presión arterial (Hipo/Hipertensión)?" to state.alteracionPresionArterial,
-                "embarazo" to "¿Embarazo o sospecha de embarazo?" to state.embarazo,
-                "diabetes" to "¿Padece de diabetes?" to state.diabetes,
-                "hepatitis" to "¿Ha tenido hepatitis?" to state.hepatitis,
-                "irradiaciones" to "¿Ha recibido radiaciones o quimioterapia?" to state.irradiaciones,
-                "discrasiasSanguineas" to "¿Trastornos de coagulación / discrasias?" to state.discrasiasSanguineas,
-                "fiebreReumatica" to "¿Ha padecido fiebre reumática?" to state.fiebreReumatica,
-                "enfermedadesRenales" to "¿Enfermedades renales?" to state.enfermedadesRenales,
-                "inmunosupresion" to "¿Inmunosupresión o VIH?" to state.inmunosupresion,
-                "trastornosEmocionales" to "¿Trastornos emocionales o depresión?" to state.trastornosEmocionales,
-                "patologiaRespiratoria" to "¿Patología respiratoria (Asma / EPOC)?" to state.patologiaRespiratoria,
-                "trastornosGastricos" to "¿Trastornos gástricos (Úlceras, reflujo)?" to state.trastornosGastricos,
-                "epilepsia" to "¿Epilepsia o convulsiones?" to state.epilepsia,
-                "cirugias" to "¿Ha sido intervenido quirúrgicamente?" to state.cirugias,
-                "enfermedadesOrales" to "¿Enfermedades orales previas?" to state.enfermedadesOrales,
-                "otrasAlteraciones" to "¿Otras alteraciones de salud?" to state.otrasAlteraciones
-            )
-
-            questions.forEach { (pair, isChecked) ->
-                val (key, label) = pair
-                Row(
+            AnamnesisCondition.entries.forEach { cond ->
+                val isChecked = cond in state.activeAnamnesisConditions
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(if (isChecked) BiodontosErrorBg.copy(alpha = 0.5f) else BiodontosInputBg.copy(alpha = 0.3f))
                         .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        text = label,
-                        fontSize = 13.sp,
-                        fontWeight = if (isChecked) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isChecked) Carmesi else BiodontosDark,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Switch(
-                        checked = isChecked,
-                        onCheckedChange = {
-                            onEvent(ClinicalAdmissionEvent.ToggleAnamnesisQuestion(key, it))
-                        },
-                        modifier = Modifier.testTag(TestTags.Admission.anamnesisSwitch(key))
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = cond.question,
+                            fontSize = 13.sp,
+                            fontWeight = if (isChecked) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isChecked) Carmesi else BiodontosDark,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked = isChecked,
+                            onCheckedChange = {
+                                onEvent(ClinicalAdmissionEvent.ToggleAnamnesisQuestion(cond.key, it))
+                            },
+                            modifier = Modifier.testTag(TestTags.Admission.anamnesisSwitch(cond.key))
+                        )
+                    }
+
+                    AnimatedVisibility(visible = isChecked) {
+                        OutlinedTextField(
+                            value = state.anamnesisOptionNotes[cond.key].orEmpty(),
+                            onValueChange = { note ->
+                                onEvent(ClinicalAdmissionEvent.UpdateAnamnesisOptionNote(cond.key, note))
+                            },
+                            label = { Text("Nota / Detalles") },
+                            placeholder = { Text(cond.noteHint) },
+                            minLines = 1,
+                            maxLines = 3,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 4.dp)
+                                .testTag(TestTags.Admission.anamnesisNoteField(cond.key)),
+                            colors = biodontosTextFieldColors(),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                    }
                 }
             }
 
@@ -965,659 +908,104 @@ private fun Step2AnamnesisContent(
 }
 
 @Composable
-private fun Step3OdontogramContent(
-    state: ClinicalAdmissionState,
-    onEvent: (ClinicalAdmissionEvent) -> Unit
+fun AdmissionSuccessDialog(
+    completion: AdmissionCompletionResult,
+    onGoToDetail: (patientId: String) -> Unit
 ) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
+    AlertDialog(
+        onDismissRequest = { onGoToDetail(completion.patientId) },
+        properties = androidx.compose.ui.window.DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        ),
+        modifier = Modifier.testTag(TestTags.Admission.SUCCESS_DIALOG),
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(Esmeralda.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = Esmeralda,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        },
+        title = {
+            Text(
+                text = "¡Registro Exitoso!",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = BiodontosDark,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.ui_clinical_admission_screen_46),
+                    text = completion.patientFullName,
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = BiodontosDark
+                    fontSize = 16.sp,
+                    color = BiodontosDark,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.testTag(TestTags.Admission.SUCCESS_DIALOG_PATIENT_NAME)
+                )
+                Text(
+                    text = "Documento: ${completion.dniCedula}",
+                    fontSize = 13.sp,
+                    color = BiodontosGreyText,
+                    modifier = Modifier.testTag(TestTags.Admission.SUCCESS_DIALOG_DNI)
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    DentitionType.entries.forEach { type ->
-                        val selected = state.dentitionType == type
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (selected) BiodontosDark else BiodontosInputBg,
-                            modifier = Modifier
-                                .clickable {
-                                    onEvent(ClinicalAdmissionEvent.ChangeDentitionType(type))
-                                }
-                                .testTag(TestTags.Odontogram.dentitionOption(type.name))
-                        ) {
-                            Text(
-                                text = when (type) {
-                                    DentitionType.ADULT -> "Adulto"
-                                    DentitionType.CHILD -> "Niño"
-                                    DentitionType.MIXED -> "Mixta"
-                                },
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (selected) BiodontosWhite else BiodontosDark,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            Text(
-                text = stringResource(R.string.ui_clinical_admission_screen_47),
-                fontSize = 12.sp,
-                color = BiodontosGreyText
-            )
-
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(ToothCondition.entries, key = { it.name }) { condition ->
-                    val isSelected = state.selectedConditionToApply == condition
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = if (isSelected) condition.color.copy(alpha = 0.2f) else BiodontosInputBg,
-                        border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, condition.color) else null,
-                        modifier = Modifier
-                            .clickable {
-                                onEvent(ClinicalAdmissionEvent.SelectConditionToApply(condition))
-                            }
-                            .testTag(TestTags.Odontogram.conditionOption(condition.name))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .clip(CircleShape)
-                                    .background(condition.color)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = condition.name,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BiodontosDark
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = stringResource(R.string.ui_clinical_admission_screen_48, state.selectedOdontogramTooth),
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                color = Zafiro
-            )
-
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(state.availableFdiTeeth, key = { it }) { toothNum ->
-                    val surfaces = state.teethSurfaces[toothNum] ?: emptyMap()
-                    val isSelected = state.selectedOdontogramTooth == toothNum
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (isSelected) SlateLight else Color.Transparent)
-                            .padding(4.dp)
-                            .clickable {
-                                onEvent(ClinicalAdmissionEvent.SelectOdontogramTooth(toothNum))
-                            }
-                    ) {
-                        Text(
-                            text = toothNum.toString(),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = if (isSelected) Zafiro else BiodontosDark
-                        )
-                        InteractiveTooth(
-                            toothNumber = toothNum,
-                            surfaceStates = surfaces,
-                            onSurfaceClicked = { surf ->
-                                onEvent(ClinicalAdmissionEvent.ApplySurfaceCondition(toothNum, surf))
-                            },
-                            modifier = Modifier.size(56.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Step4PeriodontogramContent(
-    state: ClinicalAdmissionState,
-    onEvent: (ClinicalAdmissionEvent) -> Unit
-) {
-    InteractivePeriodontogram(
-        selectedToothNumber = state.selectedPeriodontalTooth,
-        availableTeeth = state.availableFdiTeeth,
-        siteMeasurements = state.siteMeasurements,
-        onToothSelected = { tooth ->
-            onEvent(ClinicalAdmissionEvent.SelectPeriodontalTooth(tooth))
-        },
-        onMeasurementChanged = { meas ->
-            onEvent(ClinicalAdmissionEvent.UpdatePeriodontalMeasurement(meas))
-        }
-    )
-}
-
-@Composable
-private fun Step5TreatmentConsentContent(
-    state: ClinicalAdmissionState,
-    onEvent: (ClinicalAdmissionEvent) -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.ui_clinical_admission_screen_49),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium,
-                color = BiodontosDark
-            )
-
-            OutlinedTextField(
-                value = state.mainDiagnosis,
-                onValueChange = {
-                    onEvent(
-                        ClinicalAdmissionEvent.UpdateDiagnoses(
-                            main = it,
-                            related = state.relatedDiagnoses,
-                            exams = state.complementaryExams,
-                            plan = state.treatmentPlanDescription
-                        )
-                    )
-                },
-                label = { Text(stringResource(R.string.ui_clinical_admission_screen_50)) },
-                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_51)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(TestTags.Admission.MAIN_DIAGNOSIS_FIELD),
-                colors = biodontosTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            OutlinedTextField(
-                value = state.relatedDiagnoses,
-                onValueChange = {
-                    onEvent(
-                        ClinicalAdmissionEvent.UpdateDiagnoses(
-                            main = state.mainDiagnosis,
-                            related = it,
-                            exams = state.complementaryExams,
-                            plan = state.treatmentPlanDescription
-                        )
-                    )
-                },
-                label = { Text(stringResource(R.string.ui_clinical_admission_screen_52)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = biodontosTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            OutlinedTextField(
-                value = state.treatmentPlanDescription,
-                onValueChange = {
-                    onEvent(
-                        ClinicalAdmissionEvent.UpdateDiagnoses(
-                            main = state.mainDiagnosis,
-                            related = state.relatedDiagnoses,
-                            exams = state.complementaryExams,
-                            plan = it
-                        )
-                    )
-                },
-                label = { Text(stringResource(R.string.ui_clinical_admission_screen_53)) },
-                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_54)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(TestTags.Admission.TREATMENT_PLAN_FIELD),
-                minLines = 3,
-                colors = biodontosTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            HorizontalDivider(color = SlateLight)
-
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = SlateLight,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = stringResource(R.string.ui_clinical_admission_screen_55),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = BiodontosDark
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.ui_clinical_admission_screen_56),
-                        fontSize = 11.sp,
-                        color = BiodontosGreyText,
-                        lineHeight = 16.sp
-                    )
-                }
-            }
-
-            OutlinedButton(
-                onClick = { onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true)) },
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Zafiro),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(TestTags.Admission.OPEN_OPERATIVE_CONSENT_BUTTON)
-            ) {
-                Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.ui_clinical_admission_screen_57), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-
-            SignaturePad(
-                title = "Firma del Paciente / Acudiente",
-                subtitle = "Firme en el recuadro para validar el consentimiento legal.",
-                currentSignature = state.consentPatientSignature,
-                onSignatureConfirmed = { sig ->
-                    onEvent(ClinicalAdmissionEvent.ConfirmConsentSignature(sig))
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun Step6EvolutionMaterialsContent(
-    state: ClinicalAdmissionState,
-    onEvent: (ClinicalAdmissionEvent) -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.ui_clinical_admission_screen_58),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium,
-                color = BiodontosDark
-            )
-
-            OutlinedTextField(
-                value = state.evolutionDescription,
-                onValueChange = {
-                    onEvent(
-                        ClinicalAdmissionEvent.UpdateEvolution(
-                            description = it,
-                            cost = state.evolutionCost,
-                            payment = state.evolutionPayment
-                        )
-                    )
-                },
-                label = { Text(stringResource(R.string.ui_clinical_admission_screen_59)) },
-                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_60)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(TestTags.Admission.EVOLUTION_DESC_FIELD),
-                minLines = 3,
-                colors = biodontosTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = state.evolutionCost,
-                    onValueChange = {
-                        onEvent(
-                            ClinicalAdmissionEvent.UpdateEvolution(
-                                description = state.evolutionDescription,
-                                cost = it,
-                                payment = state.evolutionPayment
-                            )
-                        )
-                    },
-                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_61)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag(TestTags.Admission.EVOLUTION_COST_FIELD),
-                    colors = biodontosTextFieldColors(),
-                    shape = RoundedCornerShape(12.dp)
-                )
-
-                OutlinedTextField(
-                    value = state.evolutionPayment,
-                    onValueChange = {
-                        onEvent(
-                            ClinicalAdmissionEvent.UpdateEvolution(
-                                description = state.evolutionDescription,
-                                cost = state.evolutionCost,
-                                payment = it
-                            )
-                        )
-                    },
-                    label = { Text(stringResource(R.string.ui_clinical_admission_screen_62)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag(TestTags.Admission.EVOLUTION_PAYMENT_FIELD),
-                    colors = biodontosTextFieldColors(),
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
-
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = if (state.evolutionBalance > 0.0) BiodontosErrorBg else Esmeralda.copy(alpha = 0.15f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Esmeralda.copy(alpha = 0.12f),
+                    modifier = Modifier.padding(top = 4.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.ui_clinical_admission_screen_63),
-                        fontWeight = FontWeight.Bold,
-                        color = if (state.evolutionBalance > 0.0) Carmesi else Esmeralda
-                    )
-                    Text(
-                        text = stringResource(R.string.ui_clinical_admission_screen_64, String.format(Locale.getDefault(), "%,.2f", state.evolutionBalance)),
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp,
-                        color = if (state.evolutionBalance > 0.0) Carmesi else Esmeralda
-                    )
-                }
-            }
-
-            HorizontalDivider(color = SlateLight)
-
-            Text(
-                text = stringResource(R.string.ui_clinical_admission_screen_65),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleSmall,
-                color = BiodontosDark
-            )
-
-            if (state.materialsCatalog.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.ui_clinical_admission_screen_66),
-                    fontSize = 12.sp,
-                    color = BiodontosGreyText
-                )
-
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(state.materialsCatalog, key = { it.id.value }) { mat ->
-                        val isSelected = state.selectedCatalogMaterial?.id == mat.id
-                        val isExpiredMat = mat.isExpired(java.time.LocalDate.now())
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) BiodontosDark else BiodontosInputBg,
-                            modifier = Modifier
-                                .clickable(enabled = !isExpiredMat) {
-                                    onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(mat))
-                                }
-                                .testTag(TestTags.Admission.catalogMaterialItem(mat.id.value))
-                        ) {
-                            Text(
-                                text = if (isExpiredMat) "${mat.name} · Vencido" else mat.name,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isExpiredMat) Carmesi else if (isSelected) BiodontosWhite else BiodontosDark,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
-                }
-
-                state.selectedCatalogMaterial?.let { selectedMat ->
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = SlateLight,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(text = stringResource(R.string.ui_clinical_admission_screen_67, selectedMat.name), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Text(text = stringResource(R.string.ui_clinical_admission_screen_68, selectedMat.invimaRegistration), fontSize = 11.sp)
-                            Text(text = stringResource(R.string.ui_clinical_admission_screen_69, selectedMat.batchLotNumber, selectedMat.manufacturingDate, selectedMat.expirationDate), fontSize = 11.sp)
-                            val today = java.time.LocalDate.now()
-                            val selectedExpired = selectedMat.isExpired(today)
-                            if (selectedExpired) {
-                                Text(text = stringResource(R.string.ui_clinical_admission_screen_70), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Carmesi)
-                            } else if (selectedMat.isNearExpiration(today)) {
-                                Text(text = stringResource(R.string.ui_clinical_admission_screen_71, java.time.temporal.ChronoUnit.DAYS.between(today, selectedMat.expirationDate)), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Ambar)
-                            }
-                            var quantityText by remember(selectedMat.id) { mutableStateOf("1.0") }
-                            OutlinedTextField(
-                                value = quantityText,
-                                onValueChange = { quantityText = it.replace(',', '.') },
-                                label = { Text(stringResource(R.string.ui_clinical_admission_screen_72)) },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                colors = biodontosTextFieldColors(),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Button(
-                                enabled = !selectedExpired,
-                                onClick = { onEvent(ClinicalAdmissionEvent.AddMaterialUsed(quantityText.toDoubleOrNull() ?: 0.0)) },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Zafiro),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.ui_clinical_admission_screen_73), fontSize = 12.sp)
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (state.usedMaterials.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.ui_clinical_admission_screen_74),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = Zafiro
-                )
-                state.usedMaterials.forEach { used ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(BiodontosInputBg)
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag(TestTags.Admission.usedMaterialItem(used.materialId)),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(text = used.materialName, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Text(text = stringResource(R.string.ui_clinical_admission_screen_75, used.invimaSnapshot, used.lotNumberSnapshot, used.expirationDateSnapshot, used.quantityUsed), fontSize = 10.sp, color = BiodontosGreyText)
-                        }
-                        IconButton(onClick = { onEvent(ClinicalAdmissionEvent.RemoveMaterialUsed(used.materialId)) }) {
-                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.ui_clinical_admission_screen_76), tint = Carmesi, modifier = Modifier.size(16.dp))
-                        }
-                    }
-                }
-            }
-
-            SignaturePad(
-                title = "Firma del Paciente en Evolución",
-                subtitle = "Conformidad con el procedimiento realizado.",
-                currentSignature = state.evolutionPatientSignature,
-                onSignatureConfirmed = { sig ->
-                    onEvent(ClinicalAdmissionEvent.ConfirmEvolutionSignature(sig))
-                }
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = stringResource(R.string.ui_clinical_admission_screen_77),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Switch(
-                    checked = state.closeRecordOnFinish,
-                    onCheckedChange = {
-                        onEvent(ClinicalAdmissionEvent.ToggleCloseRecord(it, state.closureSummary))
-                    },
-                    modifier = Modifier.testTag(TestTags.Admission.CLOSE_RECORD_SWITCH)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun Step7NextAppointmentContent(
-    state: ClinicalAdmissionState,
-    onEvent: (ClinicalAdmissionEvent) -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BiodontosWhite),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.ui_clinical_admission_screen_78),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium,
-                color = BiodontosDark
-            )
-            Text(
-                text = stringResource(R.string.ui_clinical_admission_screen_79),
-                fontSize = 12.sp,
-                color = BiodontosGreyText
-            )
-
-            OutlinedTextField(
-                value = state.nextAppointmentDate,
-                onValueChange = {
-                    onEvent(
-                        ClinicalAdmissionEvent.UpdateNextAppointment(
-                            date = it,
-                            time = state.nextAppointmentTime,
-                            reason = state.nextAppointmentReason
-                        )
-                    )
-                },
-                label = { Text(stringResource(R.string.ui_clinical_admission_screen_80)) },
-                placeholder = { Text(stringResource(R.string.ui_clinical_admission_screen_81)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(TestTags.Admission.NEXT_APPT_DATE_FIELD),
-                colors = biodontosTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            OutlinedTextField(
-                value = state.nextAppointmentTime,
-                onValueChange = {
-                    onEvent(
-                        ClinicalAdmissionEvent.UpdateNextAppointment(
-                            date = state.nextAppointmentDate,
-                            time = it,
-                            reason = state.nextAppointmentReason
-                        )
-                    )
-                },
-                label = { Text(stringResource(R.string.ui_clinical_admission_screen_82)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(TestTags.Admission.NEXT_APPT_TIME_FIELD),
-                colors = biodontosTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            OutlinedTextField(
-                value = state.nextAppointmentReason,
-                onValueChange = {
-                    onEvent(
-                        ClinicalAdmissionEvent.UpdateNextAppointment(
-                            date = state.nextAppointmentDate,
-                            time = state.nextAppointmentTime,
-                            reason = it
-                        )
-                    )
-                },
-                label = { Text(stringResource(R.string.ui_clinical_admission_screen_83)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(TestTags.Admission.NEXT_APPT_REASON_FIELD),
-                colors = biodontosTextFieldColors(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Esmeralda.copy(alpha = 0.1f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Text(
-                        text = stringResource(R.string.ui_clinical_admission_screen_84),
+                        text = "HISTORIA CLÍNICA APERTURADA",
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Esmeralda,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.ui_clinical_admission_screen_85, state.firstName, state.firstLastName, state.dniCedula) +
-                                "Dentición: ${state.dentitionType.name} | Anamnesis: 20 puntos diligenciados\n" +
-                                "Odontograma y Periodontograma registrados.\n" +
-                                "Evolución y firmas anexadas correctamente.",
-                        fontSize = 12.sp,
-                        color = BiodontosDark,
-                        lineHeight = 18.sp
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "El paciente y su anamnesis han sido registrados en el sistema. Puede continuar con el odontograma, plan de tratamiento o evoluciones desde su ficha clínica.",
+                    fontSize = 12.sp,
+                    color = BiodontosGreyText,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onGoToDetail(completion.patientId) },
+                colors = ButtonDefaults.buttonColors(containerColor = BiodontosDark),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.Admission.SUCCESS_DIALOG_GO_TO_DETAIL_BUTTON)
+            ) {
+                Text(
+                    text = "Ir a la Ficha del Paciente",
+                    color = BiodontosWhite,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
-    }
+    )
 }
 
 @Preview(showBackground = true)

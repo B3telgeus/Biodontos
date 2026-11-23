@@ -2,13 +2,30 @@ package com.example.biodontos.presentation.admission
 
 import androidx.compose.runtime.Immutable
 import com.example.biodontos.core.ui.UiText
-import com.example.biodontos.domain.model.ClinicalMaterial
+import com.example.biodontos.domain.model.AnamnesisCondition
+import com.example.biodontos.domain.model.ClinicalRecord
 import com.example.biodontos.domain.model.DentitionType
-import com.example.biodontos.domain.model.EvolutionMaterialUsed
-import com.example.biodontos.domain.model.PeriodontalSiteLocation
-import com.example.biodontos.domain.model.PeriodontalSiteMeasurement
-import com.example.biodontos.domain.model.ToothCondition
-import com.example.biodontos.domain.model.ToothSurface
+import java.time.LocalDate
+
+enum class AdmissionStep(val number: Int, val title: String) {
+    PATIENT_DATA(1, "Datos del Paciente"),
+    ANAMNESIS(2, "Anamnesis Médica");
+
+    companion object {
+        const val MAX_STEP = 2
+        fun fromNumber(number: Int): AdmissionStep =
+            if (number >= 2) ANAMNESIS else PATIENT_DATA
+    }
+}
+
+@Immutable
+data class AdmissionCompletionResult(
+    val patientId: String,
+    val patientFullName: String,
+    val dniCedula: String,
+    val clinicalRecordId: String,
+    val isNewAdmission: Boolean
+)
 
 @Immutable
 data class ClinicalAdmissionState(
@@ -19,13 +36,17 @@ data class ClinicalAdmissionState(
     val successMessage: String? = null,
     val successUiText: UiText? = null,
     val isFinished: Boolean = false,
+    val completionResult: AdmissionCompletionResult? = null,
 
     val patientId: String = "",
     val clinicalRecordId: String = "",
     val doctorId: String = "",
+    val doctorUserId: String? = null,
     val doctorName: String = "Dr. Odontólogo",
     val doctorLicense: String = "OD-98234-COL",
+    val existingClinicalRecord: ClinicalRecord? = null,
 
+    // Step 1: Patient Data
     val dniCedula: String = "",
     val dniError: String? = null,
     val dniErrorUiText: UiText? = null,
@@ -59,100 +80,46 @@ data class ClinicalAdmissionState(
     val illnessHistory: String = "",
     val hasCriticalAllergies: Boolean = false,
     val allergiesDescription: String = "",
+    val dentitionType: DentitionType = DentitionType.ADULT,
+    val consentSigned: Boolean = false,
 
-    val showOperativeConsentDialog: Boolean = false,
-    val operativeConsentProposedTreatment: String = "",
-    val operativeConsentSignerType: String = "PATIENT",
-    val operativeConsentRepresentativeName: String = "",
-    val operativeConsentRepresentativeId: String = "",
-    val operativeConsentPatientSignature: String = "",
-    val operativeConsentDoctorSignature: String = "",
-    val operativeConsentProcedures: List<com.example.biodontos.domain.model.InformedConsentProcedure> = emptyList(),
-    val operativeConsentSaved: Boolean = false,
-
-    val tratamientoMedicoActual: Boolean = false,
-    val tomaMedicamentos: Boolean = false,
-    val alergias: Boolean = false,
-    val cardiopatias: Boolean = false,
-    val alteracionPresionArterial: Boolean = false,
-    val embarazo: Boolean = false,
-    val diabetes: Boolean = false,
-    val hepatitis: Boolean = false,
-    val irradiaciones: Boolean = false,
-    val discrasiasSanguineas: Boolean = false,
-    val fiebreReumatica: Boolean = false,
-    val enfermedadesRenales: Boolean = false,
-    val inmunosupresion: Boolean = false,
-    val trastornosEmocionales: Boolean = false,
-    val patologiaRespiratoria: Boolean = false,
-    val trastornosGastricos: Boolean = false,
-    val epilepsia: Boolean = false,
-    val cirugias: Boolean = false,
-    val enfermedadesOrales: Boolean = false,
-    val otrasAlteraciones: Boolean = false,
+    // Step 2: Anamnesis
+    val activeAnamnesisConditions: Set<AnamnesisCondition> = emptySet(),
     val anamnesisObservaciones: String = "",
     val antecedentesFamiliares: String = "",
     val medicamentosActuales: String = "",
-
-    val dentitionType: DentitionType = DentitionType.ADULT,
-    val teethSurfaces: Map<Int, Map<ToothSurface, ToothCondition>> = emptyMap(),
-    val selectedOdontogramTooth: Int = 11,
-    val selectedConditionToApply: ToothCondition = ToothCondition.CARIES,
-
-    val selectedPeriodontalTooth: Int = 11,
-    val siteMeasurements: Map<Pair<Int, PeriodontalSiteLocation>, PeriodontalSiteMeasurement> = emptyMap(),
-    val periodontalObservations: String = "",
-
-    val mainDiagnosis: String = "",
-    val relatedDiagnoses: String = "",
-    val complementaryExams: String = "",
-    val treatmentPlanDescription: String = "",
-    val consentSigned: Boolean = false,
-    val consentPatientSignature: String = "",
-
-    val evolutionDescription: String = "",
-    val evolutionCost: String = "0",
-    val evolutionPayment: String = "0",
-    val evolutionPatientSignature: String = "",
-    val materialsCatalog: List<ClinicalMaterial> = emptyList(),
-    val selectedCatalogMaterial: ClinicalMaterial? = null,
-    val usedMaterials: List<EvolutionMaterialUsed> = emptyList(),
-    val closeRecordOnFinish: Boolean = false,
-    val closureSummary: String = "",
-
-    val nextAppointmentDate: String = "",
-    val nextAppointmentTime: String = "10:00",
-    val nextAppointmentReason: String = "Control y seguimiento post-tratamiento",
-    val nextAppointmentScheduled: Boolean = false
+    val anamnesisOptionNotes: Map<String, String> = emptyMap()
 ) {
-    val evolutionBalance: Double
-        get() {
-            val c = evolutionCost.toDoubleOrNull() ?: 0.0
-            val p = evolutionPayment.toDoubleOrNull() ?: 0.0
-            return (c - p).coerceAtLeast(0.0)
-        }
+    val tratamientoMedicoActual: Boolean get() = AnamnesisCondition.TRATAMIENTO_MEDICO in activeAnamnesisConditions
+    val tomaMedicamentos: Boolean get() = AnamnesisCondition.TOMA_MEDICAMENTOS in activeAnamnesisConditions
+    val alergias: Boolean get() = AnamnesisCondition.ALERGIAS in activeAnamnesisConditions
+    val cardiopatias: Boolean get() = AnamnesisCondition.CARDIOPATIAS in activeAnamnesisConditions
+    val alteracionPresionArterial: Boolean get() = AnamnesisCondition.ALTERACION_PRESION in activeAnamnesisConditions
+    val embarazo: Boolean get() = AnamnesisCondition.EMBARAZO in activeAnamnesisConditions
+    val diabetes: Boolean get() = AnamnesisCondition.DIABETES in activeAnamnesisConditions
+    val hepatitis: Boolean get() = AnamnesisCondition.HEPATITIS in activeAnamnesisConditions
+    val irradiaciones: Boolean get() = AnamnesisCondition.IRRADIACIONES in activeAnamnesisConditions
+    val discrasiasSanguineas: Boolean get() = AnamnesisCondition.DISCRASIAS_SANGUINEAS in activeAnamnesisConditions
+    val fiebreReumatica: Boolean get() = AnamnesisCondition.FIEBRE_REUMATICA in activeAnamnesisConditions
+    val enfermedadesRenales: Boolean get() = AnamnesisCondition.ENFERMEDADES_RENALES in activeAnamnesisConditions
+    val inmunosupresion: Boolean get() = AnamnesisCondition.INMUNOSUPRESION in activeAnamnesisConditions
+    val trastornosEmocionales: Boolean get() = AnamnesisCondition.TRASTORNOS_EMOCIONALES in activeAnamnesisConditions
+    val patologiaRespiratoria: Boolean get() = AnamnesisCondition.PATOLOGIA_RESPIRATORIA in activeAnamnesisConditions
+    val trastornosGastricos: Boolean get() = AnamnesisCondition.TRASTORNOS_GASTRICOS in activeAnamnesisConditions
+    val epilepsia: Boolean get() = AnamnesisCondition.EPILEPSIA in activeAnamnesisConditions
+    val cirugias: Boolean get() = AnamnesisCondition.CIRUGIAS in activeAnamnesisConditions
+    val enfermedadesOrales: Boolean get() = AnamnesisCondition.ENFERMEDADES_ORALES in activeAnamnesisConditions
+    val otrasAlteraciones: Boolean get() = AnamnesisCondition.OTRAS_ALTERACIONES in activeAnamnesisConditions
 
-    val availableFdiTeeth: List<Int>
-        get() = when (dentitionType) {
-            DentitionType.ADULT -> listOf(
-                18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28,
-                48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38
-            )
-            DentitionType.CHILD -> listOf(
-                55, 54, 53, 52, 51, 61, 62, 63, 64, 65,
-                85, 84, 83, 82, 81, 71, 72, 73, 74, 75
-            )
-            DentitionType.MIXED -> listOf(
-                16, 55, 54, 53, 52, 11, 21, 62, 63, 64, 65, 26,
-                46, 85, 84, 83, 82, 41, 31, 72, 73, 74, 75, 36
-            )
-        }
+    val patientFullName: String
+        get() = listOf(firstName, firstLastName, secondLastName)
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
 
     val isMinor: Boolean
         get() = try {
-            val date = java.time.LocalDate.parse(birthDate)
-            val years = java.time.Period.between(date, java.time.LocalDate.now()).years
-            years < 18
+            val date = LocalDate.parse(birthDate)
+            java.time.Period.between(date, LocalDate.now()).years < 18
         } catch (_: Exception) {
             false
         }

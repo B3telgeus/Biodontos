@@ -73,4 +73,34 @@ class PeriodontalCalculationTest {
             furcationGrade = 5
         )
     }
+
+    @Test
+    fun `Upper arch quadrants 1 2 5 6 use Palatino labels`() {
+        listOf(18, 11, 21, 28, 55, 61).forEach { tooth ->
+            assertTrue("Tooth $tooth should be upper arch", PeriodontalSiteLocation.isUpperArchTooth(tooth))
+            assertFalse("Tooth $tooth should not be lower arch", PeriodontalSiteLocation.isLowerArchTooth(tooth))
+            assertEquals("CARA PALATINA", PeriodontalSiteLocation.innerFaceTitleForTooth(tooth))
+            assertEquals("MP", PeriodontalSiteLocation.MESIO_LINGUAL.shortLabelForTooth(tooth))
+            assertEquals("P", PeriodontalSiteLocation.MID_LINGUAL.shortLabelForTooth(tooth))
+            assertEquals("DP", PeriodontalSiteLocation.DISTO_LINGUAL.shortLabelForTooth(tooth))
+            assertEquals("Mesiopalatino", PeriodontalSiteLocation.MESIO_LINGUAL.fullLabelForTooth(tooth))
+            assertEquals("Palatino medio", PeriodontalSiteLocation.MID_LINGUAL.fullLabelForTooth(tooth))
+            assertEquals("Distopalatino", PeriodontalSiteLocation.DISTO_LINGUAL.fullLabelForTooth(tooth))
+        }
+    }
+
+    @Test
+    fun `Lower arch quadrants 3 4 7 8 use Lingual labels`() {
+        listOf(31, 36, 38, 41, 46, 48, 75, 81).forEach { tooth ->
+            assertTrue("Tooth $tooth should be lower arch", PeriodontalSiteLocation.isLowerArchTooth(tooth))
+            assertFalse("Tooth $tooth should not be upper arch", PeriodontalSiteLocation.isUpperArchTooth(tooth))
+            assertEquals("CARA LINGUAL", PeriodontalSiteLocation.innerFaceTitleForTooth(tooth))
+            assertEquals("ML", PeriodontalSiteLocation.MESIO_LINGUAL.shortLabelForTooth(tooth))
+            assertEquals("L", PeriodontalSiteLocation.MID_LINGUAL.shortLabelForTooth(tooth))
+            assertEquals("DL", PeriodontalSiteLocation.DISTO_LINGUAL.shortLabelForTooth(tooth))
+            assertEquals("Mesiolingual", PeriodontalSiteLocation.MESIO_LINGUAL.fullLabelForTooth(tooth))
+            assertEquals("Lingual medio", PeriodontalSiteLocation.MID_LINGUAL.fullLabelForTooth(tooth))
+            assertEquals("Distolingual", PeriodontalSiteLocation.DISTO_LINGUAL.fullLabelForTooth(tooth))
+        }
+    }
 }

@@ -50,7 +50,8 @@ fun AnamnesisDto.toDomain(): Anamnesis = Anamnesis(
     observaciones = observaciones,
     antecedentesFamiliares = antecedentesFamiliares,
     medicamentosActuales = medicamentosActuales,
-    alergiasDescripcion = alergiasDescripcion
+    alergiasDescripcion = alergiasDescripcion,
+    optionNotes = optionNotes
 )
 
 fun Anamnesis.toDto(): AnamnesisDto {
@@ -89,7 +90,8 @@ fun Anamnesis.toDto(): AnamnesisDto {
         observaciones = observaciones,
         antecedentesFamiliares = antecedentesFamiliares,
         medicamentosActuales = medicamentosActuales,
-        alergiasDescripcion = alergiasDescripcion
+        alergiasDescripcion = alergiasDescripcion,
+        optionNotes = optionNotes
     )
 }
 
@@ -193,7 +195,11 @@ fun EvolutionDto.toDomain(materials: List<EvolutionMaterialUsed> = emptyList()):
         doctorSignatureUrl = doctorSignatureUrl,
         materialsUsed = materials,
         voidInfo = resolvedVoidInfo,
-        amendsEvolutionId = amendsEvolutionId
+        amendsEvolutionId = amendsEvolutionId,
+        cie10Code = cie10Code,
+        cie10Description = cie10Description,
+        cupsCode = cupsCode,
+        cupsDescription = cupsDescription
     )
 }
 
@@ -214,7 +220,11 @@ fun Evolution.toDto(): EvolutionDto = EvolutionDto(
     voidedAt = voidInfo?.voidedAt?.let { java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(it) },
     voidedBy = voidInfo?.voidedBy,
     voidReason = voidInfo?.reason,
-    amendsEvolutionId = amendsEvolutionId?.ifBlank { null }
+    amendsEvolutionId = amendsEvolutionId?.ifBlank { null },
+    cie10Code = cie10Code?.ifBlank { null },
+    cie10Description = cie10Description?.ifBlank { null },
+    cupsCode = cupsCode?.ifBlank { null },
+    cupsDescription = cupsDescription?.ifBlank { null }
 )
 
 fun EvolutionMaterialUsedDto.toDomain(): EvolutionMaterialUsed {

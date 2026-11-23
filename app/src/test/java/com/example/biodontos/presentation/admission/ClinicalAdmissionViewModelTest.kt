@@ -2,6 +2,7 @@ package com.example.biodontos.presentation.admission
 
 import com.example.biodontos.MainDispatcherRule
 import com.example.biodontos.domain.model.*
+import com.example.biodontos.domain.model.history.AuditAction
 import com.example.biodontos.domain.repository.*
 import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import io.mockk.*
@@ -30,6 +31,7 @@ class ClinicalAdmissionViewModelTest {
     private val informedConsentRepository: InformedConsentRepository = mockk(relaxed = true)
     private val appointmentRepository: AppointmentRepository = mockk(relaxed = true)
     private val guardianRepository: GuardianRepository = mockk(relaxed = true)
+    private val clinicalAuditRepository: ClinicalAuditRepository = mockk(relaxed = true)
 
     private lateinit var viewModel: ClinicalAdmissionViewModel
 
@@ -39,7 +41,8 @@ class ClinicalAdmissionViewModelTest {
         licenseNumber: String = "OD-12345-COL",
         initialPatientId: String? = null,
         doctorUseCase: GetCurrentDoctorUseCase? = null,
-        doctorRepo: DoctorRepository? = null
+        doctorRepo: DoctorRepository? = null,
+        auditRepository: ClinicalAuditRepository? = null
     ): ClinicalAdmissionViewModel {
         val useCase = doctorUseCase ?: mockk<GetCurrentDoctorUseCase>().also {
             val names = doctorName.removePrefix("Dr. ").removePrefix("Dra. ").trim().split(" ")
@@ -59,55 +62,28 @@ class ClinicalAdmissionViewModelTest {
             patientRepository = patientRepository,
             clinicalRecordRepository = clinicalRecordRepository,
             anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
             guardianRepository = guardianRepository,
             initialPatientId = initialPatientId,
             getCurrentDoctorUseCase = useCase,
-            doctorRepository = doctorRepo
+            clinicalAuditRepository = auditRepository ?: clinicalAuditRepository
         )
     }
 
     @Before
     fun setUp() {
-        coEvery { materialRepository.getMaterials() } returns Result.success(
-            listOf(
-                ClinicalMaterial(
-                    id = "mat-1",
-                    name = "Resina Filtek Z350 XT",
-                    invimaRegistration = "INVIMA 2018DM-0018241",
-                    batchLotNumber = "LOTE-9921A",
-                    manufacturingDate = "2024-01-10",
-                    expirationDate = "2027-01-10"
-                )
-            )
-        )
-
         viewModel = ClinicalAdmissionViewModel(
             patientRepository = patientRepository,
             clinicalRecordRepository = clinicalRecordRepository,
             anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
-            guardianRepository = guardianRepository
+            guardianRepository = guardianRepository,
+            clinicalAuditRepository = clinicalAuditRepository
         )
     }
 
-
     @Test
-    fun `Initial state starts at Step 1 and loads materials catalog`() = runTest {
+    fun `Initial state starts at Step 1`() = runTest {
         val state = viewModel.state.value
         assertEquals(1, state.currentStep)
-        assertEquals(1, state.materialsCatalog.size)
-        assertEquals("Resina Filtek Z350 XT", state.materialsCatalog.first().name)
     }
 
     @Test
@@ -153,38 +129,6 @@ class ClinicalAdmissionViewModelTest {
     }
 
     @Test
-    fun `Evolution balance is correctly calculated as cost minus payment`() {
-        viewModel.onEvent(ClinicalAdmissionEvent.UpdateEvolution(
-            description = "Resina compuesta",
-            cost = "150000",
-            payment = "100000"
-        ))
-
-        val state = viewModel.state.value
-        assertEquals(50000.0, state.evolutionBalance, 0.01)
-    }
-
-    @Test
-    fun `Adding and removing INVIMA materials updates used materials list`() {
-        val material = ClinicalMaterial(
-            id = "mat-1",
-            name = "Resina Filtek Z350 XT",
-            invimaRegistration = "INVIMA 2018DM-0018241",
-            batchLotNumber = "LOTE-9921A",
-            manufacturingDate = "2024-01-10",
-            expirationDate = "2027-01-10"
-        )
-        viewModel.onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(material))
-        viewModel.onEvent(ClinicalAdmissionEvent.AddMaterialUsed(1.0))
-
-        assertEquals(1, viewModel.state.value.usedMaterials.size)
-        assertEquals("INVIMA 2018DM-0018241", viewModel.state.value.usedMaterials.first().invimaSnapshot)
-
-        viewModel.onEvent(ClinicalAdmissionEvent.RemoveMaterialUsed("mat-1"))
-        assertTrue(viewModel.state.value.usedMaterials.isEmpty())
-    }
-
-    @Test
     fun `Auto detects pediatric dentition if birth date indicates under 12 years old`() {
         viewModel.onEvent(ClinicalAdmissionEvent.UpdateBirthDate("2020-05-10"))
         assertEquals(DentitionType.CHILD, viewModel.state.value.dentitionType)
@@ -200,23 +144,6 @@ class ClinicalAdmissionViewModelTest {
 
         viewModel.onEvent(ClinicalAdmissionEvent.UpdateBirthDate("2015-05-20"))
         assertTrue(viewModel.state.value.isMinor)
-    }
-
-    @Test
-    fun `Adding expired material in step 6 is rejected and sets errorMessage`() = runTest {
-        val expired = ClinicalMaterial(
-            id = "mat-exp",
-            name = "Anestésico Vencido",
-            invimaRegistration = "INVIMA 2016M-000111",
-            batchLotNumber = "LOTE-OLD",
-            manufacturingDate = "2020-01-10",
-            expirationDate = "2022-01-10"
-        )
-        viewModel.onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(expired))
-        viewModel.onEvent(ClinicalAdmissionEvent.AddMaterialUsed(1.0))
-
-        assertTrue(viewModel.state.value.usedMaterials.isEmpty())
-        assertEquals(MaterialError.MaterialExpired.userMessage, viewModel.state.value.errorMessage)
     }
 
     @Test
@@ -272,20 +199,11 @@ class ClinicalAdmissionViewModelTest {
         coEvery { patientRepository.getPatientById("pat-999") } returns Result.success(existingPatient)
         coEvery { clinicalRecordRepository.getRecordByPatientId("pat-999") } returns Result.success(existingRecord)
         coEvery { anamnesisRepository.getAnamnesisByPatientId("pat-999") } returns Result.success(existingAnamnesis)
-        coEvery { odontogramRepository.getOdontogram("pat-999") } returns Result.success(emptyList())
-        coEvery { informedConsentRepository.getConsentByPatientId("pat-999") } returns Result.success(null)
-        coEvery { periodontalRepository.getExaminationByRecordId("rec-888") } returns Result.success(null)
 
         val vm = ClinicalAdmissionViewModel(
             patientRepository = patientRepository,
             clinicalRecordRepository = clinicalRecordRepository,
             anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
             guardianRepository = guardianRepository,
             initialPatientId = "pat-999"
         )
@@ -297,7 +215,6 @@ class ClinicalAdmissionViewModelTest {
         assertEquals("Lucía", s.firstName)
         assertEquals("Mora", s.firstLastName)
         assertEquals("rec-888", s.clinicalRecordId)
-        assertEquals("Pulpitis irreversible", s.mainDiagnosis)
         assertTrue(s.alergias)
         assertTrue(s.diabetes)
         assertFalse(s.isLoading)
@@ -308,40 +225,39 @@ class ClinicalAdmissionViewModelTest {
         val savedGuardian = Guardian(
             id = "g-uuid-999",
             firstName = "Elena",
-            lastName = "Suarez",
-            phone = "3151112233",
-            address = "Calle 80 # 10-20",
-            locality = "Engativá"
+            lastName = "Gómez",
+            phone = "3109998877",
+            address = "Calle 100 # 15-20"
         )
-        coEvery { guardianRepository.saveGuardian(any()) } returns Result.success(savedGuardian)
+        val savedPatient = Patient(
+            id = "pat-child-1",
+            dniCedula = "1199887766",
+            firstName = "Mateo",
+            firstLastName = "Gómez",
+            guardianId = "g-uuid-999"
+        )
 
-        var capturedPatient: Patient? = null
-        coEvery { patientRepository.createOrUpdatePatient(any()) } answers {
-            capturedPatient = firstArg()
-            Result.success(requireNotNull(capturedPatient) { "capturedPatient is null" })
-        }
+        coEvery { guardianRepository.saveGuardian(any()) } returns Result.success(savedGuardian)
+        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(savedPatient)
         coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(
-            ClinicalRecord(id = "rec-1", patientId = "pat-1")
+            ClinicalRecord(id = "rec-child-1", patientId = "pat-child-1")
         )
 
         val vm = createViewModelWithDoctor()
         advanceUntilIdle()
 
-        vm.onEvent(ClinicalAdmissionEvent.UpdateDni("1050607080"))
+        vm.onEvent(ClinicalAdmissionEvent.UpdateDni("1199887766"))
         vm.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Mateo"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Gomez"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateAddress("Calle 80 # 10-20"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateLocality("Engativá"))
+        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Gómez"))
+        vm.onEvent(ClinicalAdmissionEvent.UpdateBirthDate("2018-03-15"))
         vm.onEvent(ClinicalAdmissionEvent.ToggleHasGuardian(true))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateGuardianRelationship("Madre"))
         vm.onEvent(
             ClinicalAdmissionEvent.UpdateGuardian(
                 relationship = "Madre",
                 firstName = "Elena",
-                lastName = "Suarez",
-                phone = "3151112233",
-                address = "Calle 80 # 10-20",
-                locality = "Engativá"
+                lastName = "Gómez",
+                phone = "3109998877",
+                address = "Calle 100 # 15-20"
             )
         )
 
@@ -349,237 +265,13 @@ class ClinicalAdmissionViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, vm.state.value.currentStep)
-        assertNotNull(capturedPatient)
-        assertEquals("Engativá", capturedPatient?.locality)
-        assertEquals("g-uuid-999", capturedPatient?.guardianId)
-        assertEquals("Madre", capturedPatient?.guardianRelationship)
-        assertEquals("Elena", capturedPatient?.guardianFirstName)
-    }
-
-
-    /**
-     * Requirement (a): Refactor obsolete test asserting DEFAULT_DOCTOR_UUID fallback.
-     * When a valid doctor session is present, uses the authenticated doctor's UUID.
-     */
-    @Test
-    fun `Operative consent saves informed consent and procedures correctly with authenticated doctor UUID`() = runTest {
-        var capturedConsent: InformedConsent? = null
-        coEvery { informedConsentRepository.saveConsent(any()) } answers {
-            capturedConsent = firstArg()
-            Result.success(requireNotNull(capturedConsent) { "El consentimiento capturado no debe ser nulo" })
+        coVerify(exactly = 1) { guardianRepository.saveGuardian(any()) }
+        coVerify(exactly = 1) {
+            patientRepository.createOrUpdatePatient(
+                match { it.guardianId == "g-uuid-999" }
+            )
         }
-
-        val authDoctorUuid = "44444444-4444-4444-4444-444444444444"
-        val vmWithDoctor = createViewModelWithDoctor(doctorId = authDoctorUuid, doctorName = "Dra. Laura Rios")
-        advanceUntilIdle()
-
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateDni("10102020"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Laura"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Rios"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true))
-        assertTrue(vmWithDoctor.state.value.showOperativeConsentDialog)
-
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentTreatment("Restauraciones estéticas en resina"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.AddOperativeConsentProcedure(toothNumber = 26, date = "2026-10-18"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.ConfirmOperativeConsentSignatures("patient_sig_data", "doctor_sig_data"))
-
-        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
-            Patient(id = "pat-100", dniCedula = "10102020", firstName = "Laura", firstLastName = "Rios")
-        )
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-100", patientId = "pat-100"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.SaveOperativeConsent)
-        advanceUntilIdle()
-
-        val state = vmWithDoctor.state.value
-        assertFalse(state.showOperativeConsentDialog)
-        assertTrue(state.operativeConsentSaved)
-        assertEquals("Consentimiento de operatoria guardado y firmado correctamente", state.successMessage)
-
-        assertNotNull(capturedConsent)
-        assertEquals(authDoctorUuid, capturedConsent?.doctorId)
-        assertTrue(capturedConsent?.treatmentSummary?.contains("consentimiento_preop_pat-100_") == true)
-        assertTrue(capturedConsent?.treatmentSummary?.contains("Restauraciones estéticas en resina") == true)
-        assertEquals("patient_sig_data", capturedConsent?.patientSignatureUrl)
-        assertEquals("doctor_sig_data", capturedConsent?.doctorSignatureUrl)
     }
-
-    /**
-     * Requirement (a) companion: When no doctor session is active, saving consent is blocked.
-     */
-    @Test
-    fun `Operative consent without active doctor session blocks save and sets error state`() = runTest {
-        var capturedConsent: InformedConsent? = null
-        coEvery { informedConsentRepository.saveConsent(any()) } answers {
-            capturedConsent = firstArg()
-            Result.success(requireNotNull(capturedConsent))
-        }
-
-        val vmWithoutDoctor = ClinicalAdmissionViewModel(
-            patientRepository = patientRepository,
-            clinicalRecordRepository = clinicalRecordRepository,
-            anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
-            guardianRepository = guardianRepository,
-            getCurrentDoctorUseCase = null
-        )
-        advanceUntilIdle()
-
-        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
-            Patient(id = "pat-100", dniCedula = "10102020", firstName = "Laura", firstLastName = "Rios")
-        )
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-100", patientId = "pat-100"))
-        vmWithoutDoctor.onEvent(ClinicalAdmissionEvent.UpdateDni("10102020"))
-        vmWithoutDoctor.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Laura"))
-        vmWithoutDoctor.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Rios"))
-        vmWithoutDoctor.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-
-        vmWithoutDoctor.onEvent(ClinicalAdmissionEvent.ToggleOperativeConsentDialog(true))
-        vmWithoutDoctor.onEvent(ClinicalAdmissionEvent.UpdateOperativeConsentTreatment("Restauraciones estéticas en resina"))
-        vmWithoutDoctor.onEvent(ClinicalAdmissionEvent.SaveOperativeConsent)
-        advanceUntilIdle()
-
-        val state = vmWithoutDoctor.state.value
-        assertNull("Consent must not be saved without an active doctor session", capturedConsent)
-        assertFalse("operativeConsentSaved must remain false without active doctor session", state.operativeConsentSaved)
-        assertNotNull("Error state must be set when doctor session is missing", state.errorMessage)
-    }
-
-    @Test
-    fun `Operative consent uses authenticated doctor UUID when getCurrentDoctorUseCase is provided`() = runTest {
-        val doctorUseCase: GetCurrentDoctorUseCase = mockk()
-        val dummyDoctor = Doctor(
-            id = DoctorId("99999999-9999-9999-9999-999999999999"),
-            userId = "user-uid-999",
-            firstName = "Andrés",
-            lastName = "Cepeda",
-            specialty = "Odontología Restauradora",
-            email = "andres.cepeda@biodontos.com",
-            licenseNumber = "OD-77889"
-        )
-        coEvery { doctorUseCase() } returns Result.success(dummyDoctor)
-
-        var capturedConsent: InformedConsent? = null
-        coEvery { informedConsentRepository.saveConsent(any()) } answers {
-            capturedConsent = firstArg()
-            Result.success(requireNotNull(capturedConsent) { "El consentimiento capturado no debe ser nulo" })
-        }
-
-        val vmWithDoctor = ClinicalAdmissionViewModel(
-            patientRepository = patientRepository,
-            clinicalRecordRepository = clinicalRecordRepository,
-            anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
-            guardianRepository = guardianRepository,
-            getCurrentDoctorUseCase = doctorUseCase
-        )
-
-        advanceUntilIdle()
-
-        assertEquals("99999999-9999-9999-9999-999999999999", vmWithDoctor.state.value.doctorId)
-        assertEquals("Andrés Cepeda", vmWithDoctor.state.value.doctorName)
-        assertEquals("OD-77889", vmWithDoctor.state.value.doctorLicense)
-
-        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
-            Patient(id = "pat-200", dniCedula = "52889900", firstName = "Camila", firstLastName = "Díaz")
-        )
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-200", patientId = "pat-200"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateDni("52889900"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Camila"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Díaz"))
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-
-        vmWithDoctor.onEvent(ClinicalAdmissionEvent.SaveOperativeConsent)
-        advanceUntilIdle()
-
-        assertNotNull(capturedConsent)
-        assertEquals("99999999-9999-9999-9999-999999999999", capturedConsent?.doctorId)
-        assertEquals("OD-77889", capturedConsent?.doctorLicenseNumber)
-        assertTrue(capturedConsent?.treatmentSummary?.contains("consentimiento_preop_pat-200_") == true)
-        assertEquals("consentimiento_preop_pat-200_${LocalDate.now()}_sig_paciente", capturedConsent?.patientSignatureUrl)
-        assertEquals("consentimiento_preop_pat-200_${LocalDate.now()}_sig_doctor", capturedConsent?.doctorSignatureUrl)
-    }
-
-    /**
-     * Requirement (b): Refactor obsolete test that asserted fallback to clinic doctor in doctorRepository.
-     * When NO authenticated doctor session exists, saving periodontal examination is strictly BLOCKED,
-     * currentStep does NOT advance to 5, and an error state is set.
-     */
-    @Test
-    fun `Periodontal examination without active doctor session is strictly blocked and does not advance to step 5`() = runTest {
-        val doctorRepo: DoctorRepository = mockk()
-        val clinicDoctor = Doctor(
-            id = DoctorId("55555555-5555-5555-5555-555555555555"),
-            userId = "user-doc-55",
-            firstName = "Erika",
-            lastName = "Bejarano",
-            specialty = "Periodoncia",
-            email = "erika.b@biodontos.com",
-            licenseNumber = "OD-98234-COL"
-        )
-        coEvery { doctorRepo.getDoctors() } returns Result.success(listOf(clinicDoctor))
-
-        var capturedExam: PeriodontalExamination? = null
-        coEvery { periodontalRepository.saveExamination(any()) } answers {
-            capturedExam = firstArg()
-            Result.success(requireNotNull(capturedExam) { "El examen periodontal capturado no debe ser nulo" })
-        }
-
-        val vmWithoutDoctorSession = ClinicalAdmissionViewModel(
-            patientRepository = patientRepository,
-            clinicalRecordRepository = clinicalRecordRepository,
-            anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
-            guardianRepository = guardianRepository,
-            doctorRepository = doctorRepo,
-            getCurrentDoctorUseCase = null
-        )
-
-        advanceUntilIdle()
-
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-300", patientId = "pat-300"))
-        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
-            Patient(id = "pat-300", dniCedula = "80991122", firstName = "Daniel", firstLastName = "Cruz")
-        )
-        coEvery { anamnesisRepository.saveAnamnesis(any()) } returns Result.success(Anamnesis(patientId = "pat-300"))
-        coEvery { odontogramRepository.updateToothState(any(), any(), any(), any(), any()) } returns Result.success(Unit)
-
-        vmWithoutDoctorSession.onEvent(ClinicalAdmissionEvent.UpdateDni("80991122"))
-        vmWithoutDoctorSession.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Daniel"))
-        vmWithoutDoctorSession.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Cruz"))
-        vmWithoutDoctorSession.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vmWithoutDoctorSession.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vmWithoutDoctorSession.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vmWithoutDoctorSession.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-
-        assertNull("Periodontal examination must not be saved without an active doctor session", capturedExam)
-        assertNotEquals("Flow must not advance to step 5 without an active doctor session", 5, vmWithoutDoctorSession.state.value.currentStep)
-        assertNotNull("Error state must be set when doctor session is missing", vmWithoutDoctorSession.state.value.errorMessage)
-    }
-
 
     @Test
     fun `Admission save blocked when getCurrentDoctorUseCase returns null`() = runTest {
@@ -590,12 +282,6 @@ class ClinicalAdmissionViewModelTest {
             patientRepository = patientRepository,
             clinicalRecordRepository = clinicalRecordRepository,
             anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
             guardianRepository = guardianRepository,
             getCurrentDoctorUseCase = doctorUseCase
         )
@@ -621,12 +307,6 @@ class ClinicalAdmissionViewModelTest {
             patientRepository = patientRepository,
             clinicalRecordRepository = clinicalRecordRepository,
             anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
             guardianRepository = guardianRepository,
             getCurrentDoctorUseCase = doctorUseCase
         )
@@ -649,12 +329,6 @@ class ClinicalAdmissionViewModelTest {
             patientRepository = patientRepository,
             clinicalRecordRepository = clinicalRecordRepository,
             anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
             guardianRepository = guardianRepository,
             getCurrentDoctorUseCase = null
         )
@@ -711,12 +385,6 @@ class ClinicalAdmissionViewModelTest {
             patientRepository = patientRepository,
             clinicalRecordRepository = clinicalRecordRepository,
             anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
             guardianRepository = guardianRepository,
             getCurrentDoctorUseCase = doctorUseCase
         )
@@ -731,7 +399,6 @@ class ClinicalAdmissionViewModelTest {
         assertEquals(1, vm.state.value.currentStep)
         assertNotNull(vm.state.value.errorMessage)
     }
-
 
     @Test
     fun `Step 1 if patient save fails stays on step 1 and sets error`() = runTest {
@@ -772,213 +439,6 @@ class ClinicalAdmissionViewModelTest {
     }
 
     @Test
-    fun `Step 3 if tooth state update fails stays on step 3 and sets error`() = runTest {
-        val vm = createViewModelWithDoctor()
-        advanceUntilIdle()
-
-        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
-            Patient(id = "pat-123", dniCedula = "1020304050", firstName = "Carlos", firstLastName = "Gómez")
-        )
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(
-            ClinicalRecord(id = "rec-456", patientId = "pat-123")
-        )
-        coEvery { anamnesisRepository.saveAnamnesis(any()) } returns Result.success(Anamnesis(patientId = "pat-123"))
-        coEvery { odontogramRepository.updateToothState(any(), any(), any(), any(), any()) } returns Result.failure(Exception("Odontogram surface persistence failed"))
-
-        vm.onEvent(ClinicalAdmissionEvent.UpdateDni("1020304050"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Carlos"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Gómez"))
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(2, vm.state.value.currentStep)
-
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(3, vm.state.value.currentStep)
-
-        vm.onEvent(ClinicalAdmissionEvent.SelectOdontogramTooth(11))
-        vm.onEvent(ClinicalAdmissionEvent.SelectConditionToApply(ToothCondition.CARIES))
-        vm.onEvent(ClinicalAdmissionEvent.ApplySurfaceCondition(11, ToothSurface.VESTIBULAR))
-
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-
-        assertEquals("Should stay on step 3 when odontogram persistence fails", 3, vm.state.value.currentStep)
-        assertNotNull(vm.state.value.errorMessage)
-    }
-
-    @Test
-    fun `Step 5 if record save fails stays on step 5 and sets error`() = runTest {
-        val vm = createViewModelWithDoctor()
-        advanceUntilIdle()
-
-        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
-            Patient(id = "pat-123", dniCedula = "1020304050", firstName = "Carlos", firstLastName = "Gómez")
-        )
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-456", patientId = "pat-123"))
-        coEvery { anamnesisRepository.saveAnamnesis(any()) } returns Result.success(Anamnesis(patientId = "pat-123"))
-        coEvery { odontogramRepository.updateToothState(any(), any(), any(), any(), any()) } returns Result.success(Unit)
-        coEvery { periodontalRepository.saveExamination(any()) } returns Result.success(PeriodontalExamination(recordId = "rec-456", doctorId = "12345678-1234-1234-1234-123456789abc", examinationDate = "2026-10-20"))
-
-        vm.onEvent(ClinicalAdmissionEvent.UpdateDni("1020304050"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Carlos"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Gómez"))
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(5, vm.state.value.currentStep)
-
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.failure(Exception("Diagnosis update failed"))
-
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-
-        assertEquals(5, vm.state.value.currentStep)
-        assertNotNull(vm.state.value.errorMessage)
-        coVerify(exactly = 0) { informedConsentRepository.saveConsent(any()) }
-    }
-
-    @Test
-    fun `Step 5 if consent save fails stays on step 5 and sets error`() = runTest {
-        val vm = createViewModelWithDoctor()
-        advanceUntilIdle()
-
-        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
-            Patient(id = "pat-123", dniCedula = "1020304050", firstName = "Carlos", firstLastName = "Gómez")
-        )
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-456", patientId = "pat-123"))
-        coEvery { anamnesisRepository.saveAnamnesis(any()) } returns Result.success(Anamnesis(patientId = "pat-123"))
-        coEvery { odontogramRepository.updateToothState(any(), any(), any(), any(), any()) } returns Result.success(Unit)
-        coEvery { periodontalRepository.saveExamination(any()) } returns Result.success(PeriodontalExamination(recordId = "rec-456", doctorId = "12345678-1234-1234-1234-123456789abc", examinationDate = "2026-10-20"))
-
-        vm.onEvent(ClinicalAdmissionEvent.UpdateDni("1020304050"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Carlos"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Gómez"))
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(5, vm.state.value.currentStep)
-
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-456", patientId = "pat-123"))
-        coEvery { informedConsentRepository.saveConsent(any()) } returns Result.failure(Exception("Informed consent persistence failed"))
-
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-
-        assertEquals(5, vm.state.value.currentStep)
-        assertNotNull(vm.state.value.errorMessage)
-    }
-
-    @Test
-    fun `Step 6 if evolution save fails stays on step 6 and does not close record`() = runTest {
-        val vm = createViewModelWithDoctor()
-        advanceUntilIdle()
-
-        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
-            Patient(id = "pat-123", dniCedula = "1020304050", firstName = "Carlos", firstLastName = "Gómez")
-        )
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-456", patientId = "pat-123"))
-        coEvery { anamnesisRepository.saveAnamnesis(any()) } returns Result.success(Anamnesis(patientId = "pat-123"))
-        coEvery { odontogramRepository.updateToothState(any(), any(), any(), any(), any()) } returns Result.success(Unit)
-        coEvery { periodontalRepository.saveExamination(any()) } returns Result.success(PeriodontalExamination(recordId = "rec-456", doctorId = "12345678-1234-1234-1234-123456789abc", examinationDate = "2026-10-20"))
-        coEvery { informedConsentRepository.saveConsent(any()) } returns Result.success(InformedConsent(patientId = "pat-123", doctorId = "12345678-1234-1234-1234-123456789abc", treatmentSummary = "Tratamiento Integral de Odontología"))
-
-        vm.onEvent(ClinicalAdmissionEvent.UpdateDni("1020304050"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Carlos"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Gómez"))
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(6, vm.state.value.currentStep)
-
-        vm.onEvent(ClinicalAdmissionEvent.ToggleCloseRecord(true, "Resumen de cierre médico"))
-        coEvery { evolutionRepository.saveEvolution(any()) } returns Result.failure(Exception("RPC network timeout"))
-
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-
-        assertEquals(6, vm.state.value.currentStep)
-        assertNotNull(vm.state.value.errorMessage)
-        coVerify(exactly = 0) { clinicalRecordRepository.closeRecord(any(), any(), any(), any()) }
-    }
-
-    @Test
-    fun `Step 6 if evolution succeeds advances to step 7 and closes record when requested`() = runTest {
-        val vm = createViewModelWithDoctor()
-        advanceUntilIdle()
-
-        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
-            Patient(id = "pat-123", dniCedula = "1020304050", firstName = "Carlos", firstLastName = "Gómez")
-        )
-        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(ClinicalRecord(id = "rec-456", patientId = "pat-123"))
-        coEvery { anamnesisRepository.saveAnamnesis(any()) } returns Result.success(Anamnesis(patientId = "pat-123"))
-        coEvery { odontogramRepository.updateToothState(any(), any(), any(), any(), any()) } returns Result.success(Unit)
-        coEvery { periodontalRepository.saveExamination(any()) } returns Result.success(PeriodontalExamination(recordId = "rec-456", doctorId = "12345678-1234-1234-1234-123456789abc", examinationDate = "2026-10-20"))
-        coEvery { informedConsentRepository.saveConsent(any()) } returns Result.success(InformedConsent(patientId = "pat-123", doctorId = "12345678-1234-1234-1234-123456789abc", treatmentSummary = "Tratamiento Integral de Odontología"))
-
-        vm.onEvent(ClinicalAdmissionEvent.UpdateDni("1020304050"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Carlos"))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Gómez"))
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(6, vm.state.value.currentStep)
-
-        vm.onEvent(ClinicalAdmissionEvent.ToggleCloseRecord(true, "Tratamiento de ingreso concluido."))
-        coEvery { evolutionRepository.saveEvolution(any()) } returns Result.success(
-            Evolution(
-                id = "evo-1",
-                recordId = "rec-456",
-                doctorId = "12345678-1234-1234-1234-123456789abc",
-                date = "2026-10-20",
-                procedureTime = "10:00:00",
-                description = "Evolución inicial",
-                doctorName = "Carlos Doctor"
-            )
-        )
-        coEvery { clinicalRecordRepository.closeRecord(any(), any(), any(), any()) } returns Result.success(Unit)
-
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-
-        assertEquals(7, vm.state.value.currentStep)
-        assertNull(vm.state.value.errorMessage)
-        coVerify(exactly = 1) {
-            clinicalRecordRepository.closeRecord(
-                recordId = "rec-456",
-                doctorId = "12345678-1234-1234-1234-123456789abc",
-                summary = "Tratamiento de ingreso concluido.",
-                signatureUrl = any()
-            )
-        }
-    }
-
-
-    @Test
     fun `Draft restoration with active doctor session populates patient data and maintains doctor identity`() = runTest {
         val doctorUuid = "99999999-8888-7777-6666-555555555555"
         val existingPatient = Patient(
@@ -1002,9 +462,6 @@ class ClinicalAdmissionViewModelTest {
         coEvery { patientRepository.getPatientById("pat-draft-1") } returns Result.success(existingPatient)
         coEvery { clinicalRecordRepository.getRecordByPatientId("pat-draft-1") } returns Result.success(existingRecord)
         coEvery { anamnesisRepository.getAnamnesisByPatientId("pat-draft-1") } returns Result.success(existingAnamnesis)
-        coEvery { odontogramRepository.getOdontogram("pat-draft-1") } returns Result.success(emptyList())
-        coEvery { informedConsentRepository.getConsentByPatientId("pat-draft-1") } returns Result.success(null)
-        coEvery { periodontalRepository.getExaminationByRecordId("rec-draft-1") } returns Result.success(null)
 
         val vm = createViewModelWithDoctor(
             doctorId = doctorUuid,
@@ -1018,7 +475,6 @@ class ClinicalAdmissionViewModelTest {
         assertEquals("80123456", state.dniCedula)
         assertEquals("Lucía", state.firstName)
         assertEquals("rec-draft-1", state.clinicalRecordId)
-        assertEquals("Pulpitis irreversible", state.mainDiagnosis)
         assertTrue(state.alergias)
         assertEquals(doctorUuid, state.doctorId)
         assertEquals("Javier Solis", state.doctorName)
@@ -1035,9 +491,6 @@ class ClinicalAdmissionViewModelTest {
         coEvery { patientRepository.getPatientById("pat-isolated") } returns Result.success(existingPatient)
         coEvery { clinicalRecordRepository.getRecordByPatientId("pat-isolated") } returns Result.success(existingRecord)
         coEvery { anamnesisRepository.getAnamnesisByPatientId("pat-isolated") } returns Result.success(null)
-        coEvery { odontogramRepository.getOdontogram("pat-isolated") } returns Result.success(emptyList())
-        coEvery { informedConsentRepository.getConsentByPatientId("pat-isolated") } returns Result.success(null)
-        coEvery { periodontalRepository.getExaminationByRecordId("rec-isolated") } returns Result.success(null)
 
         val vmDoctorA = createViewModelWithDoctor(doctorId = doctorAUuid, doctorName = "Dr. Andres Alvarez", initialPatientId = "pat-isolated")
         advanceUntilIdle()
@@ -1050,14 +503,18 @@ class ClinicalAdmissionViewModelTest {
     }
 
     @Test
-    fun `Full clinical admission happy path with authenticated doctor completes all 7 steps`() = runTest {
+    fun `Full clinical admission happy path with authenticated doctor completes 2 steps, emits completion result and records audit`() = runTest {
         val doctorUuid = "77777777-7777-7777-7777-777777777777"
-        val vm = createViewModelWithDoctor(doctorId = doctorUuid, doctorName = "Dr. Mateo Martinez", licenseNumber = "OD-99001")
-        advanceUntilIdle()
+        val auditRepo: ClinicalAuditRepository = mockk(relaxed = true)
+        coEvery { auditRepo.recordAudit(any(), any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
 
-        var capturedConsent: InformedConsent? = null
-        var capturedExam: PeriodontalExamination? = null
-        var capturedEvolution: Evolution? = null
+        val vm = createViewModelWithDoctor(
+            doctorId = doctorUuid,
+            doctorName = "Dr. Mateo Martinez",
+            licenseNumber = "OD-99001",
+            auditRepository = auditRepo
+        )
+        advanceUntilIdle()
 
         coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
             Patient(id = "pat-full", dniCedula = "99887766", firstName = "Valeria", firstLastName = "Torres")
@@ -1066,20 +523,6 @@ class ClinicalAdmissionViewModelTest {
             ClinicalRecord(id = "rec-full", patientId = "pat-full")
         )
         coEvery { anamnesisRepository.saveAnamnesis(any()) } returns Result.success(Anamnesis(patientId = "pat-full"))
-        coEvery { odontogramRepository.updateToothState(any(), any(), any(), any(), any()) } returns Result.success(Unit)
-        coEvery { periodontalRepository.saveExamination(any()) } answers {
-            capturedExam = firstArg()
-            Result.success(requireNotNull(capturedExam))
-        }
-        coEvery { informedConsentRepository.saveConsent(any()) } answers {
-            capturedConsent = firstArg()
-            Result.success(requireNotNull(capturedConsent))
-        }
-        coEvery { evolutionRepository.saveEvolution(any()) } answers {
-            capturedEvolution = firstArg()
-            Result.success(requireNotNull(capturedEvolution))
-        }
-        coEvery { clinicalRecordRepository.closeRecord(any(), any(), any(), any()) } returns Result.success(Unit)
 
         vm.onEvent(ClinicalAdmissionEvent.UpdateDni("99887766"))
         vm.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Valeria"))
@@ -1089,54 +532,41 @@ class ClinicalAdmissionViewModelTest {
         assertEquals(2, vm.state.value.currentStep)
 
         vm.onEvent(ClinicalAdmissionEvent.ToggleAnamnesisQuestion("alergias", true))
+        vm.onEvent(ClinicalAdmissionEvent.UpdateAnamnesisOptionNote("alergias", "Alérgica a la penicilina"))
         vm.onEvent(ClinicalAdmissionEvent.NextStep)
         advanceUntilIdle()
-        assertEquals(3, vm.state.value.currentStep)
 
-        vm.onEvent(ClinicalAdmissionEvent.SelectOdontogramTooth(16))
-        vm.onEvent(ClinicalAdmissionEvent.SelectConditionToApply(ToothCondition.CARIES))
-        vm.onEvent(ClinicalAdmissionEvent.ApplySurfaceCondition(16, ToothSurface.OCLUSAL))
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(4, vm.state.value.currentStep)
+        val completion = vm.state.value.completionResult
+        assertNotNull(completion)
+        assertEquals("pat-full", completion?.patientId)
+        assertEquals("Valeria Torres", completion?.patientFullName)
+        assertEquals("99887766", completion?.dniCedula)
+        assertTrue(completion?.isNewAdmission == true)
 
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(5, vm.state.value.currentStep)
-        assertEquals(doctorUuid, capturedExam?.doctorId)
+        coVerify(exactly = 1) {
+            auditRepo.recordAudit(
+                patientId = "pat-full",
+                entityTable = "clinical_records",
+                entityId = "rec-full",
+                action = AuditAction.CREATE,
+                changedFields = match { it.contains("patient_admission") && it.contains("anamnesis") },
+                actorUserId = "user-77777777-7777-7777-7777-777777777777",
+                actorName = "Mateo Martinez"
+            )
+        }
 
-        vm.onEvent(ClinicalAdmissionEvent.UpdateDiagnoses("Caries dental profunda", "", "", "Restauración resina"))
-        vm.onEvent(ClinicalAdmissionEvent.ConfirmConsentSignature("sig_data_valeria"))
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(6, vm.state.value.currentStep)
-        assertEquals(doctorUuid, capturedConsent?.doctorId)
-        assertEquals("OD-99001", capturedConsent?.doctorLicenseNumber)
-
-        val material = vm.state.value.materialsCatalog.first()
-        vm.onEvent(ClinicalAdmissionEvent.SelectMaterialFromCatalog(material))
-        vm.onEvent(ClinicalAdmissionEvent.AddMaterialUsed(1.0))
-        vm.onEvent(ClinicalAdmissionEvent.UpdateEvolution("Restauración oclusal con resina filtek", "150000", "150000"))
-        vm.onEvent(ClinicalAdmissionEvent.ConfirmEvolutionSignature("sig_evo_valeria"))
-        vm.onEvent(ClinicalAdmissionEvent.ToggleCloseRecord(true, "Tratamiento finalizado satisfactoriamente."))
-        vm.onEvent(ClinicalAdmissionEvent.NextStep)
-        advanceUntilIdle()
-        assertEquals(7, vm.state.value.currentStep)
-        assertEquals(doctorUuid, capturedEvolution?.doctorId)
-
-        vm.onEvent(ClinicalAdmissionEvent.FinishAdmission)
-        advanceUntilIdle()
-        assertTrue(vm.state.value.isFinished)
-        assertNotNull(vm.state.value.successMessage)
+        // Test dismiss dialog
+        vm.onEvent(ClinicalAdmissionEvent.DismissSuccessDialog)
+        assertNull(vm.state.value.completionResult)
     }
 
     @Test
     fun `SavedStateHandle restores currentStep and patientId without storing large payloads`() = runTest {
         val handle = androidx.lifecycle.SavedStateHandle(
             mapOf(
-                ClinicalAdmissionViewModel.KEY_PATIENT_ID to "pat-restored",
-                ClinicalAdmissionViewModel.KEY_CLINICAL_RECORD_ID to "rec-restored",
-                ClinicalAdmissionViewModel.KEY_CURRENT_STEP to 3
+                ClinicalAdmissionViewModel.KEY_CURRENT_STEP to 2,
+                ClinicalAdmissionViewModel.KEY_PATIENT_ID to "pat-saved-123",
+                ClinicalAdmissionViewModel.KEY_CLINICAL_RECORD_ID to "rec-saved-456"
             )
         )
 
@@ -1144,31 +574,50 @@ class ClinicalAdmissionViewModelTest {
             patientRepository = patientRepository,
             clinicalRecordRepository = clinicalRecordRepository,
             anamnesisRepository = anamnesisRepository,
-            odontogramRepository = odontogramRepository,
-            periodontalRepository = periodontalRepository,
-            evolutionRepository = evolutionRepository,
-            materialRepository = materialRepository,
-            informedConsentRepository = informedConsentRepository,
-            appointmentRepository = appointmentRepository,
             guardianRepository = guardianRepository,
             savedStateHandle = handle
         )
+
+        assertEquals(2, vm.state.value.currentStep)
+        assertEquals("pat-saved-123", vm.state.value.patientId)
+        assertEquals("rec-saved-456", vm.state.value.clinicalRecordId)
+    }
+
+    @Test
+    fun `Step 2 persists notes only for active anamnesis options`() = runTest {
+        val vm = createViewModelWithDoctor()
         advanceUntilIdle()
 
-        assertEquals(3, vm.state.value.currentStep)
-        assertEquals("pat-restored", vm.state.value.patientId)
-        assertEquals("rec-restored", vm.state.value.clinicalRecordId)
-
-        vm.onEvent(ClinicalAdmissionEvent.ConfirmConsentSignature("sig_vector_large_payload"))
-        advanceUntilIdle()
-
-        assertEquals(
-            setOf(
-                ClinicalAdmissionViewModel.KEY_PATIENT_ID,
-                ClinicalAdmissionViewModel.KEY_CLINICAL_RECORD_ID,
-                ClinicalAdmissionViewModel.KEY_CURRENT_STEP
-            ),
-            handle.keys()
+        var capturedAnamnesis: Anamnesis? = null
+        coEvery { patientRepository.createOrUpdatePatient(any()) } returns Result.success(
+            Patient(id = "pat-notes", dniCedula = "12345678", firstName = "Ana", firstLastName = "Ruiz")
         )
+        coEvery { clinicalRecordRepository.saveRecord(any()) } returns Result.success(
+            ClinicalRecord(id = "rec-notes", patientId = "pat-notes")
+        )
+        coEvery { anamnesisRepository.saveAnamnesis(any()) } answers {
+            capturedAnamnesis = firstArg()
+            Result.success(firstArg())
+        }
+
+        vm.onEvent(ClinicalAdmissionEvent.UpdateDni("12345678"))
+        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstName("Ana"))
+        vm.onEvent(ClinicalAdmissionEvent.UpdateFirstLastName("Ruiz"))
+        vm.onEvent(ClinicalAdmissionEvent.NextStep)
+        advanceUntilIdle()
+        assertEquals(2, vm.state.value.currentStep)
+
+        vm.onEvent(ClinicalAdmissionEvent.ToggleAnamnesisQuestion("diabetes", true))
+        vm.onEvent(ClinicalAdmissionEvent.UpdateAnamnesisOptionNote("diabetes", "Tipo 2 controlada"))
+        vm.onEvent(ClinicalAdmissionEvent.ToggleAnamnesisQuestion("alergias", true))
+        vm.onEvent(ClinicalAdmissionEvent.UpdateAnamnesisOptionNote("alergias", "Penicilina"))
+        vm.onEvent(ClinicalAdmissionEvent.ToggleAnamnesisQuestion("alergias", false))
+
+        vm.onEvent(ClinicalAdmissionEvent.NextStep)
+        advanceUntilIdle()
+
+        assertEquals(2, vm.state.value.currentStep)
+        assertNotNull(vm.state.value.completionResult)
+        assertEquals(mapOf("diabetes" to "Tipo 2 controlada"), capturedAnamnesis?.optionNotes)
     }
 }

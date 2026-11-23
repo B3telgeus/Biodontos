@@ -21,7 +21,11 @@ data class EvolutionDto(
     @SerialName("voided_at") val voidedAt: String? = null,
     @SerialName("voided_by") val voidedBy: String? = null,
     @SerialName("void_reason") val voidReason: String? = null,
-    @SerialName("amends_evolution_id") val amendsEvolutionId: String? = null
+    @SerialName("amends_evolution_id") val amendsEvolutionId: String? = null,
+    @SerialName("cie10_code") val cie10Code: String? = null,
+    @SerialName("cie10_description") val cie10Description: String? = null,
+    @SerialName("cups_code") val cupsCode: String? = null,
+    @SerialName("cups_description") val cupsDescription: String? = null
 )
 
 @Serializable

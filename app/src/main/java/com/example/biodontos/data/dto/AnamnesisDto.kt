@@ -30,5 +30,6 @@ data class AnamnesisDto(
     val observaciones: String = "",
     @SerialName("antecedentes_familiares") val antecedentesFamiliares: String = "",
     @SerialName("medicamentos_actuales") val medicamentosActuales: String? = null,
-    @SerialName("alergias_descripcion") val alergiasDescripcion: String? = null
+    @SerialName("alergias_descripcion") val alergiasDescripcion: String? = null,
+    @SerialName("option_notes") val optionNotes: Map<String, String> = emptyMap()
 )

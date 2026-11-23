@@ -727,6 +727,23 @@ private fun EvolutionActivityContent(activity: PatientActivity.EvolutionActivity
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
+        if (!evo.cie10Code.isNullOrBlank() || !evo.cupsCode.isNullOrBlank()) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (!evo.cie10Code.isNullOrBlank()) {
+                    StatusPill(
+                        text = "CIE-10 ${evo.cie10Code}${evo.cie10Description?.let { " · $it" }.orEmpty()}",
+                        color = Zafiro
+                    )
+                }
+                if (!evo.cupsCode.isNullOrBlank()) {
+                    StatusPill(
+                        text = "CUPS ${evo.cupsCode}${evo.cupsDescription?.let { " · $it" }.orEmpty()}",
+                        color = Esmeralda
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+        }
         Text(
             text = evo.description,
             fontSize = 14.sp,

@@ -210,12 +210,8 @@ fun InteractivePeriodontogram(
                     siteLocation = loc
                 )
                 SiteMeasurementCard(
-                    title = when (loc) {
-                        PeriodontalSiteLocation.MESIO_VESTIBULAR -> "MV"
-                        PeriodontalSiteLocation.MID_VESTIBULAR -> "V"
-                        PeriodontalSiteLocation.DISTO_VESTIBULAR -> "DV"
-                        else -> ""
-                    },
+                    title = loc.shortLabelForTooth(selectedToothNumber),
+                    subtitle = loc.fullLabelForTooth(selectedToothNumber),
                     measurement = measurement,
                     onChanged = onMeasurementChanged,
                     modifier = Modifier.weight(1f)
@@ -226,12 +222,13 @@ fun InteractivePeriodontogram(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.ui_interactive_periodontogram_577),
+            text = PeriodontalSiteLocation.innerFaceTitleForTooth(selectedToothNumber),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Bold,
                 color = Zafiro,
                 letterSpacing = 1.sp
-            )
+            ),
+            modifier = Modifier.testTag(TestTags.Periodontogram.INNER_FACE_HEADER)
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -245,12 +242,8 @@ fun InteractivePeriodontogram(
                     siteLocation = loc
                 )
                 SiteMeasurementCard(
-                    title = when (loc) {
-                        PeriodontalSiteLocation.MESIO_LINGUAL -> "ML"
-                        PeriodontalSiteLocation.MID_LINGUAL -> "L/P"
-                        PeriodontalSiteLocation.DISTO_LINGUAL -> "DL"
-                        else -> ""
-                    },
+                    title = loc.shortLabelForTooth(selectedToothNumber),
+                    subtitle = loc.fullLabelForTooth(selectedToothNumber),
                     measurement = measurement,
                     onChanged = onMeasurementChanged,
                     modifier = Modifier.weight(1f)
@@ -343,6 +336,7 @@ fun InteractivePeriodontogram(
 @Composable
 private fun SiteMeasurementCard(
     title: String,
+    subtitle: String,
     measurement: PeriodontalSiteMeasurement,
     onChanged: (PeriodontalSiteMeasurement) -> Unit,
     modifier: Modifier = Modifier
@@ -371,6 +365,13 @@ private fun SiteMeasurementCard(
             fontWeight = FontWeight.Bold,
             color = if (isDeep) Carmesi else BiodontosDark,
             fontSize = 13.sp
+        )
+        Text(
+            text = subtitle,
+            color = if (isDeep) Carmesi.copy(alpha = 0.85f) else BiodontosGreyText,
+            fontSize = 10.sp,
+            textAlign = TextAlign.Center,
+            maxLines = 1
         )
 
         Spacer(modifier = Modifier.height(6.dp))

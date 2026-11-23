@@ -60,12 +60,9 @@ import com.example.biodontos.domain.model.history.PatientHistorySummary
 import com.example.biodontos.presentation.admission.ClinicalAdmissionContent
 import com.example.biodontos.presentation.admission.ClinicalAdmissionEvent
 import com.example.biodontos.presentation.admission.ClinicalAdmissionState
-import com.example.biodontos.presentation.admission.OperativeConsentDialog
 import com.example.biodontos.presentation.patients.PatientListScreen
 import com.example.biodontos.presentation.patients.PatientListState
 import com.example.biodontos.presentation.patients.PatientQuickFilter
-import com.example.biodontos.presentation.patients.PatientRegistrationScreen
-import com.example.biodontos.presentation.patients.PatientRegistrationState
 import com.example.biodontos.presentation.patients.detail.PatientDetailScreen
 import com.example.biodontos.presentation.patients.detail.PatientDetailState
 import com.example.biodontos.presentation.patients.detail.PatientDetailTab
@@ -230,81 +227,6 @@ class PatientsAndAdmissionComposeTest {
         }
 
         composeTestRule.onNodeWithTag(TestTags.Patients.LIST_EMPTY).assertIsDisplayed()
-    }
-
-    @Test
-    fun patientRegistrationValidatesInputsAllergiesConsentAndButtons() {
-        var state by mutableStateOf(PatientRegistrationState())
-        var saveClicked by mutableStateOf(false)
-        var backClicked by mutableStateOf(false)
-
-        composeTestRule.setBiodontosContent {
-            PatientRegistrationScreen(
-                state = state,
-                onDniChange = { state = state.copy(dniCedula = it, dniError = null) },
-                onFirstNameChange = { state = state.copy(firstName = it, firstNameError = null) },
-                onLastNameChange = { state = state.copy(lastName = it, lastNameError = null) },
-                onPhoneChange = { state = state.copy(phone = it) },
-                onConsentChange = { state = state.copy(consentSigned = it) },
-                onAllergiesChange = { state = state.copy(hasCriticalAllergies = it) },
-                onAllergiesDescriptionChange = { state = state.copy(allergiesDescription = it) },
-                onSaveClick = { saveClicked = true },
-                onBackClick = { backClicked = true }
-            )
-        }
-
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_ROOT).assertIsDisplayed()
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_DNI_FIELD).performTextInput("10203040")
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_FIRST_NAME_FIELD).performTextInput("María")
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_LAST_NAME_FIELD).performTextInput("Gómez")
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_PHONE_FIELD).performTextInput("3001234567")
-
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_CONSENT_ROW)
-            .performScrollTo()
-            .assertIsOff()
-            .performClick()
-            .assertIsOn()
-
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_ALLERGIES_DESC_FIELD).assertDoesNotExist()
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_ALLERGIES_ROW)
-            .performScrollTo()
-            .assertIsOff()
-            .performClick()
-            .assertIsOn()
-
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_ALLERGIES_DESC_FIELD)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .performTextInput("Penicilina")
-
-        composeTestRule.runOnIdle {
-            state = state.copy(
-                dniError = "DNI inválido",
-                firstNameError = "Nombre requerido",
-                error = "Revise los campos obligatorios"
-            )
-        }
-
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_ERROR_TEXT)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .assertTextContains("Revise los campos obligatorios")
-
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_SAVE_BUTTON)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .performClick()
-
-        composeTestRule.onNodeWithTag(TestTags.Patients.REG_CANCEL_BUTTON)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .performClick()
-
-        composeTestRule.runOnIdle {
-            assertThat(saveClicked).isTrue()
-            assertThat(backClicked).isTrue()
-            assertThat(state.allergiesDescription).isEqualTo("Penicilina")
-        }
     }
 
     @Test
@@ -835,33 +757,30 @@ class PatientsAndAdmissionComposeTest {
     }
 
     @Test
-    fun clinicalAdmissionNavigatesAllSevenStepsAndCapturesClinicalInputs() {
-        val activeMaterial = ClinicalMaterial(
-            id = MaterialId("mat-1"),
-            name = "Resina Filtek",
-            invimaRegistration = "INVIMA 2024DM-001",
-            batchLotNumber = "LOT-01",
-            manufacturingDate = LocalDate.now().minusMonths(2),
-            expirationDate = LocalDate.now().plusYears(1)
-        )
+    fun clinicalAdmissionNavigatesTwoStepsShowsSuccessDialogAndNavigatesToDetail() {
         var state by mutableStateOf(
             ClinicalAdmissionState(
-                currentStep = 1,
-                materialsCatalog = listOf(activeMaterial),
-                selectedCatalogMaterial = activeMaterial
+                currentStep = 1
             )
         )
-        var finishedTriggered by mutableStateOf(false)
+        var finishedPatientId: String? by mutableStateOf(null)
 
         fun handleEvent(event: ClinicalAdmissionEvent) {
             state = when (event) {
                 is ClinicalAdmissionEvent.JumpToStep -> state.copy(currentStep = event.step)
                 is ClinicalAdmissionEvent.NextStep -> {
-                    if (state.currentStep == 7) {
-                        finishedTriggered = true
-                        state
+                    if (state.currentStep == 1) {
+                        state.copy(currentStep = 2)
                     } else {
-                        state.copy(currentStep = state.currentStep + 1)
+                        state.copy(
+                            completionResult = com.example.biodontos.presentation.admission.AdmissionCompletionResult(
+                                patientId = "pat-123",
+                                patientFullName = "${state.firstName} ${state.firstLastName}".trim(),
+                                dniCedula = state.dniCedula,
+                                clinicalRecordId = "rec-123",
+                                isNewAdmission = true
+                            )
+                        )
                     }
                 }
                 is ClinicalAdmissionEvent.PreviousStep ->
@@ -880,57 +799,17 @@ class PatientsAndAdmissionComposeTest {
                     hasCriticalAllergies = event.hasAllergies,
                     allergiesDescription = event.description
                 )
-                is ClinicalAdmissionEvent.ToggleAnamnesisQuestion -> when (event.questionKey) {
-                    "diabetes" -> state.copy(diabetes = event.value)
-                    else -> state
+                is ClinicalAdmissionEvent.ToggleAnamnesisQuestion -> {
+                    val cond = com.example.biodontos.domain.model.AnamnesisCondition.fromKey(event.questionKey)
+                    if (cond != null) {
+                        val updated = if (event.value) state.activeAnamnesisConditions + cond else state.activeAnamnesisConditions - cond
+                        state.copy(activeAnamnesisConditions = updated)
+                    } else state
                 }
-                is ClinicalAdmissionEvent.SelectConditionToApply ->
-                    state.copy(selectedConditionToApply = event.condition)
-                is ClinicalAdmissionEvent.ApplySurfaceCondition -> {
-                    val toothMap = state.teethSurfaces[event.toothNumber]?.toMutableMap() ?: mutableMapOf()
-                    toothMap[event.surface] = state.selectedConditionToApply
-                    val updated = state.teethSurfaces.toMutableMap()
-                    updated[event.toothNumber] = toothMap
-                    state.copy(teethSurfaces = updated)
-                }
-                is ClinicalAdmissionEvent.UpdateDiagnoses -> state.copy(
-                    mainDiagnosis = event.main,
-                    relatedDiagnoses = event.related,
-                    complementaryExams = event.exams,
-                    treatmentPlanDescription = event.plan
+                is ClinicalAdmissionEvent.UpdateAnamnesisOptionNote -> state.copy(
+                    anamnesisOptionNotes = state.anamnesisOptionNotes + (event.questionKey to event.note)
                 )
-                is ClinicalAdmissionEvent.ConfirmConsentSignature -> state.copy(
-                    consentPatientSignature = event.signature,
-                    consentSigned = event.signature.isNotBlank()
-                )
-                is ClinicalAdmissionEvent.UpdateEvolution -> state.copy(
-                    evolutionDescription = event.description,
-                    evolutionCost = event.cost,
-                    evolutionPayment = event.payment
-                )
-                is ClinicalAdmissionEvent.SelectMaterialFromCatalog ->
-                    state.copy(selectedCatalogMaterial = event.material)
-                is ClinicalAdmissionEvent.AddMaterialUsed -> {
-                    val mat = checkNotNull(state.selectedCatalogMaterial)
-                    val used = EvolutionMaterialUsed(
-                        materialId = mat.id.value,
-                        materialName = mat.name,
-                        quantityUsed = event.quantity,
-                        lotNumberSnapshot = mat.batchLotNumber,
-                        invimaSnapshot = mat.invimaRegistration,
-                        expirationDateSnapshot = mat.expirationDate.toString()
-                    )
-                    state.copy(usedMaterials = state.usedMaterials + used)
-                }
-                is ClinicalAdmissionEvent.ConfirmEvolutionSignature ->
-                    state.copy(evolutionPatientSignature = event.signature)
-                is ClinicalAdmissionEvent.ToggleCloseRecord ->
-                    state.copy(closeRecordOnFinish = event.close, closureSummary = event.summary)
-                is ClinicalAdmissionEvent.UpdateNextAppointment -> state.copy(
-                    nextAppointmentDate = event.date,
-                    nextAppointmentTime = event.time,
-                    nextAppointmentReason = event.reason
-                )
+                is ClinicalAdmissionEvent.DismissSuccessDialog -> state.copy(completionResult = null)
                 else -> state
             }
         }
@@ -939,246 +818,102 @@ class PatientsAndAdmissionComposeTest {
             ClinicalAdmissionContent(
                 state = state,
                 onEvent = ::handleEvent,
-                onNavigateBack = {}
+                onNavigateBack = {},
+                onGoToDetail = { patientId -> finishedPatientId = patientId }
             )
         }
 
-        composeTestRule.onNodeWithTag(TestTags.Admission.ROOT).assertIsDisplayed()
-        composeTestRule.onNodeWithTag(TestTags.Admission.DNI_FIELD).performTextInput("10987654")
-        composeTestRule.onNodeWithTag(TestTags.Admission.FIRST_NAME_FIELD).performTextInput("Sofía")
-        composeTestRule.onNodeWithTag(TestTags.Admission.FIRST_LAST_NAME_FIELD).performTextInput("Martínez")
+        // Paso 1: Identificación
+        composeTestRule.onNodeWithTag(TestTags.Admission.DNI_FIELD).performTextInput("10203040")
+        composeTestRule.onNodeWithTag(TestTags.Admission.FIRST_NAME_FIELD).performTextInput("Ana")
+        composeTestRule.onNodeWithTag(TestTags.Admission.FIRST_LAST_NAME_FIELD).performTextInput("López")
+        composeTestRule.onNodeWithTag(TestTags.Admission.PHONE_FIELD).performTextInput("3001234567")
 
-        composeTestRule.onNodeWithTag(TestTags.Admission.GUARDIAN_SWITCH)
-            .performScrollTo()
-            .assertIsOff()
-            .performClick()
-            .assertIsOn()
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.CONSULTATION_REASON_FIELD)
-            .performScrollTo()
-            .performTextInput("Control general")
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.ALLERGIES_SWITCH)
-            .performScrollTo()
-            .performClick()
-            .assertIsOn()
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.ALLERGIES_DESC_FIELD)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .performTextInput("Sulfas")
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.STEP_HEADER_ROW).performScrollToKey(2)
-        composeTestRule.onNodeWithTag(TestTags.Admission.stepChip(2)).performClick()
-        composeTestRule.onNodeWithTag(TestTags.Admission.anamnesisSwitch("diabetes"))
-            .performScrollTo()
-            .assertIsOff()
-            .performClick()
-            .assertIsOn()
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.STEP_HEADER_ROW).performScrollToKey(3)
-        composeTestRule.onNodeWithTag(TestTags.Admission.stepChip(3)).performClick()
-        composeTestRule.onNodeWithTag(TestTags.Odontogram.conditionOption(ToothCondition.CARIES.name))
-            .performClick()
-
-        composeTestRule.onNodeWithText("Arco Dental", substring = true).performScrollTo()
-        composeTestRule.onNode(
-            hasTestTag(TestTags.Admission.STEP_LIST).not()
-                .and(hasScrollToKeyAction())
-                .and(hasAnyDescendant(hasTestTag(TestTags.Odontogram.tooth(18)))),
-            useUnmergedTree = true
-        ).performScrollToKey(28)
-
-        composeTestRule.onNodeWithTag(TestTags.Odontogram.tooth(28), useUnmergedTree = true)
-            .assertExists()
-            .performTouchInput { click(center) }
-
-        composeTestRule.runOnIdle {
-            assertThat(state.teethSurfaces[28]?.get(ToothSurface.OCLUSAL)).isEqualTo(ToothCondition.CARIES)
-        }
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.STEP_HEADER_ROW).performScrollToKey(4)
-        composeTestRule.onNodeWithTag(TestTags.Admission.stepChip(4)).performClick()
-        composeTestRule.onNodeWithTag(TestTags.Periodontogram.ROOT).assertIsDisplayed()
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.STEP_HEADER_ROW).performScrollToKey(5)
-        composeTestRule.onNodeWithTag(TestTags.Admission.stepChip(5)).performClick()
-        composeTestRule.onNodeWithTag(TestTags.Admission.MAIN_DIAGNOSIS_FIELD)
-            .performScrollTo()
-            .performTextInput("K02.1 Caries de la dentina")
-        composeTestRule.onNodeWithTag(TestTags.Admission.TREATMENT_PLAN_FIELD)
-            .performScrollTo()
-            .performTextInput("Resina compuesta pieza 28")
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPEN_OPERATIVE_CONSENT_BUTTON)
-            .performScrollTo()
-            .assertIsDisplayed()
-
-        composeTestRule.onNodeWithTag(TestTags.Components.SIGNATURE_PAD_CANVAS)
-            .performScrollTo()
-            .performTouchInput {
-                down(topLeft + Offset(10f, 10f))
-                moveTo(center)
-                moveTo(bottomRight - Offset(10f, 10f))
-                up()
-            }
-        composeTestRule.onNodeWithTag(TestTags.Components.SIGNATURE_PAD_CONFIRM_BUTTON)
-            .performScrollTo()
-            .performClick()
-        composeTestRule.runOnIdle {
-            assertThat(state.consentSigned).isTrue()
-        }
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.STEP_HEADER_ROW).performScrollToKey(6)
-        composeTestRule.onNodeWithTag(TestTags.Admission.stepChip(6)).performClick()
-        composeTestRule.onNodeWithTag(TestTags.Admission.EVOLUTION_DESC_FIELD)
-            .performScrollTo()
-            .performTextInput("Restauración estética")
-        composeTestRule.onNodeWithTag(TestTags.Admission.EVOLUTION_COST_FIELD)
-            .performScrollTo()
-            .performTextReplacement("180000")
-        composeTestRule.onNodeWithTag(TestTags.Admission.EVOLUTION_PAYMENT_FIELD)
-            .performScrollTo()
-            .performTextReplacement("180000")
-        composeTestRule.onNodeWithText("Seleccione del inventario de clínica:").performScrollTo()
-        composeTestRule.onNodeWithTag(TestTags.Admission.catalogMaterialItem("mat-1"))
-            .performScrollTo()
-            .performClick()
-        composeTestRule.onNodeWithText("Registrar Uso en Evolución")
-            .performScrollTo()
-            .performClick()
-        composeTestRule.onNodeWithTag(TestTags.Admission.usedMaterialItem("mat-1"))
-            .performScrollTo()
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithTag(TestTags.Admission.CLOSE_RECORD_SWITCH)
-            .performScrollTo()
-            .performClick()
-            .assertIsOn()
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.STEP_HEADER_ROW).performScrollToKey(7)
-        composeTestRule.onNodeWithTag(TestTags.Admission.stepChip(7)).performClick()
-        composeTestRule.onNodeWithTag(TestTags.Admission.NEXT_APPT_DATE_FIELD)
-            .performScrollTo()
-            .performTextInput("2026-11-15")
-        composeTestRule.onNodeWithTag(TestTags.Admission.NEXT_APPT_TIME_FIELD)
-            .performScrollTo()
-            .performTextReplacement("11:30")
-        composeTestRule.onNodeWithTag(TestTags.Admission.NEXT_APPT_REASON_FIELD)
-            .performScrollTo()
-            .performTextReplacement("Control oclusal")
         composeTestRule.onNodeWithTag(TestTags.Admission.NEXT_BUTTON).performClick()
 
+        // Paso 2: Anamnesis
+        composeTestRule.onNodeWithTag(TestTags.Admission.anamnesisSwitch("alergias"))
+            .performScrollTo()
+            .performClick()
+
+        composeTestRule.onNodeWithTag(TestTags.Admission.anamnesisNoteField("alergias"))
+            .performScrollTo()
+            .performTextInput("Penicilina y derivados")
+
+        // Finalizar admisión (Paso 2 -> diálogo de éxito)
+        composeTestRule.onNodeWithTag(TestTags.Admission.NEXT_BUTTON).performClick()
+
+        // Validar modal de registro exitoso
+        composeTestRule.onNodeWithTag(TestTags.Admission.SUCCESS_DIALOG).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(TestTags.Admission.SUCCESS_DIALOG_PATIENT_NAME)
+            .assertTextContains("Ana López", substring = true)
+        composeTestRule.onNodeWithTag(TestTags.Admission.SUCCESS_DIALOG_DNI)
+            .assertTextContains("10203040", substring = true)
+
+        // Clic en botón "Ir a la Ficha del Paciente"
+        composeTestRule.onNodeWithTag(TestTags.Admission.SUCCESS_DIALOG_GO_TO_DETAIL_BUTTON).performClick()
+
         composeTestRule.runOnIdle {
-            assertThat(finishedTriggered).isTrue()
+            assertThat(finishedPatientId).isEqualTo("pat-123")
         }
     }
 
     @Test
-    fun operativeConsentDialogSwitchesSignerAddsProceduresAndSaves() {
-        var state by mutableStateOf(
-            ClinicalAdmissionState(
+    fun patientDetailPeriodontogramTabRendersAndHandlesInteractions() {
+        var selectedTooth by mutableStateOf(11)
+        var savedCalled by mutableStateOf(false)
+        var observationsText by mutableStateOf("")
+
+        val detailState = PatientDetailState(
+            patientId = "pat-123",
+            patient = Patient(
+                id = "pat-123",
+                dniCedula = "10203040",
                 firstName = "Ana",
                 firstLastName = "López",
-                dniCedula = "102030",
-                showOperativeConsentDialog = true
-            )
+                secondLastName = "Pérez",
+                birthDate = "1995-05-20",
+                phone = "3001234567",
+                email = "ana.lopez@example.com",
+                locality = "Chapinero"
+            ),
+            selectedTab = PatientDetailTab.PERIODONTOGRAM,
+            periodontalSelectedTooth = selectedTooth,
+            periodontalObservations = observationsText,
+            isLoading = false
         )
-        var savedCalled by mutableStateOf(false)
-        var dismissedCalled by mutableStateOf(false)
 
         composeTestRule.setBiodontosContent {
-            OperativeConsentDialog(
-                state = state,
-                onDismiss = { dismissedCalled = true },
-                onUpdateTreatment = {
-                    state = state.copy(operativeConsentProposedTreatment = it)
-                },
-                onUpdateSigner = { signerType, repName, repId ->
-                    state = state.copy(
-                        operativeConsentSignerType = signerType,
-                        operativeConsentRepresentativeName = repName,
-                        operativeConsentRepresentativeId = repId
-                    )
-                },
-                onAddProcedure = { tooth, date ->
-                    val proc = com.example.biodontos.domain.model.InformedConsentProcedure(
-                        consentId = "",
-                        toothNumber = tooth,
-                        procedureDate = date
-                    )
-                    state = state.copy(
-                        operativeConsentProcedures = state.operativeConsentProcedures + proc
-                    )
-                },
-                onRemoveProcedure = { index ->
-                    val updated = state.operativeConsentProcedures.toMutableList()
-                    if (index in updated.indices) {
-                        updated.removeAt(index)
-                    }
-                    state = state.copy(operativeConsentProcedures = updated)
-                },
-                onConfirmSignatures = { pSig, dSig ->
-                    state = state.copy(
-                        operativeConsentPatientSignature = pSig,
-                        operativeConsentDoctorSignature = dSig
-                    )
-                },
-                onSaveConsent = { savedCalled = true }
+            PatientDetailScreen(
+                state = detailState,
+                onTabSelected = {},
+                onNavigateBack = {},
+                onSelectPeriodontalTooth = { selectedTooth = it },
+                onPeriodontalObservationsChange = { observationsText = it },
+                onSavePeriodontogram = { savedCalled = true }
             )
         }
 
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_DIALOG).assertIsDisplayed()
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_SIGNER_PATIENT)
-            .assertIsSelected()
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_SIGNER_GUARDIAN)
+        composeTestRule.onNodeWithTag(TestTags.Patients.PERIODONTOGRAM_TAB_CONTENT).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(TestTags.Periodontogram.ROOT).assertIsDisplayed()
+
+        // Seleccionar diente 18
+        composeTestRule.onNodeWithTag(TestTags.Periodontogram.toothChip(18))
+            .assertExists()
             .performClick()
-            .assertIsSelected()
 
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_REP_NAME_FIELD)
-            .assertIsDisplayed()
-            .performTextInput("Marta López")
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_REP_ID_FIELD)
-            .assertIsDisplayed()
-            .performTextInput("52123456")
+        // Modificar observaciones periodontales
+        composeTestRule.onNodeWithTag(TestTags.Patients.PERIODONTOGRAM_OBSERVATIONS_INPUT)
+            .performScrollTo()
+            .performTextInput("Gingivitis localizada en sextante anterosuperior")
 
-        composeTestRule.onNode(
-            hasScrollToIndexAction()
-                .and(hasAnyAncestor(hasTestTag(TestTags.Admission.OPERATIVE_CONSENT_DIALOG)))
-        ).performScrollToIndex(1)
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_TREATMENT_FIELD)
-            .performTextInput("Resina compuesta piezas 16 y 26")
-
-        composeTestRule.onNode(
-            hasScrollToIndexAction()
-                .and(hasAnyAncestor(hasTestTag(TestTags.Admission.OPERATIVE_CONSENT_DIALOG)))
-        ).performScrollToIndex(3)
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_TOOTH_INPUT)
-            .performTextReplacement("26")
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_ADD_PROCEDURE_BUTTON)
-            .performClick()
-        composeTestRule.onNodeWithTag(TestTags.Admission.operativeProcedureItem(0))
-            .assertIsDisplayed()
-
-        composeTestRule.onNode(
-            hasScrollToIndexAction()
-                .and(hasAnyAncestor(hasTestTag(TestTags.Admission.OPERATIVE_CONSENT_DIALOG)))
-        ).performScrollToIndex(5)
-        composeTestRule.onAllNodesWithTag(TestTags.Components.SIGNATURE_PAD_ROOT)
-            .assertCountEquals(2)
-            .let { pads ->
-                pads[0].assertIsDisplayed()
-                pads[1].assertIsDisplayed()
-            }
-
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_SAVE_BUTTON)
-            .performClick()
-        composeTestRule.onNodeWithTag(TestTags.Admission.OPERATIVE_CONSENT_DISMISS_BUTTON)
+        // Guardar periodontograma
+        composeTestRule.onNodeWithTag(TestTags.Patients.PERIODONTOGRAM_SAVE_BUTTON)
+            .performScrollTo()
             .performClick()
 
         composeTestRule.runOnIdle {
             assertThat(savedCalled).isTrue()
-            assertThat(dismissedCalled).isTrue()
         }
     }
 }

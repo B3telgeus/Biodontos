@@ -6,7 +6,46 @@ enum class PeriodontalSiteLocation {
     DISTO_VESTIBULAR,
     MESIO_LINGUAL,
     MID_LINGUAL,
-    DISTO_LINGUAL
+    DISTO_LINGUAL;
+
+    fun shortLabelForTooth(toothNumber: Int): String {
+        val isUpper = isUpperArchTooth(toothNumber)
+        return when (this) {
+            MESIO_VESTIBULAR -> "MV"
+            MID_VESTIBULAR -> "V"
+            DISTO_VESTIBULAR -> "DV"
+            MESIO_LINGUAL -> if (isUpper) "MP" else "ML"
+            MID_LINGUAL -> if (isUpper) "P" else "L"
+            DISTO_LINGUAL -> if (isUpper) "DP" else "DL"
+        }
+    }
+
+    fun fullLabelForTooth(toothNumber: Int): String {
+        val isUpper = isUpperArchTooth(toothNumber)
+        return when (this) {
+            MESIO_VESTIBULAR -> "Mesiovestibular"
+            MID_VESTIBULAR -> "Vestibular medio"
+            DISTO_VESTIBULAR -> "Distovestibular"
+            MESIO_LINGUAL -> if (isUpper) "Mesiopalatino" else "Mesiolingual"
+            MID_LINGUAL -> if (isUpper) "Palatino medio" else "Lingual medio"
+            DISTO_LINGUAL -> if (isUpper) "Distopalatino" else "Distolingual"
+        }
+    }
+
+    companion object {
+        fun isUpperArchTooth(toothNumber: Int): Boolean {
+            val quadrant = toothNumber / 10
+            return quadrant == 1 || quadrant == 2 || quadrant == 5 || quadrant == 6
+        }
+
+        fun isLowerArchTooth(toothNumber: Int): Boolean {
+            val quadrant = toothNumber / 10
+            return quadrant == 3 || quadrant == 4 || quadrant == 7 || quadrant == 8
+        }
+
+        fun innerFaceTitleForTooth(toothNumber: Int): String =
+            if (isUpperArchTooth(toothNumber)) "CARA PALATINA" else "CARA LINGUAL"
+    }
 }
 
 data class PeriodontalSiteMeasurement(

@@ -72,20 +72,12 @@ class ClinicalAdmissionViewModelFactory(
                 patientRepository = container.patientRepository,
                 clinicalRecordRepository = container.clinicalRecordRepository,
                 anamnesisRepository = container.anamnesisRepository,
-                odontogramRepository = container.odontogramRepository,
-                periodontalRepository = container.periodontalRepository,
-                evolutionRepository = container.evolutionRepository,
-                materialRepository = container.materialRepository,
-                informedConsentRepository = container.informedConsentRepository,
-                appointmentRepository = container.appointmentRepository,
                 guardianRepository = container.guardianRepository,
                 initialPatientId = patientId,
                 getCurrentDoctorUseCase = container.getCurrentDoctorUseCase,
-                doctorRepository = container.doctorRepository,
                 admissionDraftDao = container.admissionDraftDao,
-                saveAdmissionEvolutionAndCloseUseCase = container.saveAdmissionEvolutionAndCloseUseCase,
-                scheduleAdmissionFollowUpUseCase = container.scheduleAdmissionFollowUpUseCase,
-                savedStateHandle = savedStateHandle
+                savedStateHandle = savedStateHandle,
+                clinicalAuditRepository = container.clinicalAuditRepository
             )
         }
     }

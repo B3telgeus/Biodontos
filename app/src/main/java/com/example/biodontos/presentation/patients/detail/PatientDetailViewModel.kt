@@ -7,6 +7,8 @@ import com.example.biodontos.domain.model.Appointment
 import com.example.biodontos.domain.model.AppointmentStatus
 import com.example.biodontos.domain.model.ClinicalHistoryError
 import com.example.biodontos.domain.model.ClinicalMaterial
+import com.example.biodontos.domain.model.ClinicalRecord
+import com.example.biodontos.domain.model.ClinicalRecordStatus
 import com.example.biodontos.domain.model.ConsentType
 import com.example.biodontos.domain.model.CopAmount
 import com.example.biodontos.domain.model.DomainError
@@ -15,10 +17,14 @@ import com.example.biodontos.domain.model.EvolutionMaterialUsed
 import com.example.biodontos.domain.model.InformedConsent
 import com.example.biodontos.domain.model.PatientId
 import com.example.biodontos.domain.model.Payment
+import com.example.biodontos.domain.model.PeriodontalExamination
+import com.example.biodontos.domain.model.PeriodontalSiteLocation
+import com.example.biodontos.domain.model.PeriodontalSiteMeasurement
 import com.example.biodontos.domain.model.Treatment
 import com.example.biodontos.domain.model.billing.TreatmentStatus
 import com.example.biodontos.domain.model.history.ActivityFilter
 import com.example.biodontos.domain.model.history.ActivityType
+import com.example.biodontos.domain.model.history.AuditAction
 import com.example.biodontos.domain.model.history.AuditEntry
 import com.example.biodontos.domain.model.history.PatientActivity
 import com.example.biodontos.domain.repository.AnamnesisRepository
@@ -29,6 +35,8 @@ import com.example.biodontos.domain.repository.ClinicalRecordRepository
 import com.example.biodontos.domain.repository.EvolutionRepository
 import com.example.biodontos.domain.repository.InformedConsentRepository
 import com.example.biodontos.domain.repository.MaterialRepository
+import com.example.biodontos.domain.repository.PeriodontalRepository
+import com.example.biodontos.domain.usecase.doctor.GetCurrentDoctorUseCase
 import com.example.biodontos.core.util.SystemClinicClock
 import com.example.biodontos.domain.repository.PatientRepository
 import com.example.biodontos.domain.usecase.clinical.SaveInformedConsentUseCase
@@ -62,7 +70,9 @@ class PatientDetailViewModel(
     private val billingRepository: BillingRepository,
     private val appointmentRepository: AppointmentRepository,
     private val materialRepository: MaterialRepository,
-    private val clinicalAuditRepository: ClinicalAuditRepository = NoOpClinicalAuditRepository,
+    private val clinicalAuditRepository: ClinicalAuditRepository,
+    private val periodontalRepository: PeriodontalRepository,
+    private val getCurrentDoctorUseCase: GetCurrentDoctorUseCase? = null,
     private val getPatientActivityTimelineUseCase: GetPatientActivityTimelineUseCase =
         GetPatientActivityTimelineUseCase(
             appointmentRepository = appointmentRepository,
@@ -97,6 +107,22 @@ class PatientDetailViewModel(
 
     private val _effectChannel = Channel<PatientDetailEffect>(Channel.BUFFERED)
     val effects: Flow<PatientDetailEffect> = _effectChannel.receiveAsFlow()
+
+    val evolutionDelegate = EvolutionDelegate(
+        evolutionRepository = evolutionRepository,
+        getCurrentDoctorUseCase = getCurrentDoctorUseCase,
+        validateEvolutionConsentRequirementUseCase = validateEvolutionConsentRequirementUseCase,
+        buildEvolutionMaterialUsageUseCase = buildEvolutionMaterialUsageUseCase,
+        updateState = { updater -> _state.update(updater) }
+    )
+
+    val periodontogramDelegate = PeriodontogramDelegate(
+        periodontalRepository = periodontalRepository,
+        clinicalRecordRepository = clinicalRecordRepository,
+        getCurrentDoctorUseCase = getCurrentDoctorUseCase,
+        updateState = { updater -> _state.update(updater) },
+        sendEffect = { effect -> _effectChannel.send(effect) }
+    )
 
     init {
         loadPatientDetail()
@@ -141,6 +167,7 @@ class PatientDetailViewModel(
                 evolutionRepository.getEvolutionsByRecordId(record.id).onSuccess { evos ->
                     _state.update { it.copy(evolutions = evos) }
                 }
+                periodontogramDelegate.loadExamination(record.id)
             }
 
             billingRepository.getTreatmentsByPatientId(patientId).onSuccess { treats ->
@@ -690,48 +717,13 @@ class PatientDetailViewModel(
         }
     }
 
-    fun openNewEvolutionDialog() {
-        val nonExpired = _state.value.materialsCatalog.firstOrNull { !it.isExpired() }
-            ?: _state.value.materialsCatalog.firstOrNull()
-        _state.update {
-            it.copy(
-                historyState = it.historyState.copy(showQuickActionSheet = false),
-                showNewEvolutionDialog = true,
-                newEvolutionDescription = "",
-                newEvolutionToothTreated = null,
-                newEvolutionCost = "0",
-                newEvolutionPayment = "0",
-                newEvolutionMaterials = emptyList(),
-                selectedCatalogMaterial = nonExpired,
-                errorMessage = null
-            )
-        }
-        recheckEvolutionConsentRequirement()
-    }
-
-    fun dismissNewEvolutionDialog() {
-        _state.update { it.copy(showNewEvolutionDialog = false) }
-    }
-
-    fun onNewEvolutionDescriptionChange(value: String) {
-        _state.update { it.copy(newEvolutionDescription = value) }
-        recheckEvolutionConsentRequirement()
-    }
-
-    fun onNewEvolutionToothChange(tooth: Int?) {
-        _state.update { it.copy(newEvolutionToothTreated = tooth) }
-        recheckEvolutionConsentRequirement()
-    }
-
-    private fun recheckEvolutionConsentRequirement() {
-        val s = _state.value
-        val status = validateEvolutionConsentRequirementUseCase(
-            description = s.newEvolutionDescription,
-            toothTreated = s.newEvolutionToothTreated,
-            consents = s.consents
-        )
-        _state.update { it.copy(evolutionConsentStatus = status) }
-    }
+    fun openNewEvolutionDialog() = evolutionDelegate.openNewEvolutionDialog(_state.value.materialsCatalog)
+    fun dismissNewEvolutionDialog() = evolutionDelegate.dismissNewEvolutionDialog()
+    fun onNewEvolutionDescriptionChange(value: String) = evolutionDelegate.onDescriptionChange(value, _state.value)
+    fun onNewEvolutionCie10Change(cie10: com.example.biodontos.domain.model.Cie10Code?) = evolutionDelegate.onCie10Change(cie10)
+    fun onNewEvolutionCupsChange(cups: com.example.biodontos.domain.model.CupsCode?) = evolutionDelegate.onCupsChange(cups, _state.value)
+    fun onNewEvolutionToothChange(tooth: Int?) = evolutionDelegate.onToothChange(tooth, _state.value)
+    private fun recheckEvolutionConsentRequirement() = evolutionDelegate.recheckConsent(_state.value)
 
     fun openClinicalConsentDialog(type: ConsentType = ConsentType.GENERAL_ODONTOLOGY, tooth: Int? = null) {
         _state.update {
@@ -778,115 +770,20 @@ class PatientDetailViewModel(
         }
     }
 
-    fun onNewEvolutionCostChange(value: String) {
-        _state.update { it.copy(newEvolutionCost = value) }
-    }
-
-    fun onNewEvolutionPaymentChange(value: String) {
-        _state.update { it.copy(newEvolutionPayment = value) }
-    }
-
-    fun onSelectCatalogMaterial(material: ClinicalMaterial) {
-        if (material.isExpired()) {
-            _state.update {
-                it.copy(errorMessage = "El material '${material.name}' se encuentra vencido y no puede ser seleccionado.")
-            }
-            return
-        }
-        _state.update { it.copy(selectedCatalogMaterial = material, errorMessage = null) }
-    }
-
+    fun onNewEvolutionCostChange(value: String) = evolutionDelegate.onCostChange(value)
+    fun onNewEvolutionPaymentChange(value: String) = evolutionDelegate.onPaymentChange(value)
+    fun onSelectCatalogMaterial(material: ClinicalMaterial) = evolutionDelegate.onSelectCatalogMaterial(material)
     fun addMaterialToEvolution(quantity: Double) {
-        val mat = _state.value.selectedCatalogMaterial ?: run {
-            _state.update { it.copy(errorMessage = "Seleccione un material del catálogo.") }
-            return
-        }
-
         viewModelScope.launch {
-            buildEvolutionMaterialUsageUseCase(material = mat, quantityUsed = quantity).fold(
-                ifLeft = { err ->
-                    _state.update { it.copy(errorMessage = err.userMessage) }
-                },
-                ifRight = { used ->
-                    _state.update { current ->
-                        val existingIndex = current.newEvolutionMaterials.indexOfFirst { it.materialId == used.materialId }
-                        val updatedList = if (existingIndex >= 0) {
-                            current.newEvolutionMaterials.toMutableList().apply {
-                                this[existingIndex] = this[existingIndex].copy(
-                                    quantityUsed = this[existingIndex].quantityUsed + quantity
-                                )
-                            }
-                        } else {
-                            current.newEvolutionMaterials + used
-                        }
-                        current.copy(newEvolutionMaterials = updatedList, errorMessage = null)
-                    }
-                }
-            )
+            evolutionDelegate.addMaterial(quantity, _state.value)
         }
     }
-
-    fun removeMaterialFromEvolution(materialId: String) {
-        _state.update {
-            it.copy(newEvolutionMaterials = it.newEvolutionMaterials.filterNot { m -> m.materialId == materialId })
-        }
-    }
-
+    fun removeMaterialFromEvolution(materialId: String) = evolutionDelegate.removeMaterial(materialId)
     fun saveEvolution() {
-        val s = _state.value
-        val recordId = s.clinicalRecord?.id ?: ""
-        if (recordId.isBlank()) {
-            _state.update { it.copy(errorMessage = "El paciente no tiene una historia clínica abierta aún.") }
-            return
-        }
-        if (s.newEvolutionDescription.isBlank()) {
-            _state.update { it.copy(errorMessage = "La descripción de la evolución es obligatoria.") }
-            return
-        }
-
-        val cost = s.newEvolutionCost.toDoubleOrNull() ?: 0.0
-        val payment = s.newEvolutionPayment.toDoubleOrNull() ?: 0.0
-
         viewModelScope.launch {
-            _state.update { it.copy(isSavingEvolution = true, errorMessage = null) }
-            val evolution = Evolution(
-                recordId = recordId,
-                doctorId = "",
-                date = LocalDate.now().toString(),
-                procedureTime = "10:00:00",
-                description = s.newEvolutionDescription.trim(),
-                doctorName = "Doctor Tratante",
-                toothTreated = s.newEvolutionToothTreated,
-                cost = cost,
-                paymentAmount = payment,
-                balance = (cost - payment).coerceAtLeast(0.0),
-                materialsUsed = s.newEvolutionMaterials
-            )
-
-            evolutionRepository.saveEvolution(evolution)
-                .onSuccess {
-                    _state.update {
-                        it.copy(
-                            isSavingEvolution = false,
-                            showNewEvolutionDialog = false,
-                            newEvolutionDescription = "",
-                            newEvolutionToothTreated = null,
-                            newEvolutionCost = "0",
-                            newEvolutionPayment = "0",
-                            newEvolutionMaterials = emptyList(),
-                            successMessage = "¡Nota de evolución registrada con éxito!"
-                        )
-                    }
-                    loadPatientDetail()
-                }
-                .onFailure { err ->
-                    _state.update {
-                        it.copy(
-                            isSavingEvolution = false,
-                            errorMessage = "Error al guardar evolución: ${err.toUserFriendlyMessage()}"
-                        )
-                    }
-                }
+            evolutionDelegate.saveEvolution(_state.value) {
+                loadPatientDetail()
+            }
         }
     }
 
@@ -958,6 +855,15 @@ class PatientDetailViewModel(
         }
     }
 
+    fun selectPeriodontalTooth(toothNumber: Int) = periodontogramDelegate.selectTooth(toothNumber)
+    fun updatePeriodontalMeasurement(measurement: PeriodontalSiteMeasurement) = periodontogramDelegate.updateMeasurement(measurement)
+    fun updatePeriodontalObservations(notes: String) = periodontogramDelegate.updateObservations(notes)
+    fun savePeriodontogram() {
+        viewModelScope.launch {
+            periodontogramDelegate.save(patientId, _state.value)
+        }
+    }
+
     private fun emitError(message: String) {
         _state.update { it.copy(errorMessage = message) }
         viewModelScope.launch {
@@ -971,16 +877,12 @@ class PatientDetailViewModel(
         else -> "No se pudo completar la operación clínica solicitada."
     }
 
-    private object NoOpClinicalAuditRepository : ClinicalAuditRepository {
-        override suspend fun getAuditTrail(patientId: String, limit: Int): Result<List<AuditEntry>> =
-            Result.success(emptyList())
-    }
-
     companion object {
         fun parseTab(tabName: String): PatientDetailTab = when (tabName.uppercase()) {
             "HISTORY" -> PatientDetailTab.HISTORY
             "SUMMARY" -> PatientDetailTab.SUMMARY
             "ODONTOGRAM" -> PatientDetailTab.ODONTOGRAM
+            "PERIODONTOGRAM" -> PatientDetailTab.PERIODONTOGRAM
             "EVOLUTIONS" -> PatientDetailTab.EVOLUTIONS
             "TREATMENTS" -> PatientDetailTab.TREATMENTS
             else -> PatientDetailTab.HISTORY

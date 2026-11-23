@@ -89,8 +89,6 @@ import com.example.biodontos.presentation.patientportal.shell.PatientNavItem
 import com.example.biodontos.presentation.patientportal.shell.PatientPortalShell
 import com.example.biodontos.presentation.patients.PatientListScreen
 import com.example.biodontos.presentation.patients.PatientListViewModel
-import com.example.biodontos.presentation.patients.PatientRegistrationRoute
-import com.example.biodontos.presentation.patients.PatientRegistrationViewModel
 import com.example.biodontos.presentation.patients.PatientsViewModelFactory
 
 private const val NAV_TRANSITION_DURATION_MS = 320
@@ -659,6 +657,8 @@ onFilterSelected = viewModel::onFilterSelected,
                 onNavigateToAdmission = { navController.navigate(ClinicalAdmission(route.patientId)) },
                 onOpenNewEvolutionDialog = viewModel::openNewEvolutionDialog,
                 onDismissNewEvolutionDialog = viewModel::dismissNewEvolutionDialog,
+                onEvolutionCie10Change = viewModel::onNewEvolutionCie10Change,
+                onEvolutionCupsChange = viewModel::onNewEvolutionCupsChange,
                 onEvolutionDescriptionChange = viewModel::onNewEvolutionDescriptionChange,
                 onEvolutionToothChange = viewModel::onNewEvolutionToothChange,
                 onEvolutionCostChange = viewModel::onNewEvolutionCostChange,
@@ -708,7 +708,11 @@ onFilterSelected = viewModel::onFilterSelected,
                 onRefreshTimeline = viewModel::refreshTimeline,
                 onOpenClinicalConsentDialog = viewModel::openClinicalConsentDialog,
                 onDismissClinicalConsentDialog = viewModel::dismissClinicalConsentDialog,
-                onSaveClinicalConsent = viewModel::onSaveClinicalConsent
+                onSaveClinicalConsent = viewModel::onSaveClinicalConsent,
+                onSelectPeriodontalTooth = viewModel::selectPeriodontalTooth,
+                onUpdatePeriodontalMeasurement = viewModel::updatePeriodontalMeasurement,
+                onPeriodontalObservationsChange = viewModel::updatePeriodontalObservations,
+                onSavePeriodontogram = viewModel::savePeriodontogram
             )
         }
 
@@ -802,15 +806,6 @@ onFilterSelected = viewModel::onFilterSelected,
             }
         }
 
-        composable<PatientRegistration> {
-            val viewModel: PatientRegistrationViewModel = viewModel(factory = PatientsViewModelFactory.RegistrationFactory)
-
-            PatientRegistrationRoute(
-                viewModel = viewModel,
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
         composable<Odontogram> { backStackEntry ->
             val route: Odontogram = backStackEntry.toRoute()
             val viewModel: OdontogramViewModel = viewModel(
@@ -840,9 +835,14 @@ onFilterSelected = viewModel::onFilterSelected,
             ClinicalAdmissionScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onAdmissionFinished = {
-                    navController.navigate(PatientList) {
-                        popUpTo(PatientList) { inclusive = true }
+                onAdmissionFinished = { patientId ->
+                    navController.navigate(PatientDetail(patientId = patientId, initialTab = "SUMMARY")) {
+                        if (route.patientId != null) {
+                            popUpTo<PatientDetail> { inclusive = true }
+                        } else {
+                            popUpTo<ClinicalAdmission> { inclusive = true }
+                        }
+                        launchSingleTop = true
                     }
                 }
             )

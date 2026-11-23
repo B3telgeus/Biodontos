@@ -14,14 +14,6 @@ object PatientsViewModelFactory {
         }
     }
 
-    val RegistrationFactory = object : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            val application = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as BiodontosApp
-            return PatientRegistrationViewModel(application.container.savePatientUseCase) as T
-        }
-    }
-
     fun createPatientDetailFactory(patientId: String, initialTab: String = "HISTORY"): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
@@ -39,6 +31,8 @@ object PatientsViewModelFactory {
                 appointmentRepository = c.appointmentRepository,
                 materialRepository = c.materialRepository,
                 clinicalAuditRepository = c.clinicalAuditRepository,
+                periodontalRepository = c.periodontalRepository,
+                getCurrentDoctorUseCase = c.getCurrentDoctorUseCase,
                 getPatientActivityTimelineUseCase = c.getPatientActivityTimelineUseCase,
                 voidEvolutionUseCase = c.voidEvolutionUseCase,
                 voidPaymentUseCase = c.voidPaymentUseCase,

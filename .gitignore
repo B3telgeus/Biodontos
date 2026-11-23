@@ -19,6 +19,7 @@ local.properties
 .artifacts
 .artifacts/
 /.artifacts/
+artifacts/
 .kotlin
 .kotlin/
 .idea/deviceManager.xml
